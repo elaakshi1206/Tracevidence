@@ -9,6 +9,8 @@ import { executeTracevidencePipeline } from '@/lib/engine/pipelineOrchestrator';
 import PipelineProgress from '@/components/analyze/PipelineProgress';
 import ClaimCard from '@/components/analyze/ClaimCard';
 import DecisionBadge from '@/components/common/DecisionBadge';
+import PageTutorialBanner from '@/components/common/PageTutorialBanner';
+import ContextHelpTooltip from '@/components/common/ContextHelpTooltip';
 import {
   Search,
   Sparkles,
@@ -38,6 +40,7 @@ export default function AnalyzePage() {
     loadBenchmarkCase,
     activeFilter,
     setActiveFilter,
+    plainEnglishMode,
   } = useAnalysisStore();
 
   const [inputMode, setInputMode] = useState<'text' | 'benchmark' | 'url'>('text');
@@ -78,11 +81,13 @@ export default function AnalyzePage() {
           <div className="flex items-center space-x-2">
             <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
             <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-white">
-              Evidence Provenance & Trust Workspace
+              {plainEnglishMode ? 'Verify Any Fact or Claim' : 'Evidence Provenance & Trust Workspace'}
             </h1>
           </div>
           <p className="mt-1 text-sm text-slate-400">
-            Submit propositions or statements to deconstruct claims, trace origins, and compute selective prediction trust.
+            {plainEnglishMode
+              ? 'Test any statement to see its original sources, find hidden circular rumors, and get a trustworthy verdict.'
+              : 'Submit propositions or statements to deconstruct claims, trace origins, and compute selective prediction trust.'}
           </p>
         </div>
 
@@ -94,6 +99,38 @@ export default function AnalyzePage() {
           <span>Interactive Evidence Graph &rarr;</span>
         </Link>
       </div>
+
+      {/* Tutorial & Guidance Banner */}
+      <PageTutorialBanner
+        pageKey="analyze_workspace"
+        title="Workspace Quick Guide"
+        subtitle="3 simple steps to audit any scientific statement, news report, or AI answer"
+        empathyNote="You don't need to know academic terminology! If you're not sure what to write, click 'Peer-Reviewed Benchmarks' below to try real-world cases with 1 click."
+        steps={[
+          {
+            number: 1,
+            title: 'Choose or Paste Input',
+            description: 'Paste any text, paste a news link, or choose from 3 preloaded research datasets.',
+            highlightAction: 'Select "Peer-Reviewed Benchmarks" for instant results',
+          },
+          {
+            number: 2,
+            title: 'Watch Live Decomposition',
+            description: 'The engine extracts atomic claims, searches literature, and collapses repeating echo-chamber articles to their single root origin.',
+            highlightAction: 'Click "Analyze Information" to start',
+          },
+          {
+            number: 3,
+            title: 'Inspect Trust Verdicts',
+            description: 'Check whether each claim gets TRUST, VERIFY, or ABSTAIN. Click "Inspect" on any claim card to see its full mathematical audit and provenance tree.',
+            highlightAction: 'Click "Inspect" on any claim below',
+          },
+        ]}
+        commonConfusion={{
+          question: 'Why does it break my paragraph into multiple smaller claims?',
+          answer: 'Long paragraphs usually mix truth with exaggeration. Breaking text into atomic sentences prevents a false claim from hiding behind three true ones!',
+        }}
+      />
 
       {/* Input Section */}
       <div className="rounded-2xl border border-white/10 bg-[#0d1424]/95 p-6 shadow-xl backdrop-blur-md">
@@ -135,11 +172,23 @@ export default function AnalyzePage() {
               <LinkIcon className="h-3.5 w-3.5" />
               <span>URL Extraction</span>
             </button>
+
+            <ContextHelpTooltip
+              title="Input Methods"
+              simpleExplanation="You can audit any text: raw statements, articles from links, or vetted academic benchmark datasets."
+              whyItMatters="Lets you fact-check anything from a tweet to a scientific paper."
+              example="Try the EV Battery Debt case to see how 10 news articles copied 1 outdated study!"
+            />
           </div>
 
-          <span className="text-[11px] font-mono text-slate-400">
-            Model: TRACEVIDENCE-AIVIDENCE v2.4 (Selective Prediction Active)
-          </span>
+          <div className="flex items-center space-x-1.5 text-[11px] font-mono text-slate-400">
+            <span>Model: TRACEVIDENCE-AIVIDENCE v2.4</span>
+            <ContextHelpTooltip
+              title="Selective Prediction Model"
+              simpleExplanation="A calibrated engine that predicts TRUST, VERIFY, or ABSTAIN rather than guessing blindly."
+              whyItMatters="Prevents AI hallucinations by refusing to answer when uncertainty is too high."
+            />
+          </div>
         </div>
 
         {/* Input Bodies */}
@@ -239,9 +288,16 @@ export default function AnalyzePage() {
           <div className="rounded-2xl border border-white/10 bg-[#0d1424] p-6 shadow-xl">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-cyan-400">
-                  Executive Research Synthesis
-                </span>
+                <div className="flex items-center space-x-1.5">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-cyan-400">
+                    {plainEnglishMode ? 'Overall Investigation Summary' : 'Executive Research Synthesis'}
+                  </span>
+                  <ContextHelpTooltip
+                    title="Executive Synthesis"
+                    simpleExplanation="A high-level overview summarizing the factual reliability across all individual statements extracted from your input."
+                    whyItMatters="Gives you the bottom-line conclusion before diving into claim-by-claim details."
+                  />
+                </div>
                 <h2 className="text-lg font-bold text-white mt-1">{currentAnalysis.title}</h2>
               </div>
 
@@ -250,14 +306,34 @@ export default function AnalyzePage() {
                 <span className="flex items-center space-x-1.5 rounded-lg bg-emerald-950/70 px-2.5 py-1 text-xs font-mono font-bold text-emerald-300 border border-emerald-500/40">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                   <span>{currentAnalysis.overallDecisionCounts.trust} TRUST</span>
+                  <ContextHelpTooltip
+                    title="TRUST Verdict"
+                    simpleExplanation="Statements with multiple independent primary origins, up-to-date citations, and no contradictory evidence."
+                    whyItMatters="You can cite or rely on these claims with high confidence."
+                    size="xs"
+                  />
                 </span>
+
                 <span className="flex items-center space-x-1.5 rounded-lg bg-amber-950/70 px-2.5 py-1 text-xs font-mono font-bold text-amber-300 border border-amber-500/40">
                   <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
                   <span>{currentAnalysis.overallDecisionCounts.verify} VERIFY</span>
+                  <ContextHelpTooltip
+                    title="VERIFY Verdict"
+                    simpleExplanation="Statements that appear plausible but depend on a single secondary source, press release, or older data."
+                    whyItMatters="Check the underlying citations before trusting completely."
+                    size="xs"
+                  />
                 </span>
+
                 <span className="flex items-center space-x-1.5 rounded-lg bg-rose-950/70 px-2.5 py-1 text-xs font-mono font-bold text-rose-300 border border-rose-500/40">
                   <ShieldAlert className="h-3.5 w-3.5 text-rose-400" />
                   <span>{currentAnalysis.overallDecisionCounts.abstain} ABSTAIN</span>
+                  <ContextHelpTooltip
+                    title="ABSTAIN Verdict (Selective Prediction)"
+                    simpleExplanation="The system withholds a verdict because evidence is disputed, circular, or severely contradictory."
+                    whyItMatters="Refusing to answer prevents fake consensus and protects you from AI hallucinations."
+                    size="xs"
+                  />
                 </span>
               </div>
             </div>
@@ -269,25 +345,68 @@ export default function AnalyzePage() {
             {/* Aggregate Metrics Bar */}
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 border-t border-white/5 pt-4">
               <div className="rounded-lg bg-black/20 p-2.5">
-                <div className="text-[10px] font-mono text-slate-400">Independence Factor</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-mono text-slate-400">
+                    {plainEnglishMode ? 'Source Diversity' : 'Independence Factor'}
+                  </div>
+                  <ContextHelpTooltip
+                    title="Source Independence"
+                    simpleExplanation="Measures whether the sources citing this claim are genuinely separate organizations or just copying the same press release."
+                    whyItMatters="100% means all sources are distinct origins. Low % means an echo chamber!"
+                    size="xs"
+                  />
+                </div>
                 <div className="mt-0.5 font-mono text-sm font-bold text-cyan-400">
                   {(currentAnalysis.aggregateMetrics.averageIndependence * 100).toFixed(1)}%
                 </div>
               </div>
+
               <div className="rounded-lg bg-black/20 p-2.5">
-                <div className="text-[10px] font-mono text-slate-400">Corroboration Confidence</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-mono text-slate-400">
+                    {plainEnglishMode ? 'Consensus Agreement' : 'Corroboration Confidence'}
+                  </div>
+                  <ContextHelpTooltip
+                    title="Corroboration Confidence"
+                    simpleExplanation="How strongly reputable literature backs up the affirmative claims."
+                    whyItMatters="High corroboration indicates broad scientific or journalistic consensus."
+                    size="xs"
+                  />
+                </div>
                 <div className="mt-0.5 font-mono text-sm font-bold text-emerald-400">
                   {(currentAnalysis.aggregateMetrics.overallCorroboration * 100).toFixed(0)}%
                 </div>
               </div>
+
               <div className="rounded-lg bg-black/20 p-2.5">
-                <div className="text-[10px] font-mono text-slate-400">Temporal Freshness</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-mono text-slate-400">
+                    {plainEnglishMode ? 'Data Freshness' : 'Temporal Freshness'}
+                  </div>
+                  <ContextHelpTooltip
+                    title="Temporal Freshness"
+                    simpleExplanation="How recent and up-to-date the supporting citations are."
+                    whyItMatters="Old science gets discounted so you don't make decisions on outdated studies."
+                    size="xs"
+                  />
+                </div>
                 <div className="mt-0.5 font-mono text-sm font-bold text-indigo-400">
                   {(currentAnalysis.aggregateMetrics.averageFreshness * 100).toFixed(0)}%
                 </div>
               </div>
+
               <div className="rounded-lg bg-black/20 p-2.5">
-                <div className="text-[10px] font-mono text-slate-400">Contradiction Conflict</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-mono text-slate-400">
+                    {plainEnglishMode ? 'Active Disputes' : 'Contradiction Conflict'}
+                  </div>
+                  <ContextHelpTooltip
+                    title="Contradiction Conflict"
+                    simpleExplanation="Percentage of claims where reputable studies directly disagree or refute each other."
+                    whyItMatters="A high conflict rate means experts are actively debating this statement."
+                    size="xs"
+                  />
+                </div>
                 <div className="mt-0.5 font-mono text-sm font-bold text-rose-400">
                   {(currentAnalysis.aggregateMetrics.contradictionRate * 100).toFixed(0)}%
                 </div>
@@ -317,8 +436,13 @@ export default function AnalyzePage() {
               </div>
             </div>
 
-            <div className="font-mono text-xs text-slate-400">
-              Showing {filteredClaims.length} of {currentAnalysis.claims.length} claims
+            <div className="flex items-center space-x-2 font-mono text-xs text-slate-400">
+              <span>Showing {filteredClaims.length} of {currentAnalysis.claims.length} claims</span>
+              <ContextHelpTooltip
+                title="Claim Deconstruction"
+                simpleExplanation="Each statement is evaluated independently so you can pinpoint which specific claim is supported and which is unsupported."
+                size="xs"
+              />
             </div>
           </div>
 

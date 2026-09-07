@@ -12,6 +12,12 @@ interface AnalysisState {
   judgeMode: boolean;
   activeFilter: 'ALL' | 'TRUST' | 'VERIFY' | 'ABSTAIN';
 
+  // Tutorials & User Understanding
+  isTourOpen: boolean;
+  tourStep: number;
+  plainEnglishMode: boolean;
+  dismissedPageTutorials: Record<string, boolean>;
+
   // Actions
   setAnalysis: (analysis: AnalysisResult) => void;
   setSelectedClaimId: (claimId: string | null) => void;
@@ -21,6 +27,13 @@ interface AnalysisState {
   setActiveFilter: (filter: 'ALL' | 'TRUST' | 'VERIFY' | 'ABSTAIN') => void;
   loadBenchmarkCase: (benchmarkId: string) => void;
   resetAnalysis: () => void;
+
+  // Tutorial actions
+  openTour: (step?: number) => void;
+  closeTour: () => void;
+  setTourStep: (step: number) => void;
+  togglePlainEnglishMode: () => void;
+  togglePageTutorial: (pageKey: string) => void;
 }
 
 export const useAnalysisStore = create<AnalysisState>((set) => ({
@@ -31,6 +44,12 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   history: BENCHMARK_CASES.map(b => b.data),
   judgeMode: true,
   activeFilter: 'ALL',
+
+  // Tutorials
+  isTourOpen: false,
+  tourStep: 0,
+  plainEnglishMode: false,
+  dismissedPageTutorials: {},
 
   setAnalysis: (analysis) =>
     set((state) => ({
@@ -58,4 +77,16 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   },
 
   resetAnalysis: () => set({ currentAnalysis: null, selectedClaimId: null, pipelineProgress: null }),
+
+  openTour: (step = 0) => set({ isTourOpen: true, tourStep: step }),
+  closeTour: () => set({ isTourOpen: false }),
+  setTourStep: (step) => set({ tourStep: step }),
+  togglePlainEnglishMode: () => set((state) => ({ plainEnglishMode: !state.plainEnglishMode })),
+  togglePageTutorial: (pageKey: string) =>
+    set((state) => ({
+      dismissedPageTutorials: {
+        ...state.dismissedPageTutorials,
+        [pageKey]: !state.dismissedPageTutorials[pageKey],
+      },
+    })),
 }));

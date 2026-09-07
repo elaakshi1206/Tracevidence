@@ -1,9 +1,8 @@
-'use client';
-
 import React from 'react';
 import { ProvenanceChain, Source } from '@/types';
 import SourceBadge from '../common/SourceBadge';
-import { GitBranch, Clock, ArrowDown, AlertOctagon, CheckCircle2 } from 'lucide-react';
+import ContextHelpTooltip from '../common/ContextHelpTooltip';
+import { GitBranch, Clock, ArrowDown, AlertOctagon, CheckCircle2, HelpCircle } from 'lucide-react';
 
 interface ProvenanceTreeProps {
   provenanceChain?: ProvenanceChain;
@@ -32,6 +31,11 @@ export default function ProvenanceTree({ provenanceChain, sources }: ProvenanceT
             <h4 className="text-sm font-bold text-white font-mono tracking-tight">
               TRACE-X Provenance Lineage Tree
             </h4>
+            <ContextHelpTooltip
+              title="Provenance Lineage Tree"
+              simpleExplanation="Shows how this information traveled from the first empirical study (Distance 0) down through journalists and blogs."
+              whyItMatters="If every article points back to 1 unvetted working paper, you can see it with your own eyes."
+            />
           </div>
           <p className="mt-0.5 text-xs text-slate-400">
             Inferring origin propagation, citation distance, and syndication echoes
@@ -50,6 +54,24 @@ export default function ProvenanceTree({ provenanceChain, sources }: ProvenanceT
           >
             {provenanceChain.level}
           </span>
+          <ContextHelpTooltip
+            title="Traceability Level"
+            simpleExplanation="Directly Traceable means the chain leads unbroken to a verifiable primary paper or government DOI."
+            size="xs"
+          />
+        </div>
+      </div>
+
+      {/* Guide Note: How to read this tree */}
+      <div className="mt-3 flex items-center justify-between rounded-lg bg-black/30 p-2.5 text-[11px] font-mono text-slate-400 border border-white/5">
+        <div className="flex items-center space-x-2">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cyan-950 text-cyan-300 border border-cyan-400 text-[10px] font-bold">
+            0
+          </span>
+          <span className="text-white font-semibold">Marker 0 = Root Origin Seed</span>
+        </div>
+        <div className="text-slate-400">
+          Markers 1+ = Secondary Citations & Syndication Reprints
         </div>
       </div>
 

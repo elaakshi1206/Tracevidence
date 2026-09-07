@@ -4,11 +4,13 @@ import React from 'react';
 import Link from 'next/link';
 import { useAnalysisStore } from '@/lib/store/analysisStore';
 import EvidenceGraph from '@/components/graph/EvidenceGraph';
+import PageTutorialBanner from '@/components/common/PageTutorialBanner';
+import ContextHelpTooltip from '@/components/common/ContextHelpTooltip';
 import { BENCHMARK_CASES } from '@/lib/benchmarks/demoCases';
-import { Network, ArrowLeft, Sparkles, Info, ShieldCheck, Layers } from 'lucide-react';
+import { Network, ArrowLeft, Sparkles, Info, ShieldCheck, Layers, HelpCircle } from 'lucide-react';
 
 export default function GraphPage() {
-  const { currentAnalysis, loadBenchmarkCase } = useAnalysisStore();
+  const { currentAnalysis, loadBenchmarkCase, plainEnglishMode } = useAnalysisStore();
 
   if (!currentAnalysis) {
     return (
@@ -35,11 +37,18 @@ export default function GraphPage() {
           <div className="flex items-center space-x-2">
             <Network className="h-5 w-5 text-cyan-400" />
             <h1 className="text-2xl font-bold font-mono tracking-tight text-white">
-              Interactive Evidence & Provenance Graph
+              {plainEnglishMode ? 'Visual Evidence & Rumor Map' : 'Interactive Evidence & Provenance Graph'}
             </h1>
+            <ContextHelpTooltip
+              title="Interactive Graph"
+              simpleExplanation="A 2-dimensional visual map showing how claims connect to sources, origin papers, and debunking citations."
+              whyItMatters="Lets you visually spot echo chambers and circular reporting at a single glance."
+            />
           </div>
           <p className="mt-1 text-xs text-slate-400">
-            TRACE-X node-link visualization mapping claims, primary seeds, and syndicated copies.
+            {plainEnglishMode
+              ? 'Trace where facts come from: Left = Original Seeds, Center = Re-reporting Media, Right = Checked Claims.'
+              : 'TRACE-X node-link visualization mapping claims, primary seeds, and syndicated copies.'}
           </p>
         </div>
 
@@ -63,36 +72,96 @@ export default function GraphPage() {
         </div>
       </div>
 
+      {/* Tutorial & Guidance Banner */}
+      <PageTutorialBanner
+        pageKey="graph_view"
+        title="Graph Navigation Tutorial"
+        subtitle="How to trace information flow and spot single points of failure"
+        empathyNote="Graphs can seem complex at first glance. Think of it like a family tree of information: follow the lines from right to left to find who originally said it!"
+        steps={[
+          {
+            number: 1,
+            title: 'Read Left to Right',
+            description: 'Left (Cyan) = Original Studies. Middle (Indigo) = News Re-reporters. Right (Emerald) = The Checked Statements.',
+            highlightAction: 'Notice the 3-column layout',
+          },
+          {
+            number: 2,
+            title: 'Spot the Echo Chamber',
+            description: 'Look for yellow dashed arrows. If 5 news sites all connect to 1 study, that is syndication, NOT 5 independent verifications.',
+            highlightAction: 'Watch for yellow dashed links',
+          },
+          {
+            number: 3,
+            title: 'Click Any Node to Inspect',
+            description: 'Clicking any circle or box opens its complete source credentials, publication year, and direct quotes in the side drawer.',
+            highlightAction: 'Click any node on canvas',
+          },
+        ]}
+        commonConfusion={{
+          question: 'What does the flashing red line mean?',
+          answer: 'The pulsing red line is a Contradiction Edge. It shows where a credible scientific study or fact-check directly refutes the claim.',
+        }}
+      />
+
       {/* Legend and Guidance Bar */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 rounded-xl border border-white/10 bg-[#0d1424] p-4 text-xs">
         <div className="flex items-center space-x-2.5">
-          <div className="h-3.5 w-3.5 rounded-full border-2 border-cyan-400 bg-cyan-950" />
+          <div className="h-3.5 w-3.5 rounded-full border-2 border-cyan-400 bg-cyan-950 shrink-0" />
           <div>
-            <div className="font-bold text-white">Primary Origin Node</div>
+            <div className="font-bold text-white flex items-center space-x-1">
+              <span>Primary Origin Node</span>
+              <ContextHelpTooltip
+                title="Primary Origin Node"
+                simpleExplanation="The first published study, trial, or official data release."
+                size="xs"
+              />
+            </div>
             <div className="text-[10px] text-slate-400">First-published seed data / study</div>
           </div>
         </div>
 
         <div className="flex items-center space-x-2.5">
-          <div className="h-3.5 w-3.5 rounded-md border-2 border-indigo-500 bg-indigo-950" />
+          <div className="h-3.5 w-3.5 rounded-md border-2 border-indigo-500 bg-indigo-950 shrink-0" />
           <div>
-            <div className="font-bold text-white">Intermediate Source</div>
+            <div className="font-bold text-white flex items-center space-x-1">
+              <span>Intermediate Source</span>
+              <ContextHelpTooltip
+                title="Intermediate Source"
+                simpleExplanation="Secondary outlets like newspapers, wire services, or blogs that report on the primary origin."
+                size="xs"
+              />
+            </div>
             <div className="text-[10px] text-slate-400">Reprint, wire agency, or media</div>
           </div>
         </div>
 
         <div className="flex items-center space-x-2.5">
-          <div className="h-3.5 w-3.5 rounded-md border-2 border-emerald-500 bg-slate-900" />
+          <div className="h-3.5 w-3.5 rounded-md border-2 border-emerald-500 bg-slate-900 shrink-0" />
           <div>
-            <div className="font-bold text-white">Claim Proposition</div>
+            <div className="font-bold text-white flex items-center space-x-1">
+              <span>Claim Proposition</span>
+              <ContextHelpTooltip
+                title="Claim Proposition"
+                simpleExplanation="The specific factual assertion being verified."
+                size="xs"
+              />
+            </div>
             <div className="text-[10px] text-slate-400">Target atomic statement evaluated</div>
           </div>
         </div>
 
         <div className="flex items-center space-x-2.5">
-          <div className="h-0.5 w-6 bg-rose-500 animate-pulse" />
+          <div className="h-0.5 w-6 bg-rose-500 animate-pulse shrink-0" />
           <div>
-            <div className="font-bold text-rose-400">Contradiction Edge</div>
+            <div className="font-bold text-rose-400 flex items-center space-x-1">
+              <span>Contradiction Edge</span>
+              <ContextHelpTooltip
+                title="Contradiction Edge"
+                simpleExplanation="A direct disagreement or refutation link between two nodes."
+                size="xs"
+              />
+            </div>
             <div className="text-[10px] text-slate-400">Direct refutation link</div>
           </div>
         </div>

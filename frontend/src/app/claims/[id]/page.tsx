@@ -9,6 +9,8 @@ import SourceBadge from '@/components/common/SourceBadge';
 import ProvenanceTree from '@/components/graph/ProvenanceTree';
 import EvidenceSnippetCard from '@/components/claims/EvidenceSnippetCard';
 import TrustMathAudit from '@/components/claims/TrustMathAudit';
+import PageTutorialBanner from '@/components/common/PageTutorialBanner';
+import ContextHelpTooltip from '@/components/common/ContextHelpTooltip';
 import {
   ArrowLeft,
   ShieldCheck,
@@ -25,7 +27,7 @@ import {
 export default function ClaimDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { currentAnalysis } = useAnalysisStore();
+  const { currentAnalysis, plainEnglishMode } = useAnalysisStore();
   const [showRawReasoning, setShowRawReasoning] = React.useState(true);
 
   const claimId = params?.id as string;
@@ -86,8 +88,45 @@ export default function ClaimDetailPage() {
           <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-cyan-300 font-bold border border-white/10">
             {claim.id}
           </span>
+          <ContextHelpTooltip
+            title="Claim Identifier"
+            simpleExplanation="A unique tracking ID assigned to this atomic assertion during the deconstruction stage."
+            size="xs"
+          />
         </div>
       </div>
+
+      {/* Tutorial & Guidance Banner */}
+      <PageTutorialBanner
+        pageKey="claim_detail"
+        title="Claim Inspection Guide"
+        subtitle="How to trace origins, inspect quotes, and review mathematical audits"
+        empathyNote="Conflicting claims can feel dizzying. We break down the exact lineage so you can see whether a statement came from a verified study or an echo chamber."
+        steps={[
+          {
+            number: 1,
+            title: 'Examine Provenance Tree',
+            description: 'Scroll down to the TRACE-X Lineage Tree to see who published this first (Distance 0) and who syndicated it.',
+            highlightAction: 'Spot the primary seed study',
+          },
+          {
+            number: 2,
+            title: 'Read Evidence Quotations',
+            description: 'Inspect direct excerpts from peer-reviewed journals, government reports, or news wire agencies.',
+            highlightAction: 'Check "Supports" vs "Contradicts" tags',
+          },
+          {
+            number: 3,
+            title: 'Audit Decision Mathematics',
+            description: 'Switch between "Plain English Walkthrough" and "Formal Math" to see exactly why this score was assigned.',
+            highlightAction: 'Toggle math view mode',
+          },
+        ]}
+        commonConfusion={{
+          question: 'What if different articles quote the exact same study with different numbers?',
+          answer: 'Journalists often round numbers or confuse units. TRACEVIDENCE extracts the exact figure from the primary DOI origin so you get the original empirical truth.',
+        }}
+      />
 
       {/* Hero: Claim Decision Banner */}
       <div className="rounded-2xl border border-white/15 bg-gradient-to-br from-[#0e1628] via-[#0d111c] to-[#07090e] p-6 sm:p-8 shadow-2xl">
@@ -98,6 +137,16 @@ export default function ClaimDetailPage() {
               <span className="font-mono text-xs text-slate-400">
                 Confidence: {(claim.confidence * 100).toFixed(0)}%
               </span>
+              <ContextHelpTooltip
+                title={`${claim.decision} Decision`}
+                simpleExplanation={
+                  claim.decision === 'TRUST'
+                    ? 'Rigorous independent corroboration with no unresolved contradictions.'
+                    : claim.decision === 'VERIFY'
+                    ? 'Plausible, but caution advised due to single-source reliance or older publication.'
+                    : 'System abstains to prevent misleading you under high uncertainty or severe conflict.'
+                }
+              />
             </div>
             <div className="mt-2 text-xs font-bold uppercase tracking-widest text-cyan-400">
               Entity Target: {claim.targetEntity}
@@ -105,7 +154,17 @@ export default function ClaimDetailPage() {
           </div>
 
           <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-right">
-            <div className="text-[11px] font-mono text-slate-400">Independence Ratio</div>
+            <div className="flex items-center justify-end space-x-1">
+              <div className="text-[11px] font-mono text-slate-400">
+                {plainEnglishMode ? 'Source Originality' : 'Independence Ratio'}
+              </div>
+              <ContextHelpTooltip
+                title="Independence Ratio"
+                simpleExplanation={`${claim.apparentSourcesCount} sources collapsed to ${claim.independentOriginsCount} origin.`}
+                whyItMatters="Protects you against repetition bias."
+                size="xs"
+              />
+            </div>
             <div className="font-mono text-lg font-black text-cyan-400">
               {claim.apparentSourcesCount} sources &rarr; {claim.independentOriginsCount} origin
               {claim.independentOriginsCount > 1 ? 's' : ''}
@@ -130,6 +189,11 @@ export default function ClaimDetailPage() {
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
               Why was this decision reached?
             </h3>
+            <ContextHelpTooltip
+              title="Decision Rationale"
+              simpleExplanation="An automated natural language summary explaining the key factual strengths and weaknesses found."
+              size="xs"
+            />
           </div>
           <p className="mt-2 text-sm text-slate-200 leading-relaxed">
             {claim.decisionReason}

@@ -24,7 +24,7 @@ import {
 
 export default function HomePage() {
   const router = useRouter();
-  const { loadBenchmarkCase } = useAnalysisStore();
+  const { loadBenchmarkCase, openTour } = useAnalysisStore();
 
   const handleCaseClick = (caseId: string) => {
     loadBenchmarkCase(caseId);
@@ -32,7 +32,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-24 py-8 sm:py-16">
+    <div className="space-y-20 py-8 sm:py-14">
       {/* Hero Section */}
       <section className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
         {/* Glow ambient background */}
@@ -58,7 +58,7 @@ export default function HomePage() {
         </p>
 
         {/* Primary CTAs */}
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link
             href="/analyze"
             className="flex items-center space-x-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 px-7 py-3.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-950 shadow-xl shadow-cyan-500/25 transition-all hover:scale-105 hover:from-cyan-400 hover:to-indigo-500"
@@ -67,17 +67,25 @@ export default function HomePage() {
             <span>Analyze Information</span>
           </Link>
 
+          <button
+            onClick={() => openTour(0)}
+            className="flex items-center space-x-2.5 rounded-xl border border-cyan-500/40 bg-cyan-950/40 px-6 py-3.5 font-mono text-xs sm:text-sm font-bold text-cyan-300 backdrop-blur-md hover:bg-cyan-900/50 shadow-lg shadow-cyan-500/10 transition-all"
+          >
+            <Sparkles className="h-4 w-4 text-amber-400" />
+            <span>Start Interactive Tutorial (60s)</span>
+          </button>
+
           <Link
             href="/research"
-            className="flex items-center space-x-2.5 rounded-xl border border-white/10 bg-slate-900/80 px-7 py-3.5 font-mono text-xs sm:text-sm font-semibold text-slate-200 backdrop-blur-md hover:border-cyan-500/40 hover:bg-slate-800 transition-all"
+            className="flex items-center space-x-2.5 rounded-xl border border-white/10 bg-slate-900/80 px-6 py-3.5 font-mono text-xs sm:text-sm font-semibold text-slate-200 backdrop-blur-md hover:border-cyan-500/40 hover:bg-slate-800 transition-all"
           >
             <BarChart3 className="h-4 w-4 text-cyan-400" />
-            <span>Research Dashboard (Judges)</span>
+            <span>Research Dashboard</span>
           </Link>
         </div>
 
         {/* Core Principles Pill Bar */}
-        <div className="mt-12 flex flex-wrap justify-center gap-4 text-xs font-mono text-slate-400">
+        <div className="mt-10 flex flex-wrap justify-center gap-3 text-xs font-mono text-slate-400">
           <span className="flex items-center space-x-1.5 rounded-lg bg-black/40 px-3 py-1.5 border border-white/5">
             <GitBranch className="h-3.5 w-3.5 text-cyan-400" />
             <span>Provenance Lineage Trees</span>
@@ -88,12 +96,73 @@ export default function HomePage() {
           </span>
           <span className="flex items-center space-x-1.5 rounded-lg bg-black/40 px-3 py-1.5 border border-white/5">
             <Clock className="h-3.5 w-3.5 text-amber-400" />
-            <span>Temporal Freshness Hazard Decay</span>
+            <span>Temporal Freshness Decay</span>
           </span>
           <span className="flex items-center space-x-1.5 rounded-lg bg-black/40 px-3 py-1.5 border border-white/5">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
             <span>Selective Prediction (ABSTAIN)</span>
           </span>
+        </div>
+      </section>
+
+      {/* New to TRACEVIDENCE? 3-Minute Empathy Tutorial Banner */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-[#0c1424] via-[#0d1629] to-[#080d17] p-6 sm:p-8 shadow-2xl">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div className="flex items-center space-x-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                <Compass className="h-4 w-4" />
+              </span>
+              <div>
+                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-cyan-400">
+                  New Here? How It Works In Plain English
+                </span>
+                <h3 className="text-lg font-bold text-white font-mono">
+                  Why Standard Fact-Checking Fails & How TRACEVIDENCE Protects You
+                </h3>
+              </div>
+            </div>
+
+            <button
+              onClick={() => openTour(0)}
+              className="flex items-center space-x-2 rounded-xl bg-cyan-500 px-4 py-2 font-mono text-xs font-bold text-slate-950 hover:bg-cyan-400 transition-all shadow-md shadow-cyan-500/20"
+            >
+              <span>Take Full Interactive Tour</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-rose-500/20 bg-black/30 p-4">
+              <div className="flex items-center space-x-2 text-rose-400 font-mono text-xs font-bold">
+                <AlertTriangle className="h-4 w-4" />
+                <span>The Problem: The Echo Chamber</span>
+              </div>
+              <p className="mt-2 text-xs text-slate-300 leading-relaxed">
+                If 12 news blogs write that an EV battery takes 50,000 km to break even, search engines count 12 independent sources. In reality, all 12 merely copied 1 outdated Swedish paper.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-cyan-500/20 bg-black/30 p-4">
+              <div className="flex items-center space-x-2 text-cyan-400 font-mono text-xs font-bold">
+                <GitBranch className="h-4 w-4" />
+                <span>The Fix: TRACE-X Lineage</span>
+              </div>
+              <p className="mt-2 text-xs text-slate-300 leading-relaxed">
+                TRACE-X crawls citation paths back to the primary origin. It detects that those 12 articles are syndicated echoes, collapsing them mathematically to <strong>1 single origin</strong>!
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-emerald-500/20 bg-black/30 p-4">
+              <div className="flex items-center space-x-2 text-emerald-400 font-mono text-xs font-bold">
+                <ShieldCheck className="h-4 w-4" />
+                <span>The Result: Trust Intelligence</span>
+              </div>
+              <p className="mt-2 text-xs text-slate-300 leading-relaxed">
+                Instead of guessing True or False, AIVIDENCE computes an explainable trust score. If uncertainty is too high, it <strong>ABSTAINS</strong>, keeping you safe from misinformation.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

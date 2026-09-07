@@ -4,6 +4,8 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from 'react-hot-toast';
+import GuidedTourModal from '@/components/common/GuidedTourModal';
+import FloatingTutorialHelper from '@/components/common/FloatingTutorialHelper';
 
 export const metadata: Metadata = {
   title: 'TRACEVIDENCE — Trace the Evidence. Measure the Trust.',
@@ -34,6 +36,8 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <GuidedTourModal />
+          <FloatingTutorialHelper />
           <Toaster
             position="bottom-right"
             toastOptions={{

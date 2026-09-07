@@ -1,8 +1,7 @@
-'use client';
-
 import React from 'react';
 import { PipelineProgressUpdate } from '@/lib/engine/pipelineOrchestrator';
-import { CheckCircle2, Loader2, GitBranch, Search, Network, ShieldCheck, Scale } from 'lucide-react';
+import ContextHelpTooltip from '../common/ContextHelpTooltip';
+import { CheckCircle2, Loader2, GitBranch, Search, Network, ShieldCheck, Scale, HelpCircle } from 'lucide-react';
 
 interface PipelineProgressProps {
   progress: PipelineProgressUpdate | null;
@@ -10,11 +9,41 @@ interface PipelineProgressProps {
 }
 
 const STAGES = [
-  { id: 'claim_extraction', name: 'Claim Extraction', icon: Scale, desc: 'Atomic decomposition' },
-  { id: 'evidence_retrieval', name: 'Evidence Retrieval', icon: Search, desc: 'Hybrid search & tiering' },
-  { id: 'provenance_clustering', name: 'TRACE-X Provenance', icon: GitBranch, desc: 'Origin & independence' },
-  { id: 'signal_verification', name: 'Signal Verification', icon: Network, desc: 'Freshness & contradiction' },
-  { id: 'trust_decision', name: 'AIVIDENCE Trust Engine', icon: ShieldCheck, desc: 'Selective prediction' },
+  {
+    id: 'claim_extraction',
+    name: 'Claim Extraction',
+    icon: Scale,
+    desc: 'Atomic decomposition',
+    tooltip: 'Splits complex text into individual verifiable facts with identified subject entities.',
+  },
+  {
+    id: 'evidence_retrieval',
+    name: 'Evidence Retrieval',
+    icon: Search,
+    desc: 'Hybrid search & tiering',
+    tooltip: 'Queries academic databases, regulatory archives, and wire agencies for primary records.',
+  },
+  {
+    id: 'provenance_clustering',
+    name: 'TRACE-X Provenance',
+    icon: GitBranch,
+    desc: 'Origin & independence',
+    tooltip: 'Traces citation lineage and collapses syndicated reprints down to the root origin seed.',
+  },
+  {
+    id: 'signal_verification',
+    name: 'Signal Verification',
+    icon: Network,
+    desc: 'Freshness & contradiction',
+    tooltip: 'Checks temporal publication dates and flags opposing research polarities.',
+  },
+  {
+    id: 'trust_decision',
+    name: 'AIVIDENCE Trust Engine',
+    icon: ShieldCheck,
+    desc: 'Selective prediction',
+    tooltip: 'Computes calibrated trust scores and assigns TRUST, VERIFY, or ABSTAIN.',
+  },
 ];
 
 export default function PipelineProgress({ progress, isAnalyzing }: PipelineProgressProps) {
@@ -34,6 +63,12 @@ export default function PipelineProgress({ progress, isAnalyzing }: PipelineProg
           <span className="font-mono text-xs font-bold uppercase tracking-wider text-cyan-300">
             Multi-Stage Research Pipeline Execution
           </span>
+          <ContextHelpTooltip
+            title="5-Stage Pipeline"
+            simpleExplanation="TRACEVIDENCE executes 5 rigorous verification layers before issuing any trust verdict."
+            whyItMatters="Transparent processing ensures you can see and trust every step."
+            size="xs"
+          />
         </div>
         <span className="font-mono text-xs font-semibold text-slate-400">
           {progress ? `${progress.progressPercent}%` : '0%'}
