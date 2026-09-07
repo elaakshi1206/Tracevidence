@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   ChevronRight,
   MessageCircleQuestion,
+  Gamepad2,
 } from 'lucide-react';
 
 export default function FloatingTutorialHelper() {
@@ -24,6 +25,7 @@ export default function FloatingTutorialHelper() {
 
   const {
     openTour,
+    openPrologue,
     plainEnglishMode,
     togglePlainEnglishMode,
     currentAnalysis,
@@ -112,13 +114,27 @@ export default function FloatingTutorialHelper() {
             <button
               onClick={() => {
                 setIsOpen(false);
-                openTour(0);
+                openPrologue(0);
               }}
-              className="w-full flex items-center justify-between rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 p-3 font-mono text-xs font-bold text-slate-950 shadow-md shadow-cyan-500/20 hover:from-cyan-400 hover:to-indigo-500 transition-all"
+              className="w-full flex items-center justify-between rounded-xl border-2 border-amber-400 bg-amber-50 p-3 font-mono text-xs font-black text-amber-950 shadow-sm hover:bg-amber-100 transition-all"
             >
               <div className="flex items-center space-x-2">
-                <BookOpen className="h-4 w-4 text-slate-950" />
-                <span>Launch Interactive Tour</span>
+                <Gamepad2 className="h-4 w-4 text-amber-600 animate-pulse" />
+                <span>🎮 Play Training Mission</span>
+              </div>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                openTour(0);
+              }}
+              className="w-full flex items-center justify-between rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-3 font-mono text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:from-blue-500 hover:to-indigo-500 transition-all"
+            >
+              <div className="flex items-center space-x-2">
+                <BookOpen className="h-4 w-4 text-white" />
+                <span>Quick Feature Walkthrough</span>
               </div>
               <ChevronRight className="h-4 w-4" />
             </button>

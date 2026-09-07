@@ -248,19 +248,25 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
               const isClaim = node.type === 'claim';
               const isOrigin = node.type === 'origin';
 
-              let borderColor = 'border-slate-700';
-              let bgColor = 'bg-slate-900';
+              let borderColor = 'border-slate-500 shadow-sm';
+              let bgColor = 'bg-[#1e293b]';
               if (isClaim) {
-                if (node.decision === 'TRUST') borderColor = 'border-emerald-500 shadow-emerald-500/30';
-                else if (node.decision === 'VERIFY') borderColor = 'border-amber-500 shadow-amber-500/30';
-                else borderColor = 'border-rose-500 shadow-rose-500/30';
-                bgColor = 'bg-[#141b2d]';
+                if (node.decision === 'TRUST') {
+                  borderColor = 'border-[#059669] ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/40';
+                  bgColor = 'bg-[#064e3b]';
+                } else if (node.decision === 'VERIFY') {
+                  borderColor = 'border-[#d97706] ring-1 ring-amber-500/50 shadow-md shadow-amber-950/40';
+                  bgColor = 'bg-[#451a03]';
+                } else {
+                  borderColor = 'border-[#e11d48] ring-1 ring-rose-500/50 shadow-md shadow-rose-950/40';
+                  bgColor = 'bg-[#4c0519]';
+                }
               } else if (isOrigin) {
-                borderColor = 'border-cyan-400 shadow-cyan-400/30';
-                bgColor = 'bg-[#0f2338]';
+                borderColor = 'border-[#14b8a6] ring-1 ring-teal-400/50 shadow-md shadow-teal-950/40';
+                bgColor = 'bg-[#134e4a]';
               } else {
-                borderColor = 'border-indigo-500/50';
-                bgColor = 'bg-[#11192e]';
+                borderColor = 'border-slate-400 shadow-md';
+                bgColor = 'bg-[#1e293b]';
               }
 
               return (
@@ -268,8 +274,8 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
                   key={node.id}
                   x={pos.x - 80}
                   y={pos.y}
-                  width="200"
-                  height="85"
+                  width="210"
+                  height="90"
                   className="overflow-visible"
                 >
                   <div
@@ -277,29 +283,29 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
                       e.stopPropagation();
                       setSelectedNodeId(node.id);
                     }}
-                    className={`h-full w-full cursor-pointer rounded-xl border-2 p-2.5 transition-all shadow-lg ${borderColor} ${bgColor} ${
-                      isSelected ? 'scale-105 ring-2 ring-white/50' : 'hover:scale-102'
+                    className={`h-full w-full cursor-pointer rounded-xl border-2 p-3 transition-all ${borderColor} ${bgColor} ${
+                      isSelected ? 'scale-105 ring-2 ring-white' : 'hover:scale-102'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 font-bold">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-slate-200 font-bold">
                         {node.type}
                       </span>
                       {isClaim && node.decision && (
                         <span
-                          className={`rounded px-1 text-[8px] font-bold ${
+                          className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
                             node.decision === 'TRUST'
-                              ? 'bg-emerald-950 text-emerald-400'
+                              ? 'bg-emerald-400 text-emerald-950'
                               : node.decision === 'VERIFY'
-                              ? 'bg-amber-950 text-amber-400'
-                              : 'bg-rose-950 text-rose-400'
+                              ? 'bg-amber-400 text-amber-950'
+                              : 'bg-rose-400 text-rose-950'
                           }`}
                         >
                           {node.decision}
                         </span>
                       )}
                       {node.tier && (
-                        <span className="rounded bg-slate-800 px-1 text-[8px] text-cyan-300 font-mono">
+                        <span className="rounded bg-teal-950 border border-teal-500/30 px-1.5 py-0.5 text-[9px] text-teal-300 font-mono font-bold">
                           {node.tier}
                         </span>
                       )}
@@ -307,7 +313,7 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
 
                     <div className="mt-1 font-bold text-xs text-white truncate">{node.label}</div>
                     {node.subtitle && (
-                      <div className="mt-0.5 text-[10px] text-slate-400 truncate leading-tight">
+                      <div className="mt-0.5 text-[10px] text-slate-300 truncate leading-tight">
                         {node.subtitle}
                       </div>
                     )}
@@ -320,45 +326,83 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
       </div>
 
       {/* Selected Node Inspector Drawer */}
-      {selectedNode && (
-        <div className="absolute bottom-4 right-4 z-20 w-80 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#0d1424]/95 p-4 shadow-2xl backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <div className="flex items-center space-x-1.5">
-              <Info className="h-3.5 w-3.5 text-cyan-400" />
-              <span className="font-mono text-xs font-bold uppercase text-white">
-                Node Inspector
-              </span>
-            </div>
-            <span className="font-mono text-[10px] text-slate-400">{selectedNode.id}</span>
-          </div>
+      {selectedNode && (() => {
+        const matchingSource = analysis.sources.find((s) => s.id === selectedNode.id);
+        const matchingClaim = analysis.claims.find((c) => c.id === selectedNode.id);
+        const matchingEvidence = analysis.evidences.filter((e) => e.sourceId === selectedNode.id || e.claimId === selectedNode.id);
 
-          <div className="mt-2.5">
-            <h5 className="text-xs font-bold text-white leading-snug">{selectedNode.label}</h5>
-            {selectedNode.subtitle && (
-              <p className="mt-1 text-[11px] text-slate-300">{selectedNode.subtitle}</p>
-            )}
-
-            <div className="mt-3 space-y-1.5 text-[11px] font-mono border-t border-white/5 pt-2">
-              <div className="flex justify-between text-slate-400">
-                <span>Type:</span>
-                <span className="font-bold text-cyan-300 uppercase">{selectedNode.type}</span>
+        return (
+          <div className="absolute bottom-4 right-4 z-20 w-88 max-h-80 overflow-y-auto rounded-xl border border-white/15 bg-[#0d1424]/95 p-4 shadow-2xl backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <div className="flex items-center space-x-1.5">
+                <Info className="h-3.5 w-3.5 text-cyan-400" />
+                <span className="font-mono text-xs font-bold uppercase text-white">
+                  Node Inspector & Raw Evidence
+                </span>
               </div>
-              {selectedNode.tier && (
-                <div className="flex justify-between text-slate-400">
-                  <span>Quality Tier:</span>
-                  <span className="text-white">{selectedNode.tier}</span>
+              <span className="font-mono text-[10px] text-slate-400">{selectedNode.id}</span>
+            </div>
+
+            <div className="mt-2.5">
+              <h5 className="text-xs font-bold text-white leading-snug">{selectedNode.label}</h5>
+              {selectedNode.subtitle && (
+                <p className="mt-1 text-[11px] text-slate-300">{selectedNode.subtitle}</p>
+              )}
+
+              {/* Raw Evidence / Snippet */}
+              {(matchingSource?.snippet || selectedNode.rawEvidenceSnippet || matchingClaim?.inputQuote) && (
+                <div className="mt-2.5 rounded-lg bg-black/40 p-2 text-[11px] text-slate-300 border border-white/10 leading-relaxed font-sans">
+                  <span className="font-mono text-[10px] font-bold text-cyan-400 block mb-0.5 uppercase">
+                    Raw Evidence Snippet:
+                  </span>
+                  &ldquo;{matchingSource?.snippet || matchingClaim?.inputQuote || selectedNode.rawEvidenceSnippet}&rdquo;
                 </div>
               )}
-              {selectedNode.decision && (
+
+              <div className="mt-3 space-y-1.5 text-[11px] font-mono border-t border-white/5 pt-2">
                 <div className="flex justify-between text-slate-400">
-                  <span>AIVIDENCE Decision:</span>
-                  <DecisionBadge decision={selectedNode.decision} size="sm" />
+                  <span>Node Type:</span>
+                  <span className="font-bold text-cyan-300 uppercase">{selectedNode.type}</span>
                 </div>
-              )}
+                {selectedNode.tier && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Quality Tier:</span>
+                    <span className="text-white font-semibold">{selectedNode.tier}</span>
+                  </div>
+                )}
+                {matchingSource?.publishedDate && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Publication Date:</span>
+                    <span className="text-slate-200">{matchingSource.publishedDate}</span>
+                  </div>
+                )}
+                {matchingSource?.verbatimOverlapRatio && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Verbatim Text Overlap:</span>
+                    <span className="text-amber-400 font-bold">
+                      {Math.round(matchingSource.verbatimOverlapRatio * 100)}% Derived
+                    </span>
+                  </div>
+                )}
+                {matchingSource?.doi && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Canonical DOI:</span>
+                    <span className="text-emerald-400 font-bold truncate max-w-[150px]">
+                      {matchingSource.doi}
+                    </span>
+                  </div>
+                )}
+                {selectedNode.decision && (
+                  <div className="flex justify-between text-slate-400 pt-1">
+                    <span>Trust Decision:</span>
+                    <DecisionBadge decision={selectedNode.decision} size="sm" />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

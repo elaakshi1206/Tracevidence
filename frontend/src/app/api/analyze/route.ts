@@ -5,12 +5,19 @@ import { BENCHMARK_CASES } from '@/lib/benchmarks/demoCases';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { text, benchmarkId } = body;
+    const { text, benchmarkId, mode = 'benchmark' } = body;
 
     if (benchmarkId) {
       const found = BENCHMARK_CASES.find(b => b.id === benchmarkId);
       if (found) {
-        return NextResponse.json({ success: true, data: found.data });
+        return NextResponse.json({
+          success: true,
+          data: {
+            ...found.data,
+            analysisMode: 'benchmark',
+            modeBadgeLabel: 'Curated Benchmark',
+          },
+        });
       }
     }
 
@@ -21,7 +28,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await executeTracevidencePipeline(text);
+    const result = await executeTracevidencePipeline(text, {
+      mode: mode === 'live' ? 'live' : 'benchmark',
+      benchmarkId,
+    });
     return NextResponse.json({ success: true, data: result });
   } catch (error: any) {
     console.error('Analysis pipeline error:', error);

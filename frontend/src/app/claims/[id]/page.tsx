@@ -22,6 +22,12 @@ import {
   ChevronDown,
   Layers,
   Sparkles,
+  Quote,
+  Scale,
+  FlaskConical,
+  Search,
+  Shield,
+  Info,
 } from 'lucide-react';
 
 export default function ClaimDetailPage() {
@@ -34,14 +40,14 @@ export default function ClaimDetailPage() {
 
   if (!currentAnalysis) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-20 text-center space-y-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">No Active Analysis Found</h2>
-        <p className="text-base sm:text-lg text-slate-300">
+      <div className="mx-auto max-w-5xl px-4 py-16 text-center space-y-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">No Active Analysis Found</h2>
+        <p className="text-sm text-slate-600">
           Please run an analysis or select a benchmark case first.
         </p>
         <Link
           href="/analyze"
-          className="btn-gradient-rbgw inline-flex items-center space-x-2 rounded-xl px-6 py-3 text-sm sm:text-base font-bold text-white shadow-xl"
+          className="btn-gradient-rbgw inline-flex items-center space-x-2 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Go to Analyze Workspace</span>
@@ -54,11 +60,11 @@ export default function ClaimDetailPage() {
 
   if (!claim) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-20 text-center space-y-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white">Claim Not Found</h2>
+      <div className="mx-auto max-w-5xl px-4 py-16 text-center space-y-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Claim Not Found</h2>
         <Link
           href="/analyze"
-          className="btn-gradient-rbgw inline-flex items-center space-x-2 rounded-xl px-6 py-3 text-sm sm:text-base font-bold text-white shadow-xl"
+          className="btn-gradient-rbgw inline-flex items-center space-x-2 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md"
         >
           <span>Return to Workspace</span>
         </Link>
@@ -72,20 +78,39 @@ export default function ClaimDetailPage() {
   const sourceMap = new Map(currentAnalysis.sources.map((s) => [s.id, s]));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 space-y-10">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       {/* Top Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-5 border-b border-white/12 pb-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <Link
           href="/analyze"
-          className="flex items-center space-x-2 text-sm sm:text-base font-mono font-bold text-blue-400 hover:text-white transition-colors"
+          className="flex items-center space-x-2 text-xs sm:text-sm font-mono font-bold text-blue-600 hover:text-blue-800 transition-colors"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
           <span>Back to Analysis Results</span>
         </Link>
 
-        <div className="flex items-center space-x-3">
-          <span className="font-mono text-sm text-slate-300 font-semibold">Claim Identifier:</span>
-          <span className="rounded-xl bg-slate-800 px-3 py-1 font-mono text-sm text-white font-black border border-white/15">
+        <div className="flex items-center space-x-2.5">
+          {/* Analysis Mode Badge */}
+          <span
+            className={`flex items-center space-x-1 rounded-md px-2.5 py-1 font-mono text-xs font-bold border ${
+              currentAnalysis.analysisMode === 'live'
+                ? 'bg-blue-50 text-blue-800 border-blue-200'
+                : 'bg-indigo-50 text-indigo-800 border-indigo-200'
+            }`}
+          >
+            {currentAnalysis.analysisMode === 'live' ? (
+              <Search className="h-3 w-3 text-blue-600" />
+            ) : (
+              <FlaskConical className="h-3 w-3 text-indigo-600" />
+            )}
+            <span>
+              {currentAnalysis.modeBadgeLabel ||
+                (currentAnalysis.analysisMode === 'live' ? 'Live Retrieval' : 'Curated Benchmark')}
+            </span>
+          </span>
+
+          <span className="font-mono text-xs text-slate-500 font-semibold">Claim ID:</span>
+          <span className="rounded-lg bg-slate-100 px-2.5 py-0.5 font-mono text-xs text-slate-800 font-bold border border-slate-200">
             {claim.id}
           </span>
           <ContextHelpTooltip
@@ -129,14 +154,27 @@ export default function ClaimDetailPage() {
       />
 
       {/* Hero: Claim Decision Banner */}
-      <div className="rounded-3xl border border-white/20 bg-gradient-to-br from-[#121c2e] via-[#0d1424] to-[#0a0e18] p-7 sm:p-9 shadow-2xl">
-        <div className="flex flex-wrap items-start justify-between gap-5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
               <DecisionBadge decision={claim.decision} size="lg" />
-              <span className="font-mono text-sm sm:text-base text-slate-200 font-bold">
-                Confidence: {(claim.confidence * 100).toFixed(0)}%
+              <span className="font-mono text-xs sm:text-sm text-slate-600 font-semibold">
+                Calibrated Confidence: {(claim.confidence * 100).toFixed(0)}%
               </span>
+              {claim.reliabilityIndicator && (
+                <span
+                  className={`rounded-md px-2 py-0.5 font-mono text-xs font-bold border ${
+                    claim.reliabilityIndicator === 'High Rigor'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : claim.reliabilityIndicator === 'Moderate Reliability'
+                      ? 'bg-blue-50 text-blue-800 border-blue-200'
+                      : 'bg-amber-50 text-amber-800 border-amber-200'
+                  }`}
+                >
+                  {claim.reliabilityIndicator}
+                </span>
+              )}
               <ContextHelpTooltip
                 title={`${claim.decision} Decision`}
                 simpleExplanation={
@@ -148,14 +186,14 @@ export default function ClaimDetailPage() {
                 }
               />
             </div>
-            <div className="mt-3 text-xs sm:text-sm font-bold uppercase tracking-widest text-blue-400 font-mono">
+            <div className="mt-2 text-xs font-bold uppercase tracking-widest text-blue-700 font-mono">
               Entity Target: {claim.targetEntity}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/15 bg-black/50 px-5 py-3.5 text-right shadow-md">
-            <div className="flex items-center justify-end space-x-1.5">
-              <div className="text-xs sm:text-sm font-mono text-slate-300">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-right shadow-2xs">
+            <div className="flex items-center justify-end space-x-1">
+              <div className="text-xs font-mono text-slate-600">
                 {plainEnglishMode ? 'Source Originality' : 'Independence Ratio'}
               </div>
               <ContextHelpTooltip
@@ -165,28 +203,41 @@ export default function ClaimDetailPage() {
                 size="xs"
               />
             </div>
-            <div className="font-mono text-xl sm:text-2xl font-black text-blue-300 mt-0.5">
+            <div className="font-mono text-base sm:text-lg font-black text-blue-700 mt-0.5">
               {claim.apparentSourcesCount} sources &rarr; {claim.independentOriginsCount} origin
               {claim.independentOriginsCount > 1 ? 's' : ''}
             </div>
-            <div className="text-xs text-slate-400 font-mono mt-0.5">
-              {(claim.independenceRatio * 100).toFixed(1)}% Independent
+            <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+              {(claim.independenceRatio * 100).toFixed(1)}% Independent · Conf: {claim.independenceConfidence || 'High'}
             </div>
           </div>
         </div>
 
         {/* Claim Text */}
-        <div className="mt-6">
-          <h1 className="text-2xl sm:text-3xl font-medium text-white leading-relaxed">
+        <div className="mt-5">
+          <h1 className="text-xl sm:text-2xl font-serif font-medium text-slate-900 leading-relaxed">
             &ldquo;{claim.text}&rdquo;
           </h1>
         </div>
 
+        {/* Verbatim Supporting Quote from Input */}
+        {claim.inputQuote && claim.inputQuote !== claim.text && (
+          <div className="mt-3 flex items-start space-x-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-700 border border-slate-200">
+            <Quote className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-mono font-bold text-slate-900 block text-[11px] uppercase tracking-wider">
+                Original Supporting Sentence from Input:
+              </span>
+              <p className="mt-0.5 italic text-slate-600">&ldquo;{claim.inputQuote}&rdquo;</p>
+            </div>
+          </div>
+        )}
+
         {/* Decision Rationale */}
-        <div className="mt-6 rounded-2xl border border-blue-500/35 bg-blue-950/30 p-5 shadow-md">
-          <div className="flex items-center space-x-2.5">
-            <Sparkles className="h-5 w-5 text-blue-400" />
-            <h3 className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-blue-300">
+        <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50/70 p-4">
+          <div className="flex items-center space-x-2">
+            <Sparkles className="h-4 w-4 text-blue-600" />
+            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-blue-900">
               Why was this decision reached?
             </h3>
             <ContextHelpTooltip
@@ -195,70 +246,131 @@ export default function ClaimDetailPage() {
               size="xs"
             />
           </div>
-          <p className="mt-2.5 text-sm sm:text-base text-slate-100 leading-relaxed font-normal">
+          <p className="mt-2 text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
             {claim.decisionReason}
           </p>
-          <div className="mt-4 pt-3 border-t border-blue-500/25 text-xs sm:text-sm font-mono text-amber-300 font-semibold">
+          <div className="mt-3 pt-2 border-t border-blue-200 text-xs font-mono text-amber-800 font-semibold">
             <span className="font-bold">RECOMMENDED PROTOCOL:</span> {claim.recommendedAction}
           </div>
         </div>
 
         {/* Signal Indicators Row */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-xl bg-slate-900/80 p-4 border border-white/10 flex items-center space-x-3.5 shadow-sm">
-            <GitFork className="h-6 w-6 text-blue-400 shrink-0" />
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-200 flex items-center space-x-3">
+            <GitFork className="h-5 w-5 text-blue-600 shrink-0" />
             <div>
-              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
+              <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                 Corroboration Structure
               </div>
-              <div className="text-sm font-bold text-white font-mono mt-0.5">
+              <div className="text-xs font-bold text-slate-900 font-mono mt-0.5">
                 {claim.apparentSourcesCount} Visible / {claim.independentOriginsCount} Independent
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl bg-slate-900/80 p-4 border border-white/10 flex items-center space-x-3.5 shadow-sm">
-            <Clock className="h-6 w-6 text-blue-300 shrink-0" />
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-200 flex items-center space-x-3">
+            <Clock className="h-5 w-5 text-blue-600 shrink-0" />
             <div>
-              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
+              <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                 Temporal Freshness
               </div>
-              <div className="text-sm font-bold text-white font-mono mt-0.5">
+              <div className="text-xs font-bold text-slate-900 font-mono mt-0.5">
                 {claim.temporalStatus} (Score: {claim.freshnessScore})
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl bg-slate-900/80 p-4 border border-white/10 flex items-center space-x-3.5 shadow-sm">
+          <div className="rounded-xl bg-slate-50 p-3 border border-slate-200 flex items-center space-x-3">
             <AlertTriangle
-              className={`h-6 w-6 shrink-0 ${
-                claim.contradictionDetected ? 'text-rose-400' : 'text-emerald-400'
+              className={`h-5 w-5 shrink-0 ${
+                claim.contradictionDetected ? 'text-rose-600' : 'text-emerald-600'
               }`}
             />
             <div>
-              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
+              <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                 Contradiction Alert
               </div>
-              <div className="text-sm font-bold font-mono mt-0.5">
+              <div className="text-xs font-bold font-mono mt-0.5">
                 {claim.contradictionDetected ? (
-                  <span className="text-rose-400">Conflict Detected</span>
+                  <span className="text-rose-700">Conflict Detected</span>
                 ) : (
-                  <span className="text-emerald-400">No Conflict</span>
+                  <span className="text-emerald-700">No Conflict</span>
                 )}
               </div>
             </div>
           </div>
         </div>
+
+        {/* Collapse Evidence Snippets Callout (When apparent sources > independent origins) */}
+        {claim.collapseEvidence && claim.apparentSourcesCount > claim.independentOriginsCount && (
+          <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 text-xs font-mono text-indigo-950">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-indigo-900 uppercase">
+                TRACE-X Source Collapse Justification:
+              </span>
+              {claim.collapseEvidence.derivationProbability && (
+                <span className="rounded bg-indigo-100 px-2 py-0.5 font-bold text-indigo-800">
+                  Derivation Probability: {claim.collapseEvidence.derivationProbability}
+                </span>
+              )}
+            </div>
+            <p className="mt-1.5 text-xs text-indigo-900/90 leading-relaxed">
+              {claim.collapseEvidence.rationale}
+            </p>
+            {claim.collapseEvidence.sharedFigures && claim.collapseEvidence.sharedFigures.length > 0 && (
+              <div className="mt-2 text-xs text-indigo-800">
+                <span className="font-bold">Shared Numerical Anchors:</span>{' '}
+                {claim.collapseEvidence.sharedFigures.join(', ')}
+              </div>
+            )}
+            {claim.collapseEvidence.overlapSnippet && (
+              <div className="mt-1 text-[11px] text-indigo-700/80">
+                {claim.collapseEvidence.overlapSnippet}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Explicit Numerical Conflict Alert Box (If present) */}
+      {claim.numericalConflict && (
+        <div className="rounded-xl border border-rose-300 bg-rose-50/90 p-4 text-rose-950 shadow-2xs font-mono">
+          <div className="flex items-center space-x-2 font-bold text-sm text-rose-800">
+            <Scale className="h-4 w-4 text-rose-600" />
+            <span>EXPLICIT NUMERICAL CONFLICT AUDIT</span>
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs">
+            <div className="rounded-lg bg-white p-3 border border-rose-200">
+              <span className="text-slate-500 block uppercase tracking-wider text-[10px]">
+                Asserted in Stated Claim:
+              </span>
+              <span className="text-base font-bold text-rose-700 mt-1 block">
+                {claim.numericalConflict.claimedValue}
+              </span>
+            </div>
+            <div className="rounded-lg bg-white p-3 border border-emerald-200">
+              <span className="text-slate-500 block uppercase tracking-wider text-[10px]">
+                Authoritative Literature Rebuttal:
+              </span>
+              <span className="text-base font-bold text-emerald-700 mt-1 block">
+                {claim.numericalConflict.rebuttalValue}
+              </span>
+            </div>
+          </div>
+          <p className="mt-2.5 text-xs text-rose-900/90 leading-relaxed">
+            {claim.numericalConflict.deltaNote}
+          </p>
+        </div>
+      )}
 
       {/* Contradiction Alert Box (If present) */}
       {claim.contradictionDetected && claim.contradictionDetails && (
-        <div className="rounded-2xl border border-rose-500/40 bg-rose-950/40 p-5 text-rose-200 shadow-xl">
-          <div className="flex items-center space-x-2.5 font-bold text-base text-rose-300 font-mono">
-            <AlertTriangle className="h-5 w-5 text-rose-400" />
+        <div className="rounded-xl border border-rose-300 bg-rose-50/80 p-4 text-rose-900 shadow-2xs">
+          <div className="flex items-center space-x-2 font-bold text-sm text-rose-800 font-mono">
+            <AlertTriangle className="h-4 w-4 text-rose-600" />
             <span>EMPIRICAL CONTRADICTION ALERT</span>
           </div>
-          <p className="mt-2 text-sm text-rose-100/90 leading-relaxed">
+          <p className="mt-1.5 text-xs text-rose-950/80 leading-relaxed">
             {claim.contradictionDetails}
           </p>
         </div>
@@ -274,18 +386,18 @@ export default function ClaimDetailPage() {
       />
 
       {/* Evidence Quotations Breakdown */}
-      <div className="space-y-5">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <Layers className="h-5 w-5 text-blue-400" />
-            <h3 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-white">
+          <div className="flex items-center space-x-2">
+            <Layers className="h-4 w-4 text-blue-600" />
+            <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-slate-900">
               Corroborating & Contradicting Evidence Snippets ({claimEvidences.length})
             </h3>
           </div>
-          <span className="text-xs sm:text-sm text-slate-300 font-semibold">Direct snippet inspection</span>
+          <span className="text-xs text-slate-500 font-medium">Direct snippet inspection</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-5">
+        <div className="grid grid-cols-1 gap-4">
           {claimEvidences.map((evidence) => (
             <EvidenceSnippetCard
               key={evidence.id}
@@ -297,29 +409,43 @@ export default function ClaimDetailPage() {
       </div>
 
       {/* Deep LLM & Algorithmic Reasoning */}
-      <div className="rounded-2xl border border-white/15 bg-gradient-to-b from-[#10182c] to-[#0d1424] p-6 shadow-2xl">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <button
           onClick={() => setShowRawReasoning(!showRawReasoning)}
           className="flex w-full items-center justify-between text-left"
         >
-          <div className="flex items-center space-x-2.5">
-            <BrainCircuit className="h-5 w-5 text-blue-400" />
-            <span className="font-mono text-sm sm:text-base font-bold uppercase tracking-wider text-white">
+          <div className="flex items-center space-x-2">
+            <BrainCircuit className="h-4 w-4 text-blue-600" />
+            <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-900">
               Epistemic Synthesis & LLM Trace
             </span>
           </div>
           <ChevronDown
-            className={`h-5 w-5 text-slate-300 transition-transform ${
+            className={`h-4 w-4 text-slate-500 transition-transform ${
               showRawReasoning ? 'rotate-180' : ''
             }`}
           />
         </button>
 
         {showRawReasoning && (
-          <div className="mt-5 pt-4 border-t border-white/10 text-sm sm:text-base text-slate-200 leading-relaxed space-y-3 font-mono">
+          <div className="mt-4 pt-3 border-t border-slate-100 text-xs sm:text-sm text-slate-700 leading-relaxed space-y-2 font-mono">
             <p>{claim.llmReasoning}</p>
           </div>
         )}
+      </div>
+
+      {/* Epistemic Boundaries & Academic Disclaimer */}
+      <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-5 space-y-2 text-xs font-mono text-amber-950">
+        <div className="flex items-center space-x-2 font-bold text-amber-900 uppercase">
+          <Shield className="h-4 w-4 text-amber-700" />
+          <span>Epistemic Boundaries & Limitations of This Run</span>
+        </div>
+        <p className="leading-relaxed text-amber-900/90">
+          “TRACEVIDENCE does not ask users to trust the system blindly. It makes evidence provenance, source independence, and uncertainty visible so that users can decide how much to trust the information.”
+        </p>
+        <p className="text-[11px] text-amber-800">
+          Research prototype for investigating evidence provenance and selective prediction. Not an infallible truth oracle. Always verify important claims with primary sources.
+        </p>
       </div>
     </div>
   );

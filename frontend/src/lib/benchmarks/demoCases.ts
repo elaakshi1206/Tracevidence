@@ -1,3 +1,4 @@
+export { LABELED_RESEARCH_DATASET, evaluateResearchDataset } from './researchDataset';
 import { BenchmarkCase } from '@/types';
 
 export const BENCHMARK_CASES: BenchmarkCase[] = [
@@ -15,6 +16,8 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
       title: 'EV Battery Manufacturing Carbon Debt & Grid Parity',
       query: 'Electric vehicle battery manufacturing carbon debt and 50,000 km parity threshold',
       inputType: 'benchmark',
+      analysisMode: 'benchmark',
+      modeBadgeLabel: 'Curated Benchmark',
       timestamp: '2026-09-07T10:15:00Z',
       executiveSummary: 'While 7 distinct commercial media outlets reported the 17-20 tonne battery carbon debt figure, TRACE-X provenance tracing reveals 100% of these publications derived their numbers from a single 2017 IVL Swedish Environmental Institute report that relied on 2015 fossil-heavy grid averages. Recent independent lifecycle analyses (ICCT 2023, TU Eindhoven 2022) establish that modern battery manufacturing emissions are 60-70 kg CO2/kWh (approx 4.5-5.2 tonnes for 75 kWh), reaching parity within 16,000–22,000 km.',
       overallDecisionCounts: {
@@ -33,6 +36,22 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
         {
           id: 'claim-ev-1',
           text: 'Producing a standard 75 kWh EV battery emits between 17 and 20 tonnes of CO2 equivalent.',
+          inputQuote: 'A widespread consensus in European media reports that producing a standard 75 kWh EV battery emits between 17 and 20 tonnes of CO2 equivalent.',
+          provenanceConfidence: 'High',
+          independenceConfidence: 'High',
+          reliabilityIndicator: 'Moderate Reliability',
+          collapseEvidence: {
+            sharedFigures: ['17-20 tonnes', '75 kWh'],
+            overlapSnippet: '82% verbatim quotation of 2017 IVL press release',
+            commonOrigin: 'src-ivl-2017',
+            derivationProbability: 'High',
+            rationale: 'All 6 media reports verbatim copy the 17-20 tonne figure from the 2017 IVL report without checking IVL downward revisions or recent empirical audits.',
+          },
+          numericalConflict: {
+            claimedValue: '17-20 tonnes CO2',
+            rebuttalValue: '4.5-5.2 tonnes CO2',
+            deltaNote: 'Asserted news figure is 3.5x higher than contemporary factory audit measurements (ICCT 2023, TU Eindhoven 2022).',
+          },
           targetEntity: '75 kWh Lithium-ion EV Battery',
           confidence: 0.42,
           decision: 'VERIFY',
@@ -58,6 +77,22 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
         {
           id: 'claim-ev-2',
           text: 'An EV must be driven at least 50,000 km in Europe before offsetting its manufacturing emissions versus an ICE vehicle.',
+          inputQuote: 'Consequently, an EV must be driven at least 50,000 km in Europe before it offsets its manufacturing emissions compared to a conventional internal combustion engine vehicle.',
+          provenanceConfidence: 'High',
+          independenceConfidence: 'High',
+          reliabilityIndicator: 'Moderate Reliability',
+          collapseEvidence: {
+            sharedFigures: ['50,000 km'],
+            overlapSnippet: 'Secondary editorial syndicate repeating obsolete break-even calculation',
+            commonOrigin: 'src-ivl-2017',
+            derivationProbability: 'High',
+            rationale: 'Break-even figure mathematically derived from the obsolete 17-20 tonne battery estimate.',
+          },
+          numericalConflict: {
+            claimedValue: '50,000 km',
+            rebuttalValue: '16,000–22,000 km',
+            deltaNote: 'Under current European grid mix, life-cycle parity occurs within 16,000–22,000 km.',
+          },
           targetEntity: 'EV Break-even Threshold (European Grid)',
           confidence: 0.48,
           decision: 'VERIFY',
@@ -240,6 +275,8 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
       title: 'Hydroxychloroquine COVID-19 Clinical Efficacy',
       query: 'Hydroxychloroquine and azithromycin 100% viral clearance efficacy in randomized trials',
       inputType: 'benchmark',
+      analysisMode: 'benchmark',
+      modeBadgeLabel: 'Curated Benchmark',
       timestamp: '2026-09-07T11:00:00Z',
       executiveSummary: 'While early French observational reports (Raoult et al., n=20) reported rapid viral clearance, rigorous global double-blind randomized trials (RECOVERY Trial n=11,500, WHO Solidarity Trial n=12,000) conclusively demonstrated zero mortality reduction and identified statistically significant cardiac arrhythmia risks. TRACEVIDENCE triggers selective prediction ABSTAIN due to severe empirical contradiction and methodological invalidity.',
       overallDecisionCounts: {
@@ -438,6 +475,8 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
       title: 'Quantum Advantage: 100x Speedup Claim & Tensor Networks',
       query: 'Random circuit sampling 100x quantum speedup vs classical supercomputer 47 years',
       inputType: 'benchmark',
+      analysisMode: 'benchmark',
+      modeBadgeLabel: 'Curated Benchmark',
       timestamp: '2026-09-07T11:45:00Z',
       executiveSummary: 'The reported 47-year classical baseline stemmed exclusively from an unoptimized naive Schrodinger algorithm quoted in a corporate press release. Independent computational physicists at Chinese Academy of Sciences and NYU demonstrated that modern tensor network contraction methods running on classical GPU clusters complete the identical computation in under 15 minutes, debunking the claimed 100x supremacy gap.',
       overallDecisionCounts: {
@@ -635,6 +674,8 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
       title: 'Mediterranean Dietary Pattern & Cardiovascular Risk Reduction',
       query: 'Mediterranean diet extra virgin olive oil 30 percent cardiovascular risk reduction PREDIMED',
       inputType: 'benchmark',
+      analysisMode: 'benchmark',
+      modeBadgeLabel: 'Curated Benchmark',
       timestamp: '2026-09-07T12:00:00Z',
       executiveSummary: 'The 30% relative risk reduction is established by primary landmark multicenter randomized trials (PREDIMED, n=7,447; CORDIOPREV, n=1,002) and independently replicated across non-overlapping longitudinal prospective cohorts (Nurses\' Health Study, EPIC Europe). High independence factor (0.83), current freshness, and zero major empirical contradictions support a high-confidence TRUST decision.',
       overallDecisionCounts: {
@@ -832,6 +873,8 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
       title: 'EU Artificial Intelligence Act High-Risk Compliance Grace Period',
       query: 'EU AI Act 36 month transition grace period high-risk systems Regulation 2024/1689',
       inputType: 'benchmark',
+      analysisMode: 'benchmark',
+      modeBadgeLabel: 'Curated Benchmark',
       timestamp: '2026-09-07T12:30:00Z',
       executiveSummary: 'The 36-month blanket grace period is outdated legal analysis derived from the Commission\'s original 2021 legislative proposal (COM(2021) 206 final). The enacted Regulation (EU) 2024/1689, published in the Official Journal in July 2024, establishes a staggered tiered timeline: prohibited practices take effect at 6 months, general-purpose AI (GPAI) at 12 months, Annex III high-risk systems at 24 months, and only Annex I regulated products receive 36 months.',
       overallDecisionCounts: {

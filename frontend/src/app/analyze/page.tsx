@@ -4,13 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAnalysisStore } from '@/lib/store/analysisStore';
-import { BENCHMARK_CASES } from '@/lib/benchmarks/demoCases';
 import { executeTracevidencePipeline } from '@/lib/engine/pipelineOrchestrator';
 import PipelineProgress from '@/components/analyze/PipelineProgress';
 import ClaimCard from '@/components/analyze/ClaimCard';
-import DecisionBadge from '@/components/common/DecisionBadge';
 import PageTutorialBanner from '@/components/common/PageTutorialBanner';
 import ContextHelpTooltip from '@/components/common/ContextHelpTooltip';
+import WorkflowStepper from '@/components/common/WorkflowStepper';
 import {
   Search,
   Sparkles,
@@ -22,8 +21,11 @@ import {
   AlertTriangle,
   ShieldAlert,
   ArrowRight,
-  RotateCcw,
-  BookOpen,
+  FlaskConical,
+  Lightbulb,
+  ChevronDown,
+  ChevronUp,
+  Info,
 } from 'lucide-react';
 
 export default function AnalyzePage() {
@@ -37,13 +39,15 @@ export default function AnalyzePage() {
     setPipelineProgress,
     isAnalyzing,
     setIsAnalyzing,
-    loadBenchmarkCase,
     activeFilter,
     setActiveFilter,
     plainEnglishMode,
+    analysisMode,
+    setAnalysisMode,
   } = useAnalysisStore();
 
-  const [inputMode, setInputMode] = useState<'text' | 'benchmark' | 'url'>('text');
+  const [inputMode, setInputMode] = useState<'text' | 'url'>('text');
+  const [showLimitations, setShowLimitations] = useState(false);
   const [inputText, setInputText] = useState(
     currentAnalysis?.query ||
       'Electric vehicle batteries generate an immense carbon debt during manufacturing. Media reports that producing a 75 kWh EV battery emits between 17 and 20 tonnes of CO2 equivalent, requiring 50,000 km to break even.'
@@ -55,8 +59,11 @@ export default function AnalyzePage() {
     setIsAnalyzing(true);
 
     try {
-      const result = await executeTracevidencePipeline(inputText, (progress) => {
-        setPipelineProgress(progress);
+      const result = await executeTracevidencePipeline(inputText, {
+        mode: analysisMode,
+        onProgress: (progress) => {
+          setPipelineProgress(progress);
+        },
       });
       setAnalysis(result);
     } catch (err) {
@@ -74,206 +81,230 @@ export default function AnalyzePage() {
     : [];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 space-y-10">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      {/* 3-Step Guided Journey Ribbon */}
+      <WorkflowStepper currentStep={1} />
+
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-6 border-b border-white/12 pb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <div className="flex items-center space-x-3">
-            <span className="h-3 w-3 rounded-full bg-gradient-to-r from-rose-500 via-blue-500 to-emerald-400 animate-ping" />
-            <h1 className="text-3xl sm:text-4xl font-bold font-mono tracking-tight text-white">
-              {plainEnglishMode ? 'Verify Any Fact or Claim' : 'Evidence Provenance & Trust Workspace'}
+          <div className="flex items-center space-x-2.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#0f766e] animate-ping" />
+            <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-[#0f172a]">
+              {plainEnglishMode ? 'Analyze Workspace' : 'Claim Analysis & Provenance Workspace'}
             </h1>
           </div>
-          <p className="mt-2 text-base sm:text-lg text-slate-300">
+          <p className="mt-1.5 text-xs sm:text-sm text-[#475569]">
             {plainEnglishMode
-              ? 'Test any statement to see its original sources, find hidden circular rumors, and get a trustworthy verdict.'
+              ? 'Enter any statement, news snippet, or AI response to deconstruct claims, find original sources, and uncover echo chambers.'
               : 'Submit propositions or statements to deconstruct claims, trace origins, and compute selective prediction trust.'}
           </p>
         </div>
 
         <Link
           href="/graph"
-          className="flex items-center space-x-2.5 rounded-2xl border border-white/25 bg-gradient-to-r from-rose-500/15 via-blue-500/20 to-emerald-500/15 px-5 py-3 text-sm sm:text-base font-bold text-white shadow-xl hover:border-white/40 hover:bg-white/15 transition-all"
+          className="flex items-center space-x-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-2.5 text-xs sm:text-sm font-bold text-[#0f766e] shadow-2xs hover:bg-teal-100 transition-all"
         >
-          <Network className="h-5 w-5 text-blue-400" />
-          <span>Interactive Evidence Graph &rarr;</span>
+          <Network className="h-4 w-4 text-[#0f766e]" />
+          <span>Evidence Graph &rarr;</span>
         </Link>
       </div>
 
-      {/* Tutorial & Guidance Banner */}
-      <PageTutorialBanner
-        pageKey="analyze_workspace"
-        title="Workspace Quick Guide"
-        subtitle="3 simple steps to audit any scientific statement, news report, or AI answer"
-        empathyNote="You don't need to know academic terminology! If you're not sure what to write, click 'Peer-Reviewed Benchmarks' below to try real-world cases with 1 click."
-        steps={[
-          {
-            number: 1,
-            title: 'Choose or Paste Input',
-            description: 'Paste any text, paste a news link, or choose from 3 preloaded research datasets.',
-            highlightAction: 'Select "Peer-Reviewed Benchmarks" for instant results',
-          },
-          {
-            number: 2,
-            title: 'Watch Live Decomposition',
-            description: 'The engine extracts atomic claims, searches literature, and collapses repeating echo-chamber articles to their single root origin.',
-            highlightAction: 'Click "Analyze Information" to start',
-          },
-          {
-            number: 3,
-            title: 'Inspect Trust Verdicts',
-            description: 'Check whether each claim gets TRUST, VERIFY, or ABSTAIN. Click "Inspect" on any claim card to see its full mathematical audit and provenance tree.',
-            highlightAction: 'Click "Inspect" on any claim below',
-          },
-        ]}
-        commonConfusion={{
-          question: 'Why does it break my paragraph into multiple smaller claims?',
-          answer: 'Long paragraphs usually mix truth with exaggeration. Breaking text into atomic sentences prevents a false claim from hiding behind three true ones!',
-        }}
-      />
+      {/* Simple Step-by-Step Guide for First-Time Users */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
+        <div className="flex items-start space-x-3">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-[#0f766e] font-mono text-xs font-bold border border-teal-200">
+            1
+          </div>
+          <div>
+            <div className="text-xs font-bold text-[#0f172a]">Enter Text or Link</div>
+            <div className="text-[11px] text-[#475569] mt-0.5">
+              Paste any statement or web URL into the box below.
+            </div>
+          </div>
+        </div>
 
-      {/* Input Section */}
-      <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#10182c] to-[#0d1424] p-7 sm:p-8 shadow-2xl backdrop-blur-xl">
-        {/* Tabs: Text / Benchmark / URL */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/12 pb-5">
-          <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-start space-x-3">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-[#f97316] font-mono text-xs font-bold border border-orange-200">
+            2
+          </div>
+          <div>
+            <div className="text-xs font-bold text-[#0f172a]">Click Analyze Information</div>
+            <div className="text-[11px] text-[#475569] mt-0.5">
+              TRACE-X traces citations and collapses syndicated copies.
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-start space-x-3">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-[#059669] font-mono text-xs font-bold border border-emerald-200">
+            3
+          </div>
+          <div>
+            <div className="text-xs font-bold text-[#0f172a]">Check Trust Ratings</div>
+            <div className="text-[11px] text-[#475569] mt-0.5">
+              Review TRUST, VERIFY, or ABSTAIN verdicts with full math proof.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Investigation Mode Selector: Benchmark vs Live Retrieval */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-[#f8fafc] p-3.5 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#0f172a]">
+            Investigation Mode:
+          </span>
+          <div className="flex items-center rounded-xl bg-white p-1 border border-slate-200 shadow-2xs">
             <button
-              onClick={() => setInputMode('text')}
-              className={`flex items-center space-x-2 rounded-xl px-4 py-2 text-sm sm:text-base font-bold transition-all ${
-                inputMode === 'text'
-                  ? 'bg-blue-600/30 text-white border border-blue-400/60 shadow-md'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+              onClick={() => setAnalysisMode('benchmark')}
+              className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
+                analysisMode === 'benchmark'
+                  ? 'bg-[#0f766e] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <FileText className="h-4 w-4" />
+              <FlaskConical className="h-3.5 w-3.5" />
+              <span>Curated Benchmark Mode</span>
+            </button>
+            <button
+              onClick={() => setAnalysisMode('live')}
+              className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
+                analysisMode === 'live'
+                  ? 'bg-[#0f766e] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span>Live Retrieval Mode</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2 text-xs font-mono text-[#475569]">
+          {analysisMode === 'benchmark' ? (
+            <span className="rounded-md bg-teal-50 px-2.5 py-1 text-[#0f766e] border border-teal-200 font-semibold">
+              Curated Academic Benchmark · High Reproducibility
+            </span>
+          ) : (
+            <span className="rounded-md bg-orange-50 px-2.5 py-1 text-[#ea580c] border border-orange-200 font-semibold">
+              Live Web & Literature Retrieval · Dynamic Search
+            </span>
+          )}
+          <ContextHelpTooltip
+            title="Analysis Modes"
+            simpleExplanation="Benchmark Mode uses peer-reviewed pre-indexed cases. Live Retrieval executes dynamic search and applies conservative selective prediction penalties."
+            size="xs"
+          />
+        </div>
+      </div>
+
+      {/* Input Section (Clean, Large, No Benchmarks Tab) */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-5">
+        {/* Tabs: Paste Text / AI Output vs URL Extraction */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setInputMode('text')}
+              className={`flex items-center space-x-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
+                inputMode === 'text'
+                  ? 'bg-teal-50 text-[#0f766e] border-teal-200 shadow-2xs'
+                  : 'bg-white text-[#475569] border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <FileText className="h-4 w-4 text-[#0f766e]" />
               <span>Paste Text / AI Output</span>
             </button>
 
             <button
-              onClick={() => setInputMode('benchmark')}
-              className={`flex items-center space-x-2 rounded-xl px-4 py-2 text-sm sm:text-base font-bold transition-all ${
-                inputMode === 'benchmark'
-                  ? 'bg-blue-600/30 text-white border border-blue-400/60 shadow-md'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Sparkles className="h-4 w-4 text-amber-400" />
-              <span>Peer-Reviewed Benchmarks</span>
-            </button>
-
-            <button
               onClick={() => setInputMode('url')}
-              className={`flex items-center space-x-2 rounded-xl px-4 py-2 text-sm sm:text-base font-bold transition-all ${
+              className={`flex items-center space-x-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
                 inputMode === 'url'
-                  ? 'bg-blue-600/30 text-white border border-blue-400/60 shadow-md'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  ? 'bg-teal-50 text-[#0f766e] border-teal-200 shadow-2xs'
+                  : 'bg-white text-[#475569] border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <LinkIcon className="h-4 w-4" />
+              <LinkIcon className="h-4 w-4 text-[#0f766e]" />
               <span>URL Extraction</span>
             </button>
-
-            <ContextHelpTooltip
-              title="Input Methods"
-              simpleExplanation="You can audit any text: raw statements, articles from links, or vetted academic benchmark datasets."
-              whyItMatters="Lets you fact-check anything from a tweet to a scientific paper."
-              example="Try the EV Battery Debt case to see how 10 news articles copied 1 outdated study!"
-            />
           </div>
 
-          <div className="flex items-center space-x-2 text-xs sm:text-sm font-mono text-slate-300">
-            <span>Model: TRACEVIDENCE-AIVIDENCE v2.4</span>
-            <ContextHelpTooltip
-              title="Selective Prediction Model"
-              simpleExplanation="A calibrated engine that predicts TRUST, VERIFY, or ABSTAIN rather than guessing blindly."
-              whyItMatters="Prevents AI hallucinations by refusing to answer when uncertainty is too high."
-            />
-          </div>
+          {/* Quick link to Benchmarks Page */}
+          <Link
+            href="/benchmarks"
+            className="flex items-center space-x-1.5 text-xs font-semibold text-[#0f766e] hover:underline"
+          >
+            <FlaskConical className="h-3.5 w-3.5" />
+            <span>Looking for pre-loaded cases? Visit Benchmarks &rarr;</span>
+          </Link>
         </div>
 
-        {/* Input Bodies */}
+        {/* Text Input Area */}
         {inputMode === 'text' && (
-          <div className="mt-5">
+          <div className="space-y-3">
             <textarea
-              rows={4}
+              rows={5}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Paste scientific statement, news paragraph, or LLM generated response to audit..."
-              className="w-full rounded-2xl border border-white/15 bg-black/50 p-5 font-mono text-sm sm:text-base text-slate-100 placeholder-slate-500 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 transition-all leading-relaxed"
+              placeholder="Type or paste any statement, scientific paragraph, news claim, or LLM-generated output..."
+              className="w-full rounded-2xl border border-slate-200 bg-[#f8fafc] p-4 sm:p-5 font-mono text-xs sm:text-sm text-[#0f172a] placeholder-slate-400 outline-none focus:border-[#0f766e] focus:bg-white focus:ring-2 focus:ring-teal-100 transition-all leading-relaxed shadow-inner"
             />
+            <div className="flex items-center justify-between text-xs text-[#475569]">
+              <span>Type or paste any paragraph. Long text is decomposed into individual atomic claims.</span>
+              <span className="font-mono">{inputText.length} characters</span>
+            </div>
           </div>
         )}
 
+        {/* URL Input Area */}
         {inputMode === 'url' && (
-          <div className="mt-5 space-y-4">
-            <div className="flex items-center space-x-3">
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
               <input
                 type="url"
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
-                placeholder="https://example.org/scientific-article-or-report"
-                className="w-full rounded-2xl border border-white/15 bg-black/50 px-5 py-3.5 font-mono text-sm sm:text-base text-slate-100 placeholder-slate-500 outline-none focus:border-blue-400"
+                placeholder="https://example.org/article-or-scientific-paper"
+                className="w-full rounded-xl border border-slate-200 bg-[#f8fafc] px-4 py-3 font-mono text-xs sm:text-sm text-[#0f172a] placeholder-slate-400 outline-none focus:border-[#0f766e] focus:bg-white"
               />
               <button
                 onClick={() =>
                   setInputText(
-                    `Article extracted from ${inputUrl || 'target link'}: Electric vehicle batteries generate an immense carbon debt during manufacturing, requiring extensive mileage to break even.`
+                    `Article extracted from ${inputUrl || 'target URL'}: Electric vehicle batteries generate an immense carbon debt during manufacturing, requiring extensive mileage to break even.`
                   )
                 }
-                className="rounded-2xl bg-slate-800 px-6 py-3.5 text-sm font-bold text-white hover:bg-slate-700 transition-colors shadow-md"
+                className="w-full sm:w-auto rounded-xl bg-[#0f766e] px-6 py-3 text-xs sm:text-sm font-bold text-white hover:bg-[#115e59] transition-colors shadow-2xs shrink-0 cursor-pointer"
               >
-                Fetch
+                Fetch Content
               </button>
             </div>
-            <p className="text-xs sm:text-sm text-slate-300">
-              Extracts text propositions, canonical DOIs, and citation trees from scientific and news URLs.
+            <p className="text-xs text-[#475569]">
+              Extracts text claims, canonical DOIs, and citation links directly from online articles or publications.
             </p>
           </div>
         )}
 
-        {inputMode === 'benchmark' && (
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {BENCHMARK_CASES.map((b) => (
-              <div
-                key={b.id}
-                onClick={() => {
-                  loadBenchmarkCase(b.id);
-                  setInputText(b.inputContent);
-                }}
-                className={`cursor-pointer rounded-2xl border p-4 sm:p-5 transition-all ${
-                  currentAnalysis?.id === b.data.id
-                    ? 'border-blue-400 bg-blue-950/40 shadow-lg shadow-blue-500/10'
-                    : 'border-white/10 bg-slate-900/60 hover:border-white/30 hover:bg-slate-900/90'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs text-blue-400 font-bold">{b.tag}</span>
-                  <DecisionBadge decision={b.expectedOutcome} size="sm" />
-                </div>
-                <h4 className="mt-2 font-bold text-sm sm:text-base text-white leading-snug">{b.title}</h4>
-                <p className="mt-1.5 text-xs sm:text-sm text-slate-300 line-clamp-2 leading-relaxed">{b.description}</p>
-                <div className="mt-3 text-xs font-mono font-semibold text-amber-300">
-                  Target Signal: {b.highlightSignal}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Friendly Helper Callout */}
+        <div className="flex items-center space-x-2.5 rounded-xl bg-teal-50/70 p-3 text-xs text-[#0f766e] border border-teal-200">
+          <Lightbulb className="h-4 w-4 text-[#f97316] shrink-0" />
+          <span>
+            <strong>Need inspiration?</strong> Try checking statements about electric vehicle emissions, cardiovascular diets, or room-temperature superconductors. Or explore the ready-made datasets in <Link href="/benchmarks" className="underline font-bold">Benchmarks</Link>.
+          </span>
+        </div>
 
-        {/* Action Button & Pipeline Runner */}
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 pt-5 border-t border-white/12">
-          <div className="flex items-center space-x-2 text-sm text-slate-300 font-mono">
-            <span>Input Size:</span>
-            <span className="text-white font-bold">{inputText.length} characters</span>
+        {/* Prominent Coral CTA Button */}
+        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+          <div className="text-xs font-mono text-[#475569]">
+            Target Engine: <strong className="text-[#0f172a]">TRACEVIDENCE v2.4 (Avishkar)</strong>
           </div>
 
           <button
             onClick={handleStartAnalysis}
             disabled={isAnalyzing || !inputText.trim()}
-            className="btn-gradient-rbgw flex items-center space-x-2.5 rounded-2xl px-8 py-3.5 font-mono text-sm sm:text-base font-bold uppercase tracking-wider text-white shadow-xl transition-all disabled:opacity-50"
+            className="flex items-center space-x-2.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] px-7 py-3 text-sm font-bold text-white shadow-md shadow-orange-500/25 transition-all disabled:opacity-50 cursor-pointer hover:-translate-y-0.5"
           >
-            <Search className="h-5 w-5 text-white" />
-            <span>{isAnalyzing ? 'Executing Research Pipeline...' : 'Analyze Information'}</span>
+            <Search className="h-4 w-4" />
+            <span>{isAnalyzing ? 'Analyzing Claims & Sources...' : 'Analyze Information'}</span>
           </button>
         </div>
       </div>
@@ -281,153 +312,161 @@ export default function AnalyzePage() {
       {/* Live Pipeline Progress Indicator */}
       <PipelineProgress progress={pipelineProgress} isAnalyzing={isAnalyzing} />
 
-      {/* Analysis Results View */}
+      {/* Analysis Results Section */}
       {currentAnalysis && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Executive Synthesis Banner */}
-          <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#10182c] to-[#0d1424] p-7 sm:p-8 shadow-2xl">
-            <div className="flex flex-wrap items-center justify-between gap-5 border-b border-white/12 pb-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5">
               <div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-400">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#0f766e]">
                     {plainEnglishMode ? 'Overall Investigation Summary' : 'Executive Research Synthesis'}
                   </span>
-                  <ContextHelpTooltip
-                    title="Executive Synthesis"
-                    simpleExplanation="A high-level overview summarizing the factual reliability across all individual statements extracted from your input."
-                    whyItMatters="Gives you the bottom-line conclusion before diving into claim-by-claim details."
-                  />
+                  <span
+                    className={`flex items-center space-x-1 rounded-md px-2 py-0.5 font-mono text-[10px] font-bold ${
+                      currentAnalysis.analysisMode === 'live'
+                        ? 'bg-orange-50 text-[#ea580c] border border-orange-200'
+                        : 'bg-teal-50 text-[#0f766e] border border-teal-200'
+                    }`}
+                  >
+                    {currentAnalysis.modeBadgeLabel ||
+                      (currentAnalysis.analysisMode === 'live' ? 'Live Retrieval' : 'Curated Benchmark')}
+                  </span>
+                  {currentAnalysis.aggregateMetrics.overallReliability && (
+                    <span
+                      className={`rounded-md px-2 py-0.5 font-mono text-[10px] font-bold ${
+                        currentAnalysis.aggregateMetrics.overallReliability === 'High Rigor'
+                          ? 'bg-emerald-50 text-[#059669] border border-emerald-200'
+                          : currentAnalysis.aggregateMetrics.overallReliability === 'Moderate Reliability'
+                          ? 'bg-teal-50 text-[#0f766e] border border-teal-200'
+                          : 'bg-amber-50 text-[#d97706] border border-amber-200'
+                      }`}
+                    >
+                      {currentAnalysis.aggregateMetrics.overallReliability}
+                    </span>
+                  )}
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white mt-1.5">{currentAnalysis.title}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-[#0f172a] mt-1.5">{currentAnalysis.title}</h2>
+                <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] font-mono text-[#475569]">
+                  <span>Engine: {currentAnalysis.provider}</span>
+                  <span>•</span>
+                  <span>Date: {new Date(currentAnalysis.timestamp).toLocaleDateString()}</span>
+                  {currentAnalysis.aggregateMetrics.provenanceConfidence && (
+                    <>
+                      <span>•</span>
+                      <span>Provenance: <strong>{currentAnalysis.aggregateMetrics.provenanceConfidence}</strong></span>
+                    </>
+                  )}
+                </div>
               </div>
 
-              {/* Decision Distribution Badges */}
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="flex items-center space-x-2 rounded-xl bg-emerald-950/80 px-3.5 py-1.5 text-xs sm:text-sm font-mono font-bold text-emerald-300 border border-emerald-500/50 shadow-sm">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              {/* Decision Counts Badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex items-center space-x-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-mono font-bold text-[#059669] border border-emerald-200 shadow-2xs">
+                  <CheckCircle2 className="h-4 w-4 text-[#059669]" />
                   <span>{currentAnalysis.overallDecisionCounts.trust} TRUST</span>
-                  <ContextHelpTooltip
-                    title="TRUST Verdict"
-                    simpleExplanation="Statements with multiple independent primary origins, up-to-date citations, and no contradictory evidence."
-                    whyItMatters="You can cite or rely on these claims with high confidence."
-                    size="xs"
-                  />
                 </span>
 
-                <span className="flex items-center space-x-2 rounded-xl bg-amber-950/80 px-3.5 py-1.5 text-xs sm:text-sm font-mono font-bold text-amber-300 border border-amber-500/50 shadow-sm">
-                  <AlertTriangle className="h-4 w-4 text-amber-400" />
+                <span className="flex items-center space-x-1.5 rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-mono font-bold text-[#d97706] border border-amber-200 shadow-2xs">
+                  <AlertTriangle className="h-4 w-4 text-[#d97706]" />
                   <span>{currentAnalysis.overallDecisionCounts.verify} VERIFY</span>
-                  <ContextHelpTooltip
-                    title="VERIFY Verdict"
-                    simpleExplanation="Statements that appear plausible but depend on a single secondary source, press release, or older data."
-                    whyItMatters="Check the underlying citations before trusting completely."
-                    size="xs"
-                  />
                 </span>
 
-                <span className="flex items-center space-x-2 rounded-xl bg-rose-950/80 px-3.5 py-1.5 text-xs sm:text-sm font-mono font-bold text-rose-300 border border-rose-500/50 shadow-sm">
-                  <ShieldAlert className="h-4 w-4 text-rose-400" />
+                <span className="flex items-center space-x-1.5 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-mono font-bold text-[#e11d48] border border-rose-200 shadow-2xs">
+                  <ShieldAlert className="h-4 w-4 text-[#e11d48]" />
                   <span>{currentAnalysis.overallDecisionCounts.abstain} ABSTAIN</span>
-                  <ContextHelpTooltip
-                    title="ABSTAIN Verdict (Selective Prediction)"
-                    simpleExplanation="The system withholds a verdict because evidence is disputed, circular, or severely contradictory."
-                    whyItMatters="Refusing to answer prevents fake consensus and protects you from AI hallucinations."
-                    size="xs"
-                  />
                 </span>
               </div>
             </div>
 
-            <p className="mt-5 text-sm sm:text-base text-slate-200 leading-relaxed font-normal">
+            <p className="mt-4 text-xs sm:text-sm text-[#475569] leading-relaxed">
               {currentAnalysis.executiveSummary}
             </p>
 
-            {/* Aggregate Metrics Bar */}
-            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4 border-t border-white/10 pt-5">
-              <div className="rounded-xl bg-black/30 p-3.5 border border-white/5">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs sm:text-sm font-semibold text-slate-300">
-                    {plainEnglishMode ? 'Source Diversity' : 'Independence Factor'}
-                  </div>
-                  <ContextHelpTooltip
-                    title="Source Independence"
-                    simpleExplanation="Measures whether the sources citing this claim are genuinely separate organizations or just copying the same press release."
-                    whyItMatters="100% means all sources are distinct origins. Low % means an echo chamber!"
-                    size="xs"
-                  />
+            {/* Metric Summary Grid */}
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 border-t border-slate-100 pt-5">
+              <div className="rounded-xl bg-[#f8fafc] p-3.5 border border-slate-200/70">
+                <div className="text-xs font-medium text-[#475569]">
+                  {plainEnglishMode ? 'Source Diversity' : 'Independence Factor'}
                 </div>
-                <div className="mt-1 font-mono text-lg sm:text-xl font-extrabold text-blue-400">
+                <div className="mt-1 font-mono text-lg font-bold text-[#0f766e]">
                   {(currentAnalysis.aggregateMetrics.averageIndependence * 100).toFixed(1)}%
                 </div>
               </div>
 
-              <div className="rounded-xl bg-black/30 p-3.5 border border-white/5">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs sm:text-sm font-semibold text-slate-300">
-                    {plainEnglishMode ? 'Consensus Agreement' : 'Corroboration'}
-                  </div>
-                  <ContextHelpTooltip
-                    title="Corroboration Confidence"
-                    simpleExplanation="How strongly reputable literature backs up the affirmative claims."
-                    whyItMatters="High corroboration indicates broad scientific or journalistic consensus."
-                    size="xs"
-                  />
+              <div className="rounded-xl bg-[#f8fafc] p-3.5 border border-slate-200/70">
+                <div className="text-xs font-medium text-[#475569]">
+                  {plainEnglishMode ? 'Consensus Agreement' : 'Corroboration'}
                 </div>
-                <div className="mt-1 font-mono text-lg sm:text-xl font-extrabold text-emerald-400">
+                <div className="mt-1 font-mono text-lg font-bold text-[#059669]">
                   {(currentAnalysis.aggregateMetrics.overallCorroboration * 100).toFixed(0)}%
                 </div>
               </div>
 
-              <div className="rounded-xl bg-black/30 p-3.5 border border-white/5">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs sm:text-sm font-semibold text-slate-300">
-                    {plainEnglishMode ? 'Data Freshness' : 'Temporal Freshness'}
-                  </div>
-                  <ContextHelpTooltip
-                    title="Temporal Freshness"
-                    simpleExplanation="How recent and up-to-date the supporting citations are."
-                    whyItMatters="Old science gets discounted so you don't make decisions on outdated studies."
-                    size="xs"
-                  />
+              <div className="rounded-xl bg-[#f8fafc] p-3.5 border border-slate-200/70">
+                <div className="text-xs font-medium text-[#475569]">
+                  {plainEnglishMode ? 'Data Freshness' : 'Temporal Freshness'}
                 </div>
-                <div className="mt-1 font-mono text-lg sm:text-xl font-extrabold text-blue-300">
+                <div className="mt-1 font-mono text-lg font-bold text-[#0f766e]">
                   {(currentAnalysis.aggregateMetrics.averageFreshness * 100).toFixed(0)}%
                 </div>
               </div>
 
-              <div className="rounded-xl bg-black/30 p-3.5 border border-white/5">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs sm:text-sm font-semibold text-slate-300">
-                    {plainEnglishMode ? 'Active Disputes' : 'Contradiction Conflict'}
-                  </div>
-                  <ContextHelpTooltip
-                    title="Contradiction Conflict"
-                    simpleExplanation="Percentage of claims where reputable studies directly disagree or refute each other."
-                    whyItMatters="A high conflict rate means experts are actively debating this statement."
-                    size="xs"
-                  />
+              <div className="rounded-xl bg-[#f8fafc] p-3.5 border border-slate-200/70">
+                <div className="text-xs font-medium text-[#475569]">
+                  {plainEnglishMode ? 'Active Disputes' : 'Contradiction Conflict'}
                 </div>
-                <div className="mt-1 font-mono text-lg sm:text-xl font-extrabold text-rose-400">
+                <div className="mt-1 font-mono text-lg font-bold text-[#e11d48]">
                   {(currentAnalysis.aggregateMetrics.contradictionRate * 100).toFixed(0)}%
                 </div>
               </div>
+            </div>
+
+            {/* Epistemic Limitations Dropdown */}
+            <div className="mt-5 border-t border-slate-100 pt-3">
+              <button
+                onClick={() => setShowLimitations(!showLimitations)}
+                className="flex items-center justify-between w-full text-left rounded-xl bg-slate-50 hover:bg-slate-100 p-3 transition-colors text-xs font-mono text-slate-700 border border-slate-200 cursor-pointer"
+              >
+                <div className="flex items-center space-x-2 font-bold">
+                  <Info className="h-4 w-4 text-[#0f766e] shrink-0" />
+                  <span>Why should I trust this analysis? (Limitations & Epistemic Boundaries)</span>
+                </div>
+                {showLimitations ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
+              </button>
+
+              {showLimitations && (
+                <div className="mt-3 rounded-xl bg-teal-50/50 p-4 border border-teal-200 text-xs text-slate-700 space-y-2 font-mono leading-relaxed">
+                  <div className="font-bold text-[#0f766e] uppercase">
+                    System Philosophy & Epistemic Constraints:
+                  </div>
+                  <p>
+                    TRACEVIDENCE does not ask users to trust the system blindly. It makes evidence provenance, source independence, and uncertainty visible so that users can decide how much to trust the information.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-slate-600">
+                    <li>Decision predictions are selective recommendations designed to assist verification.</li>
+                    <li>Paywalled registries or private datasets may not be fully represented.</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Filter Bar */}
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <Filter className="h-5 w-5 text-slate-300" />
-              <span className="font-mono text-sm font-bold text-slate-300">Filter Claims:</span>
-              <div className="flex items-center space-x-1.5 rounded-xl bg-slate-900 p-1.5 border border-white/10">
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-slate-500" />
+              <span className="font-mono text-xs font-semibold text-[#475569]">Filter Statements:</span>
+              <div className="flex items-center space-x-1 rounded-xl bg-slate-100 p-1 border border-slate-200">
                 {(['ALL', 'TRUST', 'VERIFY', 'ABSTAIN'] as const).map((filter) => (
                   <button
                     key={filter}
                     onClick={() => setActiveFilter(filter)}
-                    className={`rounded-lg px-4 py-1.5 text-xs sm:text-sm font-mono font-bold transition-all ${
+                    className={`rounded-lg px-3 py-1 text-xs font-mono font-bold transition-all cursor-pointer ${
                       activeFilter === filter
-                        ? 'btn-gradient-rbgw shadow'
-                        : 'text-slate-300 hover:text-white hover:bg-white/10'
+                        ? 'bg-[#0f766e] text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     {filter}
@@ -436,13 +475,8 @@ export default function AnalyzePage() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 font-mono text-sm text-slate-300">
-              <span>Showing {filteredClaims.length} of {currentAnalysis.claims.length} claims</span>
-              <ContextHelpTooltip
-                title="Claim Deconstruction"
-                simpleExplanation="Each statement is evaluated independently so you can pinpoint which specific claim is supported and which is unsupported."
-                size="xs"
-              />
+            <div className="font-mono text-xs text-slate-500">
+              Showing {filteredClaims.length} of {currentAnalysis.claims.length} claims
             </div>
           </div>
 
@@ -456,6 +490,31 @@ export default function AnalyzePage() {
                 onSelect={() => setSelectedClaimId(claim.id)}
               />
             ))}
+          </div>
+
+          {/* Next Step Banner */}
+          <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start space-x-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0f766e] text-xs font-bold text-white">
+                  2
+                </span>
+                <h3 className="font-bold text-[#0f172a] text-sm sm:text-base">
+                  Ready to see the visual web of evidence?
+                </h3>
+              </div>
+              <p className="text-xs text-[#475569] max-w-xl">
+                See how multiple news articles connect back to single origin studies, spot circular references, and watch echo chambers collapse visually.
+              </p>
+            </div>
+
+            <Link
+              href="/graph"
+              className="flex items-center space-x-2 rounded-xl bg-[#0f766e] px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#115e59] transition-all shrink-0"
+            >
+              <span>Explore Evidence Graph</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       )}

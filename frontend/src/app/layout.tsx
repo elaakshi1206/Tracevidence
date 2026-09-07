@@ -6,6 +6,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from 'react-hot-toast';
 import GuidedTourModal from '@/components/common/GuidedTourModal';
 import FloatingTutorialHelper from '@/components/common/FloatingTutorialHelper';
+import CompulsoryPrologueTutorial from '@/components/common/CompulsoryPrologueTutorial';
 
 export const metadata: Metadata = {
   title: 'TRACEVIDENCE — Trace the Evidence. Measure the Trust.',
@@ -28,20 +29,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-[#0a0e1a] text-slate-100 antialiased selection:bg-rose-500 selection:text-white relative">
-        {/* Organic Ambient Atmosphere - Red, Blue, Green, White lighting meshes */}
+    <html lang="en">
+      <body className="min-h-screen bg-[#f8fafc] text-[#0f172a] antialiased selection:bg-[#0f766e] selection:text-white relative">
+        {/* Soft Ambient Teal & Coral Atmosphere */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          {/* Crimson / Coral Red Orb */}
-          <div className="ambient-rbgw-glow -top-32 -left-32 h-[550px] w-[550px] bg-rose-600/18" />
-          {/* Sapphire / Deep Blue Orb */}
-          <div className="ambient-rbgw-glow top-1/4 right-0 h-[600px] w-[600px] bg-blue-600/18" />
-          {/* Lush Emerald Green Orb */}
-          <div className="ambient-rbgw-glow bottom-1/4 left-1/3 h-[500px] w-[500px] bg-emerald-500/15" />
-          {/* Luminous Pure White Spotlight */}
-          <div className="ambient-rbgw-glow top-10 left-1/2 -translate-x-1/2 h-[350px] w-[350px] bg-white/10 blur-[140px]" />
-          {/* Subtle noise/grid blend texture */}
-          <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
+          {/* Soft Deep Teal Orb */}
+          <div className="ambient-glow -top-32 -left-32 h-[500px] w-[500px] bg-teal-200/40" />
+          {/* Soft Coral Orb */}
+          <div className="ambient-glow top-1/4 right-0 h-[500px] w-[500px] bg-orange-100/50" />
+          {/* Subtle Emerald Tint */}
+          <div className="ambient-glow bottom-1/4 left-1/3 h-[450px] w-[450px] bg-emerald-100/30" />
+          {/* Pure White Central Wash */}
+          <div className="ambient-glow top-10 left-1/2 -translate-x-1/2 h-[350px] w-[350px] bg-white/80" />
         </div>
 
         <TooltipProvider>
@@ -50,19 +49,19 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <CompulsoryPrologueTutorial />
           <GuidedTourModal />
           <FloatingTutorialHelper />
           <Toaster
             position="bottom-right"
             toastOptions={{
               style: {
-                background: 'rgba(15, 23, 42, 0.95)',
-                color: '#ffffff',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                fontSize: '15px',
+                background: '#ffffff',
+                color: '#0f172a',
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
                 fontWeight: '500',
-                backdropFilter: 'blur(12px)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.1)',
               },
             }}
           />

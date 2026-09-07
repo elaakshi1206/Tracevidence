@@ -1,5 +1,11 @@
 export type DecisionType = 'TRUST' | 'VERIFY' | 'ABSTAIN';
 
+export type ConfidenceLevel = 'High' | 'Medium' | 'Low';
+
+export type ReliabilityLevel = 'High Rigor' | 'Moderate Reliability' | 'High Epistemic Uncertainty';
+
+export type DerivationProbability = 'High' | 'Medium' | 'Low';
+
 export type SourceTier =
   | 'Academic'
   | 'Government'
@@ -62,10 +68,25 @@ export interface TrustScoreBreakdown {
   finalTrustScore: number; // T(c)
 }
 
+export interface CollapseEvidence {
+  sharedFigures?: string[];
+  overlapSnippet?: string;
+  commonOrigin?: string;
+  derivationProbability?: DerivationProbability;
+  rationale?: string;
+}
+
+export interface NumericalConflict {
+  claimedValue: string;
+  rebuttalValue: string;
+  deltaNote: string;
+}
+
 export interface Claim {
   id: string;
   text: string;
   targetEntity: string;
+  inputQuote?: string; // Original verbatim supporting sentence/quote from input text
   confidence: number;
   decision: DecisionType;
   decisionReason: string;
@@ -73,10 +94,15 @@ export interface Claim {
   apparentSourcesCount: number;
   independentOriginsCount: number;
   independenceRatio: number;
+  provenanceConfidence?: ConfidenceLevel;
+  independenceConfidence?: ConfidenceLevel;
+  reliabilityIndicator?: ReliabilityLevel;
+  collapseEvidence?: CollapseEvidence;
   freshnessScore: number;
   temporalStatus: 'Current' | 'Outdated' | 'Historical' | 'Pending Verification';
   contradictionDetected: boolean;
   contradictionDetails?: string;
+  numericalConflict?: NumericalConflict;
   evidenceIds: string[];
   provenanceChain?: ProvenanceChain;
   mathBreakdown: TrustScoreBreakdown;
@@ -93,6 +119,10 @@ export interface EvidenceGraphNode {
   polarity?: PolarityType;
   isPrimaryOrigin?: boolean;
   clusterId?: string;
+  rawEvidenceSnippet?: string;
+  publishedDate?: string;
+  doi?: string;
+  derivationProbability?: DerivationProbability;
 }
 
 export interface EvidenceGraphEdge {
@@ -109,6 +139,8 @@ export interface AnalysisResult {
   title: string;
   query: string;
   inputType: 'text' | 'url' | 'document' | 'benchmark';
+  analysisMode: 'benchmark' | 'live';
+  modeBadgeLabel: 'Curated Benchmark' | 'Live Retrieval';
   timestamp: string;
   executiveSummary: string;
   overallDecisionCounts: {
@@ -122,6 +154,9 @@ export interface AnalysisResult {
     averageFreshness: number;
     contradictionRate: number;
     riskCoverageScore: number;
+    overallReliability?: ReliabilityLevel;
+    provenanceConfidence?: ConfidenceLevel;
+    independenceConfidence?: ConfidenceLevel;
   };
   claims: Claim[];
   sources: Source[];
@@ -133,6 +168,7 @@ export interface AnalysisResult {
   };
   executionTimeMs: number;
   provider: string;
+  limitationsNote?: string;
 }
 
 export interface BenchmarkCase {
@@ -146,3 +182,37 @@ export interface BenchmarkCase {
   expectedOutcome: DecisionType;
   data: AnalysisResult;
 }
+
+export type ResearchCategory =
+  | 'Clean'
+  | 'Echo Chamber'
+  | 'Outdated'
+  | 'Contradiction'
+  | 'Unsupported'
+  | 'Partial'
+  | 'Ambiguous';
+
+export interface LabeledResearchClaim {
+  id: string;
+  text: string;
+  targetEntity: string;
+  goldDecision: DecisionType;
+  category: ResearchCategory;
+  expectedOriginsCount: number;
+  apparentSourcesCount: number;
+  topic: string;
+  year: number;
+  benchmarkReference?: string;
+  notes: string;
+}
+
+export interface DatasetEvaluationMetrics {
+  totalEvaluated: number;
+  accuracy: number;
+  macroF1: number;
+  falseConfidenceRate: number; // FCR %
+  calibrationErrorECE: number;
+  abstentionRate: number;
+  categoryBreakdown: Record<ResearchCategory, { total: number; correct: number; fcr: number }>;
+}
+

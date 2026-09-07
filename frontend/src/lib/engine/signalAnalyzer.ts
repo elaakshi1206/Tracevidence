@@ -1,20 +1,49 @@
-import { Evidence, Source } from '@/types';
+import { Evidence, Source, NumericalConflict } from '@/types';
 
 export interface SignalAnalysisResult {
   contradictionDetected: boolean;
   contradictionDetails?: string;
+  numericalConflict?: NumericalConflict;
   freshnessScore: number; // 0 to 1
   temporalStatus: 'Current' | 'Outdated' | 'Historical' | 'Pending Verification';
   supportScore: number; // 0 to 1
 }
 
+export type DomainTopic = 'technology' | 'medicine' | 'policy' | 'statistics' | 'general';
+
+/**
+ * Returns half-life in years based on domain sensitivity:
+ * - technology & software: ~2 years
+ * - policy & statutes: ~2.5 years
+ * - medicine & clinical protocols: ~3 years
+ * - statistics & economics: ~2 years
+ * - general / foundational sciences: ~6 years
+ */
+export function getDomainHalfLifeYears(topic: DomainTopic = 'general'): number {
+  switch (topic) {
+    case 'technology':
+      return 2.0;
+    case 'policy':
+      return 2.5;
+    case 'medicine':
+      return 3.0;
+    case 'statistics':
+      return 2.0;
+    case 'general':
+    default:
+      return 5.0;
+  }
+}
+
 /**
  * Evaluates temporal freshness decay based on half-life parameters
- * lambda = 0.25 (approx 3-year half life for technology/regulatory domains)
  */
-export function calculateFreshnessDecay(publishedDate: string, domainHalfLifeYears: number = 3): number {
+export function calculateFreshnessDecay(
+  publishedDate: string,
+  domainHalfLifeYears: number = 3
+): number {
   const pubTime = new Date(publishedDate).getTime();
-  if (isNaN(pubTime)) return 0.70;
+  if (isNaN(pubTime)) return 0.65;
 
   const now = new Date('2026-09-07T00:00:00Z').getTime(); // Synchronized to benchmark reference time
   const diffYears = Math.max(0, (now - pubTime) / (1000 * 60 * 60 * 24 * 365.25));
@@ -27,11 +56,21 @@ export function calculateFreshnessDecay(publishedDate: string, domainHalfLifeYea
 }
 
 /**
- * Analyzes evidence polarity, contradiction signals, and average freshness
+ * Extracts key numbers with surrounding units (e.g. "17-20 tonnes", "100%", "47 years", "14.8 minutes")
+ */
+function extractValueWithUnit(text: string): string | null {
+  const match = text.match(/\b\d+(?:[.,-]\d+)?(?:\s*(?:%|tonnes?|kg|km|years?|days?|hours?|minutes?|seconds?|kWh|MWh|USD|\$|EUR|€))?\b/i);
+  return match ? match[0] : null;
+}
+
+/**
+ * Analyzes evidence polarity, numerical/factual contradiction signals, and domain freshness
  */
 export function analyzeVerificationSignals(
   evidences: Evidence[],
-  sources: Source[]
+  sources: Source[],
+  claimText?: string,
+  domain: DomainTopic = 'technology'
 ): SignalAnalysisResult {
   if (evidences.length === 0) {
     return {
@@ -43,6 +82,7 @@ export function analyzeVerificationSignals(
   }
 
   const sourceMap = new Map<string, Source>(sources.map(s => [s.id, s]));
+  const halfLife = getDomainHalfLifeYears(domain);
 
   let supportWeight = 0;
   let contradictWeight = 0;
@@ -54,7 +94,7 @@ export function analyzeVerificationSignals(
   evidences.forEach(ev => {
     const src = sourceMap.get(ev.sourceId);
     const cred = src ? src.credibilityScore : 0.5;
-    const fresh = src ? calculateFreshnessDecay(src.publishedDate) : 0.6;
+    const fresh = src ? calculateFreshnessDecay(src.publishedDate, halfLife) : 0.6;
     freshnessSum += fresh;
 
     const effectiveWeight = cred * ev.relevanceScore;
@@ -72,7 +112,7 @@ export function analyzeVerificationSignals(
 
   const averageFreshness = Number((freshnessSum / evidences.length).toFixed(3));
   const contradictionRatio = totalWeight > 0 ? contradictWeight / totalWeight : 0;
-  const contradictionDetected = contradictionRatio >= 0.3 || contradictingEvidences.length > 0;
+  const contradictionDetected = contradictionRatio >= 0.25 || contradictingEvidences.length > 0;
 
   let temporalStatus: SignalAnalysisResult['temporalStatus'] = 'Current';
   if (averageFreshness < 0.35) {
@@ -84,15 +124,30 @@ export function analyzeVerificationSignals(
   const supportScore = totalWeight > 0 ? Number((supportWeight / totalWeight).toFixed(3)) : 0.4;
 
   let contradictionDetails: string | undefined;
+  let numericalConflict: NumericalConflict | undefined;
+
   if (contradictionDetected && contradictingEvidences.length > 0) {
     const bestContradiction = contradictingEvidences[0];
     const src = sourceMap.get(bestContradiction.sourceId);
-    contradictionDetails = `Contradicted by ${src?.title || 'authoritative source'}: "${bestContradiction.quote.slice(0, 140)}..."`;
+    contradictionDetails = `Empirical contradiction from ${src?.publisher || 'primary authority'}: "${bestContradiction.quote.slice(0, 160)}..."`;
+
+    // Extract numerical conflict if available
+    const claimedVal = claimText ? extractValueWithUnit(claimText) : null;
+    const rebuttalVal = extractValueWithUnit(bestContradiction.quote);
+
+    if (claimedVal && rebuttalVal && claimedVal !== rebuttalVal) {
+      numericalConflict = {
+        claimedValue: claimedVal,
+        rebuttalValue: rebuttalVal,
+        deltaNote: `Asserted proposition states ${claimedVal}, but peer-reviewed findings report ${rebuttalVal}.`,
+      };
+    }
   }
 
   return {
     contradictionDetected,
     contradictionDetails,
+    numericalConflict,
     freshnessScore: averageFreshness,
     temporalStatus,
     supportScore,

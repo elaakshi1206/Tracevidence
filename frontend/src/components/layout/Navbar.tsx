@@ -1,19 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAnalysisStore } from '@/lib/store/analysisStore';
-import { BENCHMARK_CASES } from '@/lib/benchmarks/demoCases';
 import {
-  ShieldCheck,
   GitBranch,
   Network,
   BarChart3,
   Sparkles,
   Search,
   Award,
-  ChevronDown,
+  Gamepad2,
+  HelpCircle,
+  Menu,
+  X,
+  Languages,
+  FlaskConical,
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -21,149 +24,236 @@ export default function Navbar() {
   const {
     judgeMode,
     toggleJudgeMode,
-    loadBenchmarkCase,
-    currentAnalysis,
     openTour,
+    openPrologue,
+    plainEnglishMode,
+    togglePlainEnglishMode,
   } = useAnalysisStore();
-  const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
-  const navLinks = [
-    { href: '/analyze', label: 'Analyze Workspace', icon: Search },
-    { href: '/graph', label: 'Evidence Graph', icon: Network },
-    { href: '/research', label: 'Research Dashboard', icon: BarChart3 },
-  ];
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/12 bg-[#0a0e1a]/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand */}
-        <div className="flex items-center space-x-4">
-          <Link href="/" className="group flex items-center space-x-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-rose-500 via-blue-500 to-emerald-400 p-[2px] shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-105">
-              <div className="flex h-full w-full items-center justify-center rounded-[9px] bg-[#0d1322]">
-                <GitBranch className="h-5 w-5 text-white transition-transform group-hover:rotate-12" />
-              </div>
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-2xs">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Left: Logo + TRACEVIDENCE + Version */}
+        <div className="flex items-center space-x-3 shrink-0">
+          <Link href="/" className="group flex items-center space-x-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0f766e] text-white shadow-md shadow-teal-900/10 transition-transform group-hover:scale-105">
+              <GitBranch className="h-5 w-5 transition-transform group-hover:rotate-12" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-mono text-xl sm:text-2xl font-black tracking-tight text-white">
-                  TRACE<span className="text-gradient-rbgw font-extrabold">VIDENCE</span>
+              <div className="flex items-center space-x-1.5">
+                <span className="font-mono text-lg font-black tracking-tight text-[#0f172a]">
+                  TRACE<span className="text-[#0f766e]">VIDENCE</span>
                 </span>
-                <span className="rounded-full bg-gradient-to-r from-rose-500/20 via-blue-500/20 to-emerald-500/20 px-2.5 py-0.5 font-mono text-xs font-bold text-white border border-white/20">
+                <span className="rounded-md bg-teal-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#0f766e] border border-teal-200">
                   v2.4
                 </span>
               </div>
-              <p className="hidden text-xs text-slate-300 font-medium sm:block">
-                TRACE-X Provenance · AIVIDENCE Trust Intelligence
+              <p className="hidden text-[11px] text-[#475569] sm:block">
+                Evidence Provenance & Uncertainty Intelligence
               </p>
             </div>
           </Link>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav className="hidden md:flex items-center space-x-1.5 rounded-xl bg-slate-900/80 p-1.5 border border-white/10 shadow-inner">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center space-x-2.5 rounded-lg px-4 py-2 text-sm sm:text-base font-semibold transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r from-rose-500/20 via-blue-500/25 to-emerald-500/20 text-white border border-white/30 shadow-md shadow-blue-500/10'
-                    : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <Icon className={`h-4 w-4 ${isActive ? 'text-blue-400' : 'text-slate-400'}`} />
-                <span>{link.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Right Actions: Interactive Tour, Benchmarks, Judge Mode */}
-        <div className="flex items-center space-x-2.5 sm:space-x-4">
-          {/* Interactive Tour Button */}
-          <button
-            onClick={() => openTour(0)}
-            className="flex items-center space-x-2 rounded-xl border border-white/20 bg-gradient-to-r from-rose-500/15 via-blue-500/15 to-emerald-500/15 px-3.5 py-2 text-sm font-semibold text-white hover:border-white/40 hover:bg-white/10 shadow-md transition-all"
-            title="Launch comprehensive guided tutorial"
-          >
-            <Sparkles className="h-4 w-4 text-emerald-400" />
-            <span className="hidden sm:inline">Interactive Tour</span>
-            <span className="sm:hidden">Tour</span>
-          </button>
-
-          {/* Quick Demo Case Selector */}
-          <div className="relative">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center space-x-2 rounded-xl border border-white/15 bg-slate-800/90 px-3.5 py-2 text-sm font-semibold text-slate-100 hover:border-white/30 hover:bg-slate-700/90 transition-colors shadow-sm"
-            >
-              <span className="hidden sm:inline">Benchmarks</span>
-              <span className="sm:hidden">Cases</span>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-300" />
-            </button>
-
-            {dropdownOpen && (
-              <div
-                className="absolute right-0 mt-2 w-80 rounded-2xl border border-white/15 bg-[#0f172a] p-2.5 shadow-2xl backdrop-blur-2xl z-50"
-                onClick={() => setDropdownOpen(false)}
-              >
-                <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 border-b border-white/10">
-                  Peer-Reviewed Benchmark Cases
-                </div>
-                <div className="mt-1.5 space-y-1">
-                  {BENCHMARK_CASES.map((b) => (
-                    <button
-                      key={b.id}
-                      onClick={() => loadBenchmarkCase(b.id)}
-                      className={`w-full text-left rounded-xl p-2.5 transition-all ${
-                        currentAnalysis?.id === b.data.id
-                          ? 'bg-blue-950/70 border border-blue-500/50 text-white shadow-sm'
-                          : 'hover:bg-white/10 text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs text-blue-400 font-bold">{b.tag}</span>
-                        <span
-                          className={`rounded-md px-2 py-0.5 text-xs font-bold ${
-                            b.expectedOutcome === 'TRUST'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-700/60'
-                              : b.expectedOutcome === 'VERIFY'
-                              ? 'bg-amber-950 text-amber-300 border border-amber-700/60'
-                              : 'bg-rose-950 text-rose-300 border border-rose-700/60'
-                          }`}
-                        >
-                          {b.expectedOutcome}
-                        </span>
-                      </div>
-                      <div className="mt-1 font-semibold text-sm text-white truncate">{b.title}</div>
-                      <div className="text-xs text-slate-400 truncate">{b.highlightSignal}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Avishkar Judge Mode Badge */}
-          <button
-            onClick={toggleJudgeMode}
-            title="Toggle Research Judge & Evaluation Mode"
-            className={`flex items-center space-x-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all border ${
-              judgeMode
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-md shadow-emerald-500/20'
-                : 'bg-slate-800/80 text-slate-300 border-white/10 hover:text-white hover:border-white/25'
+        {/* Center: Main Navigation Links */}
+        <nav className="hidden lg:flex items-center space-x-1 rounded-xl bg-slate-100/90 p-1 border border-slate-200/70">
+          {/* Analyze Workspace */}
+          <Link
+            href="/analyze"
+            className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              pathname === '/analyze'
+                ? 'bg-white text-[#0f766e] shadow-xs border border-slate-200/80 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <Award className="h-4 w-4 text-emerald-400" />
-            <span className="hidden sm:inline">Judge Mode</span>
-            <span className="sm:hidden">Judge</span>
+            <Search className={`h-3.5 w-3.5 ${pathname === '/analyze' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
+            <span>Analyze Workspace</span>
+          </Link>
+
+          {/* Evidence Graph */}
+          <Link
+            href="/graph"
+            className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              pathname === '/graph'
+                ? 'bg-white text-[#0f766e] shadow-xs border border-slate-200/80 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            }`}
+          >
+            <Network className={`h-3.5 w-3.5 ${pathname === '/graph' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
+            <span>Evidence Graph</span>
+          </Link>
+
+          {/* Research Dashboard */}
+          <Link
+            href="/research"
+            className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              pathname === '/research'
+                ? 'bg-white text-[#0f766e] shadow-xs border border-slate-200/80 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            }`}
+          >
+            <BarChart3 className={`h-3.5 w-3.5 ${pathname === '/research' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
+            <span>Research Dashboard</span>
+          </Link>
+
+          {/* Training Mission (Interactive Trigger) */}
+          <button
+            onClick={() => openPrologue(0)}
+            className="flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all cursor-pointer"
+            title="Start Interactive Investigator Training Mission"
+          >
+            <Gamepad2 className="h-3.5 w-3.5 text-amber-600" />
+            <span>Training Mission</span>
+          </button>
+
+          {/* Tour (Interactive Trigger) */}
+          <button
+            onClick={() => openTour(0)}
+            className="flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all cursor-pointer"
+            title="Launch Feature-by-Feature Guided Tour"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-teal-600" />
+            <span>Tour</span>
+          </button>
+
+          {/* Benchmarks (Dedicated Page Link) */}
+          <Link
+            href="/benchmarks"
+            className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              pathname === '/benchmarks'
+                ? 'bg-white text-[#0f766e] shadow-xs border border-slate-200/80 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            }`}
+          >
+            <FlaskConical className={`h-3.5 w-3.5 ${pathname === '/benchmarks' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
+            <span>Benchmarks</span>
+          </Link>
+
+          {/* Judge Mode (Toggle Trigger) */}
+          <button
+            onClick={toggleJudgeMode}
+            className={`flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all cursor-pointer border ${
+              judgeMode
+                ? 'bg-purple-50 text-purple-700 border-purple-200 font-bold shadow-2xs'
+                : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white/60'
+            }`}
+            title="Toggle Academic Reviewer & Evaluation Mode"
+          >
+            <Award className={`h-3.5 w-3.5 ${judgeMode ? 'text-purple-600' : 'text-slate-400'}`} />
+            <span>{judgeMode ? 'Judge Mode (ON)' : 'Judge Mode'}</span>
+          </button>
+        </nav>
+
+        {/* Right Side: Plain English / Tech English toggle */}
+        <div className="hidden lg:flex items-center space-x-3 shrink-0">
+          <button
+            onClick={togglePlainEnglishMode}
+            className={`flex items-center space-x-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-all border shadow-2xs cursor-pointer ${
+              plainEnglishMode
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                : 'bg-teal-50 text-[#0f766e] border-teal-300 hover:bg-teal-100'
+            }`}
+            title="Toggle between everyday Plain English and formal Academic/Technical terminology"
+          >
+            <Languages className="h-3.5 w-3.5" />
+            <span>{plainEnglishMode ? 'Plain English' : 'Tech English'}</span>
+          </button>
+        </div>
+
+        {/* Mobile Hamburger Button */}
+        <div className="flex lg:hidden items-center space-x-2">
+          <button
+            onClick={togglePlainEnglishMode}
+            className="rounded-lg px-2 py-1 border border-slate-200 text-xs font-bold text-slate-700 bg-white"
+          >
+            {plainEnglishMode ? 'Plain' : 'Tech'}
+          </button>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
+
+      {/* Mobile Drawer */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-2">
+          <Link
+            href="/analyze"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center space-x-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <Search className="h-4 w-4 text-[#0f766e]" />
+            <span>Analyze Workspace</span>
+          </Link>
+
+          <Link
+            href="/graph"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center space-x-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <Network className="h-4 w-4 text-[#0f766e]" />
+            <span>Evidence Graph</span>
+          </Link>
+
+          <Link
+            href="/research"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center space-x-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <BarChart3 className="h-4 w-4 text-[#0f766e]" />
+            <span>Research Dashboard</span>
+          </Link>
+
+          <Link
+            href="/benchmarks"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center space-x-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <FlaskConical className="h-4 w-4 text-[#0f766e]" />
+            <span>Benchmarks</span>
+          </Link>
+
+          <div className="border-t border-slate-100 pt-2 space-y-2">
+            <button
+              onClick={() => {
+                openPrologue(0);
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center space-x-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900"
+            >
+              <Gamepad2 className="h-4 w-4 text-amber-600" />
+              <span>Start Training Mission</span>
+            </button>
+
+            <button
+              onClick={() => {
+                openTour(0);
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center space-x-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-bold text-teal-900"
+            >
+              <Sparkles className="h-4 w-4 text-[#0f766e]" />
+              <span>Guided Tour</span>
+            </button>
+
+            <button
+              onClick={() => {
+                toggleJudgeMode();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center space-x-2 rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-bold text-purple-900"
+            >
+              <Award className="h-4 w-4 text-purple-600" />
+              <span>{judgeMode ? 'Judge Mode: ON' : 'Toggle Judge Mode'}</span>
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

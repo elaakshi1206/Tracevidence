@@ -18,11 +18,20 @@ interface AnalysisState {
   plainEnglishMode: boolean;
   dismissedPageTutorials: Record<string, boolean>;
 
+  // Gamified Compulsory Prologue Tutorial
+  isPrologueOpen: boolean;
+  prologueStep: number;
+  hasCompletedPrologue: boolean;
+
+  // Dual Analysis Modes
+  analysisMode: 'benchmark' | 'live';
+
   // Actions
   setAnalysis: (analysis: AnalysisResult) => void;
   setSelectedClaimId: (claimId: string | null) => void;
   setPipelineProgress: (progress: PipelineProgressUpdate | null) => void;
   setIsAnalyzing: (loading: boolean) => void;
+  setAnalysisMode: (mode: 'benchmark' | 'live') => void;
   toggleJudgeMode: () => void;
   setActiveFilter: (filter: 'ALL' | 'TRUST' | 'VERIFY' | 'ABSTAIN') => void;
   loadBenchmarkCase: (benchmarkId: string) => void;
@@ -34,6 +43,12 @@ interface AnalysisState {
   setTourStep: (step: number) => void;
   togglePlainEnglishMode: () => void;
   togglePageTutorial: (pageKey: string) => void;
+
+  // Prologue actions
+  openPrologue: (step?: number) => void;
+  closePrologue: () => void;
+  setPrologueStep: (step: number) => void;
+  completePrologue: () => void;
 }
 
 export const useAnalysisStore = create<AnalysisState>((set) => ({
@@ -44,16 +59,23 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   history: BENCHMARK_CASES.map(b => b.data),
   judgeMode: true,
   activeFilter: 'ALL',
+  analysisMode: 'benchmark',
 
   // Tutorials
   isTourOpen: false,
   tourStep: 0,
-  plainEnglishMode: false,
+  plainEnglishMode: true,
   dismissedPageTutorials: {},
+
+  // Gamified Compulsory Prologue Tutorial
+  isPrologueOpen: false, // will auto-trigger on first mount if not completed in localStorage
+  prologueStep: 0,
+  hasCompletedPrologue: false,
 
   setAnalysis: (analysis) =>
     set((state) => ({
       currentAnalysis: analysis,
+      analysisMode: analysis.analysisMode || state.analysisMode,
       selectedClaimId: analysis.claims[0]?.id || null,
       history: [analysis, ...state.history.filter((h) => h.id !== analysis.id)].slice(0, 10),
     })),
@@ -61,6 +83,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   setSelectedClaimId: (claimId) => set({ selectedClaimId: claimId }),
   setPipelineProgress: (progress) => set({ pipelineProgress: progress }),
   setIsAnalyzing: (loading) => set({ isAnalyzing: loading }),
+  setAnalysisMode: (mode) => set({ analysisMode: mode }),
   toggleJudgeMode: () => set((state) => ({ judgeMode: !state.judgeMode })),
   setActiveFilter: (filter) => set({ activeFilter: filter }),
 
@@ -69,6 +92,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
     if (found) {
       set({
         currentAnalysis: found.data,
+        analysisMode: 'benchmark',
         selectedClaimId: found.data.claims[0]?.id || null,
         pipelineProgress: null,
         isAnalyzing: false,
@@ -89,4 +113,18 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
         [pageKey]: !state.dismissedPageTutorials[pageKey],
       },
     })),
+
+  openPrologue: (step = 0) => set({ isPrologueOpen: true, prologueStep: step }),
+  closePrologue: () => set({ isPrologueOpen: false }),
+  setPrologueStep: (step: number) => set({ prologueStep: step }),
+  completePrologue: () => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('tracevidence_prologue_completed', 'true');
+      } catch (e) {
+        // ignore
+      }
+    }
+    set({ isPrologueOpen: false, hasCompletedPrologue: true });
+  },
 }));

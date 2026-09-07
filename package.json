@@ -4,9 +4,11 @@
   "private": true,
   "description": "TRACEVIDENCE: Evidence Provenance & Trust Decision Research Platform",
   "scripts": {
+    "dev": "npm --prefix frontend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "build:frontend": "npm --prefix frontend run build",
     "dev:backend": "cd backend && .\\venv\\Scripts\\python -m uvicorn app.main:app --reload --port 8000",
+    "dev:all": "start npm --prefix frontend run dev && cd backend && .\\venv\\Scripts\\python -m uvicorn app.main:app --reload --port 8000",
     "test:frontend": "npm --prefix frontend run lint"
   }
 }

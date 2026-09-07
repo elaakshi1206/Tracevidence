@@ -12,21 +12,21 @@ export default function DecisionBadge({ decision, size = 'md', showIcon = true }
   const configs = {
     TRUST: {
       label: 'TRUST',
-      bg: 'bg-emerald-950/90 text-emerald-200 border-emerald-400/60 shadow-emerald-500/20',
+      bg: 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs',
       icon: ShieldCheck,
-      iconColor: 'text-emerald-400',
+      iconColor: 'text-emerald-600',
     },
     VERIFY: {
       label: 'VERIFY',
-      bg: 'bg-amber-950/90 text-amber-200 border-amber-400/60 shadow-amber-500/20',
+      bg: 'bg-amber-50 text-amber-800 border-amber-300 shadow-2xs',
       icon: AlertTriangle,
-      iconColor: 'text-amber-400',
+      iconColor: 'text-amber-600',
     },
     ABSTAIN: {
       label: 'ABSTAIN',
-      bg: 'bg-rose-950/90 text-rose-200 border-rose-400/60 shadow-rose-500/20',
+      bg: 'bg-rose-50 text-rose-800 border-rose-300 shadow-2xs',
       icon: ShieldAlert,
-      iconColor: 'text-rose-400',
+      iconColor: 'text-rose-600',
     },
   };
 
@@ -34,20 +34,20 @@ export default function DecisionBadge({ decision, size = 'md', showIcon = true }
   const Icon = config.icon;
 
   const sizeClasses = {
-    sm: 'px-2.5 py-1 text-xs space-x-1.5 font-bold',
-    md: 'px-3 py-1.5 text-sm space-x-2 font-bold',
-    lg: 'px-4 py-2 text-base space-x-2.5 font-extrabold',
+    sm: 'px-2 py-0.5 text-[11px] space-x-1 font-bold',
+    md: 'px-2.5 py-1 text-xs space-x-1.5 font-bold',
+    lg: 'px-3.5 py-1.5 text-sm space-x-2 font-bold',
   };
 
   const iconSizes = {
-    sm: 'h-3.5 w-3.5',
-    md: 'h-4 w-4',
-    lg: 'h-5 w-5',
+    sm: 'h-3 w-3',
+    md: 'h-3.5 w-3.5',
+    lg: 'h-4 w-4',
   };
 
   return (
     <span
-      className={`inline-flex items-center rounded-lg font-mono tracking-wider uppercase border shadow-md ${sizeClasses[size]} ${config.bg}`}
+      className={`inline-flex items-center rounded-lg font-mono tracking-wider uppercase border ${sizeClasses[size]} ${config.bg}`}
     >
       {showIcon && <Icon className={`${iconSizes[size]} ${config.iconColor} shrink-0`} />}
       <span>{config.label}</span>

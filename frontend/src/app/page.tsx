@@ -2,296 +2,304 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAnalysisStore } from '@/lib/store/analysisStore';
-import { BENCHMARK_CASES } from '@/lib/benchmarks/demoCases';
-import DecisionBadge from '@/components/common/DecisionBadge';
 import {
   GitBranch,
-  ShieldCheck,
   Search,
   Network,
   BarChart3,
   Award,
   ArrowRight,
-  Sparkles,
-  Layers,
-  Scale,
-  Clock,
+  ShieldCheck,
   AlertTriangle,
-  Compass,
+  FileSearch,
+  Layers,
+  CheckCircle2,
+  Gamepad2,
+  Sparkles,
+  ExternalLink,
+  ShieldAlert,
 } from 'lucide-react';
 
 export default function HomePage() {
-  const router = useRouter();
-  const { loadBenchmarkCase, openTour } = useAnalysisStore();
-
-  const handleCaseClick = (caseId: string) => {
-    loadBenchmarkCase(caseId);
-    router.push('/analyze');
-  };
+  const { openPrologue, plainEnglishMode } = useAnalysisStore();
 
   return (
-    <div className="space-y-24 py-10 sm:py-16">
-      {/* Hero Section */}
-      <section className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-        {/* Dynamic Multi-Color Ambient Glows (Red, Blue, Green, White) */}
-        <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-rose-500/20 blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/2 right-1/4 translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-blue-500/20 blur-[120px] pointer-events-none" />
-        <div className="absolute top-2/3 left-1/2 -translate-x-1/2 -translate-y-1/2 h-72 w-96 rounded-full bg-emerald-500/18 blur-[130px] pointer-events-none" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-white/10 blur-[100px] pointer-events-none" />
+    <div className="space-y-20 py-10 sm:py-16">
+      {/* 1. HERO SECTION */}
+      <section className="relative mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
+        {/* Soft Ambient Highlights */}
+        <div className="ambient-glow top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 h-72 w-72 rounded-full bg-teal-200/30 blur-[90px] pointer-events-none" />
+        <div className="ambient-glow top-1/2 right-1/4 translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-orange-200/30 blur-[90px] pointer-events-none" />
 
-        {/* Top Announcement Pill */}
-        <div className="inline-flex items-center space-x-2.5 rounded-full border border-white/25 bg-gradient-to-r from-rose-500/15 via-blue-500/15 to-emerald-500/15 px-5 py-2 text-sm font-semibold text-white backdrop-blur-xl shadow-lg">
-          <Award className="h-4 w-4 text-amber-300" />
-          <span>Avishkar Research Prototype · Human-Verifiable Decision Intelligence</span>
+        {/* Small badge */}
+        <div className="inline-flex items-center space-x-2 rounded-full border border-teal-200 bg-white px-4 py-1.5 text-xs font-semibold text-[#0f766e] shadow-2xs">
+          <Award className="h-4 w-4 text-amber-500" />
+          <span>Avishkar Research Prototype</span>
         </div>
 
-        {/* Grand Hero Title with Red-Blue-Green-White Gradient */}
-        <h1 className="mt-8 font-mono text-5xl font-black tracking-tight text-white sm:text-7xl sm:leading-tight">
-          TRACE<span className="text-gradient-rbgw">VIDENCE</span>
+        {/* Large title */}
+        <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-[#0f172a] sm:text-6xl sm:leading-tight">
+          TRACE<span className="text-[#0f766e]">VIDENCE</span>
         </h1>
 
-        <p className="mt-4 text-2xl sm:text-3xl font-semibold text-slate-200 italic">
+        {/* Tagline */}
+        <p className="mt-3 text-xl sm:text-2xl font-serif italic text-[#0f766e] font-medium">
           &ldquo;Trace the Evidence. Measure the Trust.&rdquo;
         </p>
 
-        <p className="mx-auto mt-6 max-w-3xl text-base sm:text-xl text-slate-200 leading-relaxed font-normal">
-          Standard chatbots and fact-checkers produce opaque scores and binary verdicts. TRACEVIDENCE formalizes an academic framework integrating{' '}
-          <strong className="text-blue-300 font-bold">TRACE-X</strong> (deep provenance tracing, origin seed detection, source collapse) and{' '}
-          <strong className="text-emerald-300 font-bold">AIVIDENCE</strong> (selective prediction: TRUST / VERIFY / ABSTAIN with mathematical transparency).
+        {/* Short simple description (maximum 2-3 lines) */}
+        <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg text-[#475569] leading-relaxed">
+          TRACEVIDENCE helps students, teachers, and researchers verify information by finding where claims originally came from, collapsing echo chambers, and computing transparent trust decisions.
         </p>
 
-        {/* Primary CTAs with Red-Blue-Green-White Gradients */}
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-5">
+        {/* Buttons */}
+        <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+          {/* Analyze Information (Primary - Coral) */}
           <Link
             href="/analyze"
-            className="btn-gradient-rbgw flex items-center space-x-3 rounded-2xl px-8 py-4 text-base sm:text-lg font-bold tracking-wide transition-all shadow-xl"
+            className="flex items-center space-x-2.5 rounded-xl bg-[#f97316] px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-orange-500/25 hover:bg-[#ea580c] hover:-translate-y-0.5 transition-all"
           >
-            <Search className="h-5 w-5" />
+            <Search className="h-4 w-4" />
             <span>Analyze Information</span>
           </Link>
 
+          {/* Start Training Mission (Secondary) */}
           <button
-            onClick={() => openTour(0)}
-            className="flex items-center space-x-3 rounded-2xl border border-white/25 bg-white/10 px-7 py-4 text-base sm:text-lg font-bold text-white backdrop-blur-xl hover:bg-white/20 hover:border-white/40 shadow-xl transition-all"
+            onClick={() => openPrologue(0)}
+            className="flex items-center space-x-2.5 rounded-xl bg-[#0f766e] px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-teal-900/15 hover:bg-[#115e59] hover:-translate-y-0.5 transition-all cursor-pointer"
           >
-            <Sparkles className="h-5 w-5 text-amber-300" />
-            <span>Interactive Tutorial (60s)</span>
+            <Gamepad2 className="h-4 w-4 text-amber-300" />
+            <span>Start Training Mission</span>
           </button>
 
+          {/* Research Dashboard (Outline) */}
           <Link
             href="/research"
-            className="flex items-center space-x-3 rounded-2xl border border-white/20 bg-slate-900/90 px-7 py-4 text-base sm:text-lg font-semibold text-slate-100 backdrop-blur-xl hover:border-blue-400 hover:bg-slate-800 transition-all shadow-lg"
+            className="flex items-center space-x-2 rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-semibold text-[#0f172a] hover:bg-slate-50 hover:border-[#0f766e] hover:text-[#0f766e] shadow-2xs transition-all"
           >
-            <BarChart3 className="h-5 w-5 text-blue-400" />
+            <BarChart3 className="h-4 w-4 text-[#0f766e]" />
             <span>Research Dashboard</span>
           </Link>
         </div>
-
-        {/* Core Principles Pill Bar */}
-        <div className="mt-12 flex flex-wrap justify-center gap-3.5 text-sm sm:text-base font-semibold text-slate-200">
-          <span className="flex items-center space-x-2 rounded-xl bg-slate-900/80 px-4 py-2.5 border border-rose-500/30 shadow-md">
-            <GitBranch className="h-4 w-4 text-rose-400" />
-            <span>Provenance Lineage Trees</span>
-          </span>
-          <span className="flex items-center space-x-2 rounded-xl bg-slate-900/80 px-4 py-2.5 border border-blue-500/30 shadow-md">
-            <Layers className="h-4 w-4 text-blue-400" />
-            <span>Source Independence Clustering</span>
-          </span>
-          <span className="flex items-center space-x-2 rounded-xl bg-slate-900/80 px-4 py-2.5 border border-emerald-500/30 shadow-md">
-            <Clock className="h-4 w-4 text-emerald-400" />
-            <span>Temporal Freshness Decay</span>
-          </span>
-          <span className="flex items-center space-x-2 rounded-xl bg-slate-900/80 px-4 py-2.5 border border-white/30 shadow-md">
-            <ShieldCheck className="h-4 w-4 text-white" />
-            <span>Selective Prediction (ABSTAIN)</span>
-          </span>
-        </div>
       </section>
 
-      {/* Human-Centered Guide: Why Standard Fact-Checking Fails */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="card-gradient-border p-8 sm:p-10 shadow-2xl">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/12 pb-6">
-            <div className="flex items-center space-x-3.5">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-500 via-blue-500 to-emerald-400 p-[1px] shadow-md">
-                <div className="flex h-full w-full items-center justify-center rounded-[15px] bg-[#0c1322]">
-                  <Compass className="h-5 w-5 text-white" />
-                </div>
+      {/* 2. WHY IT MATTERS SECTION (Three Equal Cards) */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#0f766e]">
+            Core Epistemic Foundation
+          </span>
+          <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-[#0f172a]">
+            Why It Matters
+          </h2>
+          <p className="mt-2 text-sm text-[#475569]">
+            Traditional fact-checking merely counts how many times something is repeated. Here is how TRACEVIDENCE changes the game:
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: The Problem (Echo Chamber) */}
+          <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-7 shadow-xs hover:shadow-md transition-shadow">
+            <div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 border border-rose-200 text-[#e11d48] mb-5">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#e11d48]">
+                The Problem
               </span>
-              <div>
-                <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-400">
-                  New Here? How It Works In Plain English
-                </span>
-                <h3 className="text-xl sm:text-2xl font-bold text-white">
-                  Why Standard Fact-Checking Fails & How TRACEVIDENCE Protects You
-                </h3>
-              </div>
-            </div>
-
-            <button
-              onClick={() => openTour(0)}
-              className="btn-gradient-rbgw flex items-center space-x-2 rounded-xl px-5 py-2.5 text-sm sm:text-base font-bold shadow-md"
-            >
-              <span>Take Full Guided Tour</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-5 shadow-lg">
-              <div className="flex items-center space-x-2.5 text-rose-300 font-bold text-base">
-                <AlertTriangle className="h-5 w-5 text-rose-400" />
-                <span>The Problem: The Echo Chamber</span>
-              </div>
-              <p className="mt-3 text-sm sm:text-base text-slate-200 leading-relaxed">
-                If 12 news blogs report that an EV battery requires 50,000 km to break even, standard checkers count 12 corroborating sources. In reality, all 12 simply syndicated 1 single outdated Swedish paper.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-blue-500/30 bg-blue-950/20 p-5 shadow-lg">
-              <div className="flex items-center space-x-2.5 text-blue-300 font-bold text-base">
-                <GitBranch className="h-5 w-5 text-blue-400" />
-                <span>The Fix: TRACE-X Lineage</span>
-              </div>
-              <p className="mt-3 text-sm sm:text-base text-slate-200 leading-relaxed">
-                TRACE-X audits citation paths back to the primary origin seed. It recognizes syndicated wire copy and mathematically collapses duplicate echoes back to <strong>1 single origin</strong>!
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-5 shadow-lg">
-              <div className="flex items-center space-x-2.5 text-emerald-300 font-bold text-base">
-                <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                <span>The Result: Trust Intelligence</span>
-              </div>
-              <p className="mt-3 text-sm sm:text-base text-slate-200 leading-relaxed">
-                Instead of guessing True or False, AIVIDENCE computes an explainable trust score. When epistemic uncertainty is too high, it <strong>ABSTAINS</strong>, preventing automated hallucination.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Peer-Reviewed Benchmark Showcase */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/12 pb-5">
-          <div>
-            <span className="font-mono text-xs font-bold uppercase tracking-widest text-blue-400">
-              Interactive Case Studies
-            </span>
-            <h2 className="mt-1.5 text-2xl sm:text-3xl font-bold text-white">
-              Preloaded Academic Benchmark Demos
-            </h2>
-            <p className="mt-1.5 text-sm sm:text-base text-slate-300">
-              Click any peer-reviewed dataset below to instantly inspect the live provenance graph, independence collapse, and trust decisions.
-            </p>
-          </div>
-
-          <Link
-            href="/research"
-            className="flex items-center space-x-1.5 text-sm sm:text-base font-semibold text-blue-400 hover:text-white transition-colors"
-          >
-            <span>View full ablation suite</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {BENCHMARK_CASES.map((b) => (
-            <div
-              key={b.id}
-              onClick={() => handleCaseClick(b.id)}
-              className="group cursor-pointer rounded-2xl border border-white/15 bg-gradient-to-b from-[#10182b] to-[#0c1220] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-white/35 hover:shadow-2xl hover:shadow-blue-500/15"
-            >
-              <div className="flex items-center justify-between">
-                <span className="rounded-md bg-slate-800/90 px-2.5 py-1 font-mono text-xs font-bold text-white border border-white/15">
-                  {b.tag}
-                </span>
-                <DecisionBadge decision={b.expectedOutcome} size="md" />
-              </div>
-
-              <h3 className="mt-4 text-base sm:text-lg font-bold text-white group-hover:text-blue-300 transition-colors leading-snug">
-                {b.title}
+              <h3 className="mt-1 text-lg font-bold text-[#0f172a]">
+                The Echo Chamber
               </h3>
-
-              <div className="mt-1.5 text-xs sm:text-sm font-mono text-slate-400">{b.domain}</div>
-
-              <p className="mt-3 text-sm sm:text-base text-slate-300 line-clamp-2 leading-relaxed">
-                {b.description}
+              <p className="mt-3 text-sm text-[#475569] leading-relaxed">
+                When 10 news articles report the exact same claim, ordinary systems count 10 independent confirmations. In reality, all 10 outlets merely syndicated or rewrote one single unverified blog post or outdated paper.
               </p>
-
-              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-sm">
-                <span className="rounded-lg bg-amber-950/60 px-2.5 py-1 text-xs font-mono font-bold text-amber-300 border border-amber-800/50">
-                  {b.highlightSignal}
-                </span>
-
-                <span className="flex items-center space-x-1.5 text-white font-semibold text-sm group-hover:translate-x-1 transition-transform">
-                  <span>Audit Case</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-blue-400" />
-                </span>
-              </div>
             </div>
-          ))}
+            <div className="mt-6 pt-4 border-t border-slate-100 font-mono text-xs font-semibold text-rose-700">
+              10 Articles ≠ 10 Independent Truths
+            </div>
+          </div>
+
+          {/* Card 2: The Fix (TRACE-X) */}
+          <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-7 shadow-xs hover:shadow-md transition-shadow">
+            <div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50 border border-teal-200 text-[#0f766e] mb-5">
+                <GitBranch className="h-6 w-6" />
+              </div>
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#0f766e]">
+                The Fix
+              </span>
+              <h3 className="mt-1 text-lg font-bold text-[#0f172a]">
+                TRACE-X Lineage Engine
+              </h3>
+              <p className="mt-3 text-sm text-[#475569] leading-relaxed">
+                TRACE-X automatically traces citations back to the root primary origin seed. It analyzes text reuse, publication dates, and syndicated wire copies to mathematically collapse 10 duplicate echoes down to their single root source.
+              </p>
+            </div>
+            <div className="mt-6 pt-4 border-t border-slate-100 font-mono text-xs font-semibold text-[#0f766e]">
+              Root Lineage Tracking & Collapse
+            </div>
+          </div>
+
+          {/* Card 3: The Result (Trust Intelligence) */}
+          <div className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-7 shadow-xs hover:shadow-md transition-shadow">
+            <div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 text-[#059669] mb-5">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#059669]">
+                The Result
+              </span>
+              <h3 className="mt-1 text-lg font-bold text-[#0f172a]">
+                Trust Intelligence
+              </h3>
+              <p className="mt-3 text-sm text-[#475569] leading-relaxed">
+                Rather than guessing True or False, TRACEVIDENCE delivers an explainable trust score. When evidence is genuinely conflicted, circular, or outdated, it has the integrity to <strong>ABSTAIN</strong>, preventing dangerous AI hallucinations.
+              </p>
+            </div>
+            <div className="mt-6 pt-4 border-t border-slate-100 font-mono text-xs font-semibold text-[#059669]">
+              Selective Prediction: TRUST / VERIFY / ABSTAIN
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Architecture & Pipeline Narrative */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-white/15 bg-gradient-to-br from-[#10192e] via-[#0c1322] to-[#080d18] p-8 sm:p-14 shadow-2xl">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-400">
-              The Academic Pipeline
+      {/* 3. HOW IT WORKS SECTION (Simple 5-Step Visual Pipeline) */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 sm:p-12 shadow-sm">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#0f766e]">
+              Step-By-Step Workflow
             </span>
-            <h2 className="mt-2 text-2xl sm:text-4xl font-bold text-white">
-              From Raw Proposition to Selective Decision Intelligence
+            <h2 className="mt-1.5 text-2xl sm:text-3xl font-bold text-[#0f172a]">
+              How It Works
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-300 leading-relaxed">
-              Traditional systems rely on token probabilities. TRACEVIDENCE enforces rigorous epistemic constraints across 5 decoupled modules.
+            <p className="mt-2 text-sm text-[#475569]">
+              Our transparent 5-step pipeline audits any claim with scientific rigor:
             </p>
           </div>
 
-          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-5">
-            <div className="rounded-2xl bg-black/40 p-5 border border-rose-500/25 shadow-lg">
-              <div className="font-mono text-xs text-rose-400 font-bold">01 / EXTRACTION</div>
-              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Atomic Decomposition</h4>
-              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Breaks discourse into atomic, falsifiable claims with isolated entities and target quantities.
-              </p>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+            {/* Step 1 */}
+            <div className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 text-center sm:text-left transition-all hover:border-teal-300 hover:bg-white hover:shadow-xs">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0f766e] text-white font-mono text-xs font-bold">
+                    1
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-[#0f766e] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                    Extract
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-[#0f172a]">1. Extract Claims</h4>
+                <p className="mt-2 text-xs text-[#475569] leading-relaxed">
+                  Breaks paragraphs into atomic, testable statements so complex ideas are evaluated individually.
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-2xl bg-black/40 p-5 border border-blue-500/25 shadow-lg">
-              <div className="font-mono text-xs text-blue-400 font-bold">02 / RETRIEVAL</div>
-              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Tiered Source Audit</h4>
-              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Classifies candidate literature into Academic, Government, Official, Media, or Aggregator tiers.
-              </p>
+            {/* Step 2 */}
+            <div className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 text-center sm:text-left transition-all hover:border-teal-300 hover:bg-white hover:shadow-xs">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0f766e] text-white font-mono text-xs font-bold">
+                    2
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-[#0f766e] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                    Retrieve
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-[#0f172a]">2. Find Evidence</h4>
+                <p className="mt-2 text-xs text-[#475569] leading-relaxed">
+                  Queries academic papers, official repositories, and credible media sources across tiered databases.
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-2xl bg-black/40 p-5 border border-emerald-500/25 shadow-lg">
-              <div className="font-mono text-xs text-emerald-400 font-bold">03 / TRACE-X</div>
-              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Provenance Lineage</h4>
-              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Computes verbatim reuse and traces origin seeds to detect echoes, syndicated wire copy, and circularity.
-              </p>
+            {/* Step 3 */}
+            <div className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 text-center sm:text-left transition-all hover:border-teal-300 hover:bg-white hover:shadow-xs">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0f766e] text-white font-mono text-xs font-bold">
+                    3
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-[#0f766e] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                    Lineage
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-[#0f172a]">3. Trace Origin</h4>
+                <p className="mt-2 text-xs text-[#475569] leading-relaxed">
+                  Follows citations backwards to discover the original publication or experimental study.
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-2xl bg-black/40 p-5 border border-amber-500/25 shadow-lg">
-              <div className="font-mono text-xs text-amber-400 font-bold">04 / SIGNALS</div>
-              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Freshness & Conflict</h4>
-              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Calculates exponential temporal decay exp(-λΔt) and flags direct empirical refutations.
-              </p>
+            {/* Step 4 */}
+            <div className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 text-center sm:text-left transition-all hover:border-teal-300 hover:bg-white hover:shadow-xs">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0f766e] text-white font-mono text-xs font-bold">
+                    4
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-[#0f766e] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                    Cluster
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-[#0f172a]">4. Check Independence</h4>
+                <p className="mt-2 text-xs text-[#475569] leading-relaxed">
+                  Groups sources that copy one another to calculate the true number of distinct origin voices.
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-2xl bg-black/40 p-5 border border-white/25 shadow-lg">
-              <div className="font-mono text-xs text-white font-bold">05 / AIVIDENCE</div>
-              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Selective Prediction</h4>
-              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Replaces hallucinations with principled decisions: TRUST, VERIFY, or selective ABSTAIN.
-              </p>
+            {/* Step 5 */}
+            <div className="relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 text-center sm:text-left transition-all hover:border-teal-300 hover:bg-white hover:shadow-xs">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0f766e] text-white font-mono text-xs font-bold">
+                    5
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-[#0f766e] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                    Decision
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-[#0f172a]">5. Decide Trust</h4>
+                <p className="mt-2 text-xs text-[#475569] leading-relaxed">
+                  Assigns calibrated decisions: TRUST (verified), VERIFY (needs checking), or ABSTAIN (conflicted).
+                </p>
+              </div>
             </div>
           </div>
+
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4 pt-6 border-t border-slate-100">
+            <Link
+              href="/analyze"
+              className="flex items-center space-x-2 rounded-xl bg-[#f97316] px-6 py-3 text-xs sm:text-sm font-bold text-white hover:bg-[#ea580c] transition-all shadow-xs"
+            >
+              <span>Try It in the Analyze Workspace</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/benchmarks"
+              className="flex items-center space-x-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-[#0f766e] hover:border-teal-200 transition-all"
+            >
+              <span>Explore Benchmark Cases</span>
+              <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. SHORT ACADEMIC DISCLAIMER */}
+      <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 text-xs text-amber-900 leading-relaxed shadow-2xs">
+          <div className="flex items-center justify-center space-x-2 font-mono font-bold text-amber-800 mb-1">
+            <ShieldAlert className="h-4 w-4 text-amber-600" />
+            <span>Academic Research Disclaimer</span>
+          </div>
+          <p>
+            TRACEVIDENCE is an academic research prototype developed for the Avishkar Research Convention. It provides visible evidence provenance and uncertainty quantification, not an infallible truth oracle. Users should always consult primary literature for safety-critical decisions.
+          </p>
         </div>
       </section>
     </div>
