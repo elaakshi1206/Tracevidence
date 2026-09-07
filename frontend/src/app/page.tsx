@@ -32,92 +32,99 @@ export default function HomePage() {
   };
 
   return (
-    <div className="space-y-20 py-8 sm:py-14">
+    <div className="space-y-24 py-10 sm:py-16">
       {/* Hero Section */}
       <section className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-        {/* Glow ambient background */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-72 w-96 sm:w-[600px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
+        {/* Dynamic Multi-Color Ambient Glows (Red, Blue, Green, White) */}
+        <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-rose-500/20 blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/2 right-1/4 translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-blue-500/20 blur-[120px] pointer-events-none" />
+        <div className="absolute top-2/3 left-1/2 -translate-x-1/2 -translate-y-1/2 h-72 w-96 rounded-full bg-emerald-500/18 blur-[130px] pointer-events-none" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-white/10 blur-[100px] pointer-events-none" />
 
-        <div className="inline-flex items-center space-x-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-3.5 py-1.5 text-xs font-mono text-cyan-300 backdrop-blur-md shadow-sm shadow-cyan-500/20">
-          <Award className="h-3.5 w-3.5 text-amber-400" />
-          <span>Avishkar Research Prototype · Decision Intelligence Framework</span>
+        {/* Top Announcement Pill */}
+        <div className="inline-flex items-center space-x-2.5 rounded-full border border-white/25 bg-gradient-to-r from-rose-500/15 via-blue-500/15 to-emerald-500/15 px-5 py-2 text-sm font-semibold text-white backdrop-blur-xl shadow-lg">
+          <Award className="h-4 w-4 text-amber-300" />
+          <span>Avishkar Research Prototype · Human-Verifiable Decision Intelligence</span>
         </div>
 
-        <h1 className="mt-6 font-mono text-4xl font-extrabold tracking-tight text-white sm:text-6xl sm:leading-tight">
-          TRACE<span className="text-cyan-400">VIDENCE</span>
+        {/* Grand Hero Title with Red-Blue-Green-White Gradient */}
+        <h1 className="mt-8 font-mono text-5xl font-black tracking-tight text-white sm:text-7xl sm:leading-tight">
+          TRACE<span className="text-gradient-rbgw">VIDENCE</span>
         </h1>
 
-        <p className="mt-3 text-lg sm:text-2xl font-medium text-slate-300 font-serif italic">
+        <p className="mt-4 text-2xl sm:text-3xl font-semibold text-slate-200 italic">
           &ldquo;Trace the Evidence. Measure the Trust.&rdquo;
         </p>
 
-        <p className="mx-auto mt-6 max-w-3xl text-sm sm:text-base text-slate-400 leading-relaxed">
+        <p className="mx-auto mt-6 max-w-3xl text-base sm:text-xl text-slate-200 leading-relaxed font-normal">
           Standard chatbots and fact-checkers produce opaque scores and binary verdicts. TRACEVIDENCE formalizes an academic framework integrating{' '}
-          <strong className="text-cyan-300 font-semibold">TRACE-X</strong> (deep provenance tracing, origin seed detection, apparent vs independent source collapse) and{' '}
-          <strong className="text-emerald-300 font-semibold">AIVIDENCE</strong> (selective prediction: TRUST / VERIFY / ABSTAIN with mathematical transparency).
+          <strong className="text-blue-300 font-bold">TRACE-X</strong> (deep provenance tracing, origin seed detection, source collapse) and{' '}
+          <strong className="text-emerald-300 font-bold">AIVIDENCE</strong> (selective prediction: TRUST / VERIFY / ABSTAIN with mathematical transparency).
         </p>
 
-        {/* Primary CTAs */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+        {/* Primary CTAs with Red-Blue-Green-White Gradients */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-5">
           <Link
             href="/analyze"
-            className="flex items-center space-x-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 px-7 py-3.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-950 shadow-xl shadow-cyan-500/25 transition-all hover:scale-105 hover:from-cyan-400 hover:to-indigo-500"
+            className="btn-gradient-rbgw flex items-center space-x-3 rounded-2xl px-8 py-4 text-base sm:text-lg font-bold tracking-wide transition-all shadow-xl"
           >
-            <Search className="h-4 w-4" />
+            <Search className="h-5 w-5" />
             <span>Analyze Information</span>
           </Link>
 
           <button
             onClick={() => openTour(0)}
-            className="flex items-center space-x-2.5 rounded-xl border border-cyan-500/40 bg-cyan-950/40 px-6 py-3.5 font-mono text-xs sm:text-sm font-bold text-cyan-300 backdrop-blur-md hover:bg-cyan-900/50 shadow-lg shadow-cyan-500/10 transition-all"
+            className="flex items-center space-x-3 rounded-2xl border border-white/25 bg-white/10 px-7 py-4 text-base sm:text-lg font-bold text-white backdrop-blur-xl hover:bg-white/20 hover:border-white/40 shadow-xl transition-all"
           >
-            <Sparkles className="h-4 w-4 text-amber-400" />
-            <span>Start Interactive Tutorial (60s)</span>
+            <Sparkles className="h-5 w-5 text-amber-300" />
+            <span>Interactive Tutorial (60s)</span>
           </button>
 
           <Link
             href="/research"
-            className="flex items-center space-x-2.5 rounded-xl border border-white/10 bg-slate-900/80 px-6 py-3.5 font-mono text-xs sm:text-sm font-semibold text-slate-200 backdrop-blur-md hover:border-cyan-500/40 hover:bg-slate-800 transition-all"
+            className="flex items-center space-x-3 rounded-2xl border border-white/20 bg-slate-900/90 px-7 py-4 text-base sm:text-lg font-semibold text-slate-100 backdrop-blur-xl hover:border-blue-400 hover:bg-slate-800 transition-all shadow-lg"
           >
-            <BarChart3 className="h-4 w-4 text-cyan-400" />
+            <BarChart3 className="h-5 w-5 text-blue-400" />
             <span>Research Dashboard</span>
           </Link>
         </div>
 
         {/* Core Principles Pill Bar */}
-        <div className="mt-10 flex flex-wrap justify-center gap-3 text-xs font-mono text-slate-400">
-          <span className="flex items-center space-x-1.5 rounded-lg bg-black/40 px-3 py-1.5 border border-white/5">
-            <GitBranch className="h-3.5 w-3.5 text-cyan-400" />
+        <div className="mt-12 flex flex-wrap justify-center gap-3.5 text-sm sm:text-base font-semibold text-slate-200">
+          <span className="flex items-center space-x-2 rounded-xl bg-slate-900/80 px-4 py-2.5 border border-rose-500/30 shadow-md">
+            <GitBranch className="h-4 w-4 text-rose-400" />
             <span>Provenance Lineage Trees</span>
           </span>
-          <span className="flex items-center space-x-1.5 rounded-lg bg-black/40 px-3 py-1.5 border border-white/5">
-            <Layers className="h-3.5 w-3.5 text-indigo-400" />
+          <span className="flex items-center space-x-2 rounded-xl bg-slate-900/80 px-4 py-2.5 border border-blue-500/30 shadow-md">
+            <Layers className="h-4 w-4 text-blue-400" />
             <span>Source Independence Clustering</span>
           </span>
-          <span className="flex items-center space-x-1.5 rounded-lg bg-black/40 px-3 py-1.5 border border-white/5">
-            <Clock className="h-3.5 w-3.5 text-amber-400" />
+          <span className="flex items-center space-x-2 rounded-xl bg-slate-900/80 px-4 py-2.5 border border-emerald-500/30 shadow-md">
+            <Clock className="h-4 w-4 text-emerald-400" />
             <span>Temporal Freshness Decay</span>
           </span>
-          <span className="flex items-center space-x-1.5 rounded-lg bg-black/40 px-3 py-1.5 border border-white/5">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+          <span className="flex items-center space-x-2 rounded-xl bg-slate-900/80 px-4 py-2.5 border border-white/30 shadow-md">
+            <ShieldCheck className="h-4 w-4 text-white" />
             <span>Selective Prediction (ABSTAIN)</span>
           </span>
         </div>
       </section>
 
-      {/* New to TRACEVIDENCE? 3-Minute Empathy Tutorial Banner */}
+      {/* Human-Centered Guide: Why Standard Fact-Checking Fails */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-[#0c1424] via-[#0d1629] to-[#080d17] p-6 sm:p-8 shadow-2xl">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-            <div className="flex items-center space-x-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                <Compass className="h-4 w-4" />
+        <div className="card-gradient-border p-8 sm:p-10 shadow-2xl">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/12 pb-6">
+            <div className="flex items-center space-x-3.5">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-500 via-blue-500 to-emerald-400 p-[1px] shadow-md">
+                <div className="flex h-full w-full items-center justify-center rounded-[15px] bg-[#0c1322]">
+                  <Compass className="h-5 w-5 text-white" />
+                </div>
               </span>
               <div>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-cyan-400">
+                <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-400">
                   New Here? How It Works In Plain English
                 </span>
-                <h3 className="text-lg font-bold text-white font-mono">
+                <h3 className="text-xl sm:text-2xl font-bold text-white">
                   Why Standard Fact-Checking Fails & How TRACEVIDENCE Protects You
                 </h3>
               </div>
@@ -125,41 +132,41 @@ export default function HomePage() {
 
             <button
               onClick={() => openTour(0)}
-              className="flex items-center space-x-2 rounded-xl bg-cyan-500 px-4 py-2 font-mono text-xs font-bold text-slate-950 hover:bg-cyan-400 transition-all shadow-md shadow-cyan-500/20"
+              className="btn-gradient-rbgw flex items-center space-x-2 rounded-xl px-5 py-2.5 text-sm sm:text-base font-bold shadow-md"
             >
-              <span>Take Full Interactive Tour</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              <span>Take Full Guided Tour</span>
+              <ArrowRight className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="rounded-xl border border-rose-500/20 bg-black/30 p-4">
-              <div className="flex items-center space-x-2 text-rose-400 font-mono text-xs font-bold">
-                <AlertTriangle className="h-4 w-4" />
+          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-5 shadow-lg">
+              <div className="flex items-center space-x-2.5 text-rose-300 font-bold text-base">
+                <AlertTriangle className="h-5 w-5 text-rose-400" />
                 <span>The Problem: The Echo Chamber</span>
               </div>
-              <p className="mt-2 text-xs text-slate-300 leading-relaxed">
-                If 12 news blogs write that an EV battery takes 50,000 km to break even, search engines count 12 independent sources. In reality, all 12 merely copied 1 outdated Swedish paper.
+              <p className="mt-3 text-sm sm:text-base text-slate-200 leading-relaxed">
+                If 12 news blogs report that an EV battery requires 50,000 km to break even, standard checkers count 12 corroborating sources. In reality, all 12 simply syndicated 1 single outdated Swedish paper.
               </p>
             </div>
 
-            <div className="rounded-xl border border-cyan-500/20 bg-black/30 p-4">
-              <div className="flex items-center space-x-2 text-cyan-400 font-mono text-xs font-bold">
-                <GitBranch className="h-4 w-4" />
+            <div className="rounded-2xl border border-blue-500/30 bg-blue-950/20 p-5 shadow-lg">
+              <div className="flex items-center space-x-2.5 text-blue-300 font-bold text-base">
+                <GitBranch className="h-5 w-5 text-blue-400" />
                 <span>The Fix: TRACE-X Lineage</span>
               </div>
-              <p className="mt-2 text-xs text-slate-300 leading-relaxed">
-                TRACE-X crawls citation paths back to the primary origin. It detects that those 12 articles are syndicated echoes, collapsing them mathematically to <strong>1 single origin</strong>!
+              <p className="mt-3 text-sm sm:text-base text-slate-200 leading-relaxed">
+                TRACE-X audits citation paths back to the primary origin seed. It recognizes syndicated wire copy and mathematically collapses duplicate echoes back to <strong>1 single origin</strong>!
               </p>
             </div>
 
-            <div className="rounded-xl border border-emerald-500/20 bg-black/30 p-4">
-              <div className="flex items-center space-x-2 text-emerald-400 font-mono text-xs font-bold">
-                <ShieldCheck className="h-4 w-4" />
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-5 shadow-lg">
+              <div className="flex items-center space-x-2.5 text-emerald-300 font-bold text-base">
+                <ShieldCheck className="h-5 w-5 text-emerald-400" />
                 <span>The Result: Trust Intelligence</span>
               </div>
-              <p className="mt-2 text-xs text-slate-300 leading-relaxed">
-                Instead of guessing True or False, AIVIDENCE computes an explainable trust score. If uncertainty is too high, it <strong>ABSTAINS</strong>, keeping you safe from misinformation.
+              <p className="mt-3 text-sm sm:text-base text-slate-200 leading-relaxed">
+                Instead of guessing True or False, AIVIDENCE computes an explainable trust score. When epistemic uncertainty is too high, it <strong>ABSTAINS</strong>, preventing automated hallucination.
               </p>
             </div>
           </div>
@@ -168,60 +175,60 @@ export default function HomePage() {
 
       {/* Peer-Reviewed Benchmark Showcase */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/12 pb-5">
           <div>
-            <span className="font-mono text-xs font-bold uppercase tracking-widest text-cyan-400">
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-blue-400">
               Interactive Case Studies
             </span>
-            <h2 className="mt-1 text-2xl font-bold text-white font-mono">
+            <h2 className="mt-1.5 text-2xl sm:text-3xl font-bold text-white">
               Preloaded Academic Benchmark Demos
             </h2>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1.5 text-sm sm:text-base text-slate-300">
               Click any peer-reviewed dataset below to instantly inspect the live provenance graph, independence collapse, and trust decisions.
             </p>
           </div>
 
           <Link
             href="/research"
-            className="flex items-center space-x-1 text-xs font-mono text-cyan-400 hover:text-cyan-300"
+            className="flex items-center space-x-1.5 text-sm sm:text-base font-semibold text-blue-400 hover:text-white transition-colors"
           >
-            <span>View full ablation table</span>
-            <ArrowRight className="h-3.5 w-3.5" />
+            <span>View full ablation suite</span>
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {BENCHMARK_CASES.map((b) => (
             <div
               key={b.id}
               onClick={() => handleCaseClick(b.id)}
-              className="group cursor-pointer rounded-2xl border border-white/10 bg-[#0d1424]/90 p-5 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:border-cyan-500/50 hover:shadow-cyan-500/10"
+              className="group cursor-pointer rounded-2xl border border-white/15 bg-gradient-to-b from-[#10182b] to-[#0c1220] p-6 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-white/35 hover:shadow-2xl hover:shadow-blue-500/15"
             >
               <div className="flex items-center justify-between">
-                <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-[10px] font-bold text-cyan-400 border border-white/10">
+                <span className="rounded-md bg-slate-800/90 px-2.5 py-1 font-mono text-xs font-bold text-white border border-white/15">
                   {b.tag}
                 </span>
-                <DecisionBadge decision={b.expectedOutcome} size="sm" />
+                <DecisionBadge decision={b.expectedOutcome} size="md" />
               </div>
 
-              <h3 className="mt-3 text-sm font-bold text-white group-hover:text-cyan-300 transition-colors leading-snug">
+              <h3 className="mt-4 text-base sm:text-lg font-bold text-white group-hover:text-blue-300 transition-colors leading-snug">
                 {b.title}
               </h3>
 
-              <div className="mt-1 text-[11px] font-mono text-slate-400">{b.domain}</div>
+              <div className="mt-1.5 text-xs sm:text-sm font-mono text-slate-400">{b.domain}</div>
 
-              <p className="mt-2.5 text-xs text-slate-400 line-clamp-2 leading-relaxed">
+              <p className="mt-3 text-sm sm:text-base text-slate-300 line-clamp-2 leading-relaxed">
                 {b.description}
               </p>
 
-              <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-3 text-xs">
-                <span className="rounded bg-amber-950/50 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-300 border border-amber-800/40">
+              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-sm">
+                <span className="rounded-lg bg-amber-950/60 px-2.5 py-1 text-xs font-mono font-bold text-amber-300 border border-amber-800/50">
                   {b.highlightSignal}
                 </span>
 
-                <span className="flex items-center space-x-1 text-cyan-400 font-mono text-[11px] font-semibold group-hover:translate-x-1 transition-transform">
+                <span className="flex items-center space-x-1.5 text-white font-semibold text-sm group-hover:translate-x-1 transition-transform">
                   <span>Audit Case</span>
-                  <ArrowRight className="h-3 w-3" />
+                  <ArrowRight className="h-3.5 w-3.5 text-blue-400" />
                 </span>
               </div>
             </div>
@@ -231,56 +238,56 @@ export default function HomePage() {
 
       {/* Architecture & Pipeline Narrative */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0d1424] via-[#080d1a] to-[#07090e] p-8 sm:p-12 shadow-2xl">
+        <div className="rounded-3xl border border-white/15 bg-gradient-to-br from-[#10192e] via-[#0c1322] to-[#080d18] p-8 sm:p-14 shadow-2xl">
           <div className="text-center max-w-3xl mx-auto">
-            <span className="font-mono text-xs font-bold uppercase tracking-widest text-cyan-400">
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-emerald-400">
               The Academic Pipeline
             </span>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-white font-mono">
+            <h2 className="mt-2 text-2xl sm:text-4xl font-bold text-white">
               From Raw Proposition to Selective Decision Intelligence
             </h2>
-            <p className="mt-3 text-xs sm:text-sm text-slate-400">
+            <p className="mt-3 text-sm sm:text-base text-slate-300 leading-relaxed">
               Traditional systems rely on token probabilities. TRACEVIDENCE enforces rigorous epistemic constraints across 5 decoupled modules.
             </p>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-5">
-            <div className="rounded-xl bg-black/40 p-4 border border-white/5">
-              <div className="font-mono text-xs text-cyan-400 font-bold">01 / EXTRACTION</div>
-              <h4 className="mt-2 font-bold text-white text-xs">Atomic Decomposition</h4>
-              <p className="mt-1 text-[11px] text-slate-400">
+          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-5">
+            <div className="rounded-2xl bg-black/40 p-5 border border-rose-500/25 shadow-lg">
+              <div className="font-mono text-xs text-rose-400 font-bold">01 / EXTRACTION</div>
+              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Atomic Decomposition</h4>
+              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
                 Breaks discourse into atomic, falsifiable claims with isolated entities and target quantities.
               </p>
             </div>
 
-            <div className="rounded-xl bg-black/40 p-4 border border-white/5">
-              <div className="font-mono text-xs text-cyan-400 font-bold">02 / RETRIEVAL</div>
-              <h4 className="mt-2 font-bold text-white text-xs">Tiered Source Audit</h4>
-              <p className="mt-1 text-[11px] text-slate-400">
+            <div className="rounded-2xl bg-black/40 p-5 border border-blue-500/25 shadow-lg">
+              <div className="font-mono text-xs text-blue-400 font-bold">02 / RETRIEVAL</div>
+              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Tiered Source Audit</h4>
+              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
                 Classifies candidate literature into Academic, Government, Official, Media, or Aggregator tiers.
               </p>
             </div>
 
-            <div className="rounded-xl bg-black/40 p-4 border border-white/5">
-              <div className="font-mono text-xs text-cyan-400 font-bold">03 / TRACE-X</div>
-              <h4 className="mt-2 font-bold text-white text-xs">Provenance Lineage</h4>
-              <p className="mt-1 text-[11px] text-slate-400">
+            <div className="rounded-2xl bg-black/40 p-5 border border-emerald-500/25 shadow-lg">
+              <div className="font-mono text-xs text-emerald-400 font-bold">03 / TRACE-X</div>
+              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Provenance Lineage</h4>
+              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
                 Computes verbatim reuse and traces origin seeds to detect echoes, syndicated wire copy, and circularity.
               </p>
             </div>
 
-            <div className="rounded-xl bg-black/40 p-4 border border-white/5">
-              <div className="font-mono text-xs text-cyan-400 font-bold">04 / SIGNALS</div>
-              <h4 className="mt-2 font-bold text-white text-xs">Freshness & Conflict</h4>
-              <p className="mt-1 text-[11px] text-slate-400">
+            <div className="rounded-2xl bg-black/40 p-5 border border-amber-500/25 shadow-lg">
+              <div className="font-mono text-xs text-amber-400 font-bold">04 / SIGNALS</div>
+              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Freshness & Conflict</h4>
+              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
                 Calculates exponential temporal decay exp(-λΔt) and flags direct empirical refutations.
               </p>
             </div>
 
-            <div className="rounded-xl bg-black/40 p-4 border border-white/5">
-              <div className="font-mono text-xs text-cyan-400 font-bold">05 / AIVIDENCE</div>
-              <h4 className="mt-2 font-bold text-white text-xs">Selective Prediction</h4>
-              <p className="mt-1 text-[11px] text-slate-400">
+            <div className="rounded-2xl bg-black/40 p-5 border border-white/25 shadow-lg">
+              <div className="font-mono text-xs text-white font-bold">05 / AIVIDENCE</div>
+              <h4 className="mt-2.5 font-bold text-white text-sm sm:text-base">Selective Prediction</h4>
+              <p className="mt-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
                 Replaces hallucinations with principled decisions: TRUST, VERIFY, or selective ABSTAIN.
               </p>
             </div>

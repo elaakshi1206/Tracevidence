@@ -27,27 +27,33 @@ export default function ClaimCard({ claim, isSelected, onSelect }: ClaimCardProp
   const [showInsight, setShowInsight] = useState(false);
 
   const borderColors = {
-    TRUST: isSelected ? 'border-emerald-500 shadow-lg shadow-emerald-500/10' : 'border-emerald-500/30 hover:border-emerald-500/60',
-    VERIFY: isSelected ? 'border-amber-500 shadow-lg shadow-amber-500/10' : 'border-amber-500/30 hover:border-amber-500/60',
-    ABSTAIN: isSelected ? 'border-rose-500 shadow-lg shadow-rose-500/10' : 'border-rose-500/30 hover:border-rose-500/60',
+    TRUST: isSelected
+      ? 'border-emerald-400 shadow-xl shadow-emerald-500/20 ring-1 ring-emerald-400/40'
+      : 'border-emerald-500/40 hover:border-emerald-400/70',
+    VERIFY: isSelected
+      ? 'border-amber-400 shadow-xl shadow-amber-500/20 ring-1 ring-amber-400/40'
+      : 'border-amber-500/40 hover:border-amber-400/70',
+    ABSTAIN: isSelected
+      ? 'border-rose-400 shadow-xl shadow-rose-500/20 ring-1 ring-rose-400/40'
+      : 'border-rose-500/40 hover:border-rose-400/70',
   };
 
   const bgColors = {
-    TRUST: 'bg-gradient-to-br from-emerald-950/20 via-[#121826] to-[#0d111c]',
-    VERIFY: 'bg-gradient-to-br from-amber-950/20 via-[#121826] to-[#0d111c]',
-    ABSTAIN: 'bg-gradient-to-br from-rose-950/20 via-[#121826] to-[#0d111c]',
+    TRUST: 'bg-gradient-to-br from-emerald-950/30 via-[#101728] to-[#0c1220]',
+    VERIFY: 'bg-gradient-to-br from-amber-950/30 via-[#101728] to-[#0c1220]',
+    ABSTAIN: 'bg-gradient-to-br from-rose-950/30 via-[#101728] to-[#0c1220]',
   };
 
   return (
     <div
       onClick={onSelect}
-      className={`group relative cursor-pointer rounded-xl border p-5 transition-all duration-200 ${borderColors[claim.decision]} ${bgColors[claim.decision]}`}
+      className={`group relative cursor-pointer rounded-2xl border p-6 transition-all duration-200 shadow-lg ${borderColors[claim.decision]} ${bgColors[claim.decision]}`}
     >
       {/* Top Header: Decision & Trust Score */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2.5">
           <DecisionBadge decision={claim.decision} size="sm" />
-          <span className="font-mono text-[11px] font-semibold text-slate-400">
+          <span className="font-mono text-xs sm:text-sm font-bold text-slate-300">
             {claim.id}
           </span>
           <ContextHelpTooltip
@@ -64,12 +70,12 @@ export default function ClaimCard({ claim, isSelected, onSelect }: ClaimCardProp
           />
         </div>
 
-        <div className="flex items-center space-x-1.5 rounded-md bg-slate-900/80 px-2.5 py-1 border border-white/5 font-mono text-xs">
-          <span className="text-slate-400">
+        <div className="flex items-center space-x-2 rounded-xl bg-slate-900/90 px-3 py-1.5 border border-white/10 font-mono text-xs sm:text-sm">
+          <span className="text-slate-300 font-semibold">
             {plainEnglishMode ? 'Trust Level:' : 'Trust Score:'}
           </span>
           <span
-            className={`font-bold ${
+            className={`font-black text-sm sm:text-base ${
               claim.decision === 'TRUST'
                 ? 'text-emerald-400'
                 : claim.decision === 'VERIFY'
@@ -89,22 +95,22 @@ export default function ClaimCard({ claim, isSelected, onSelect }: ClaimCardProp
       </div>
 
       {/* Target Entity & Claim Text */}
-      <div className="mt-3">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-cyan-400">
+      <div className="mt-4">
+        <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-blue-400 font-mono">
           Target: {claim.targetEntity}
         </div>
-        <p className="mt-1 text-sm font-medium text-slate-100 leading-relaxed">
+        <p className="mt-1.5 text-base sm:text-lg font-semibold text-white leading-relaxed">
           &ldquo;{claim.text}&rdquo;
         </p>
       </div>
 
       {/* Research Signals Grid */}
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 border-t border-white/5 pt-3">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 border-t border-white/10 pt-4">
         {/* Source Independence Factor */}
-        <div className="rounded-lg bg-black/20 p-2 border border-white/5">
+        <div className="rounded-xl bg-black/30 p-3 border border-white/5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-1 text-[10px] text-slate-400">
-              <GitFork className="h-3 w-3 text-cyan-400" />
+            <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-300">
+              <GitFork className="h-3.5 w-3.5 text-blue-400" />
               <span>{plainEnglishMode ? 'Originality' : 'Independence'}</span>
             </div>
             <ContextHelpTooltip
@@ -114,7 +120,7 @@ export default function ClaimCard({ claim, isSelected, onSelect }: ClaimCardProp
               size="xs"
             />
           </div>
-          <div className="mt-1 font-mono text-xs font-bold text-white">
+          <div className="mt-1.5 font-mono text-xs sm:text-sm font-bold text-white">
             {claim.apparentSourcesCount} sources &rarr;{' '}
             <span
               className={
@@ -128,16 +134,16 @@ export default function ClaimCard({ claim, isSelected, onSelect }: ClaimCardProp
               {claim.independentOriginsCount} origin{claim.independentOriginsCount > 1 ? 's' : ''}
             </span>
           </div>
-          <div className="text-[9px] text-slate-500">
+          <div className="text-xs text-slate-400 mt-0.5">
             Ratio: {(claim.independenceRatio * 100).toFixed(0)}%
           </div>
         </div>
 
         {/* Temporal Freshness */}
-        <div className="rounded-lg bg-black/20 p-2 border border-white/5">
+        <div className="rounded-xl bg-black/30 p-3 border border-white/5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-1 text-[10px] text-slate-400">
-              <Clock className="h-3 w-3 text-indigo-400" />
+            <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-300">
+              <Clock className="h-3.5 w-3.5 text-blue-300" />
               <span>{plainEnglishMode ? 'Age' : 'Freshness'}</span>
             </div>
             <ContextHelpTooltip
@@ -147,7 +153,7 @@ export default function ClaimCard({ claim, isSelected, onSelect }: ClaimCardProp
               size="xs"
             />
           </div>
-          <div className="mt-1 font-mono text-xs font-bold">
+          <div className="mt-1.5 font-mono text-xs sm:text-sm font-bold">
             <span
               className={
                 claim.temporalStatus === 'Current'
@@ -160,16 +166,16 @@ export default function ClaimCard({ claim, isSelected, onSelect }: ClaimCardProp
               {claim.temporalStatus}
             </span>
           </div>
-          <div className="text-[9px] text-slate-500">
+          <div className="text-xs text-slate-400 mt-0.5">
             Decay Factor: {claim.freshnessScore}
           </div>
         </div>
 
         {/* Contradiction Alert */}
-        <div className="rounded-lg bg-black/20 p-2 border border-white/5 col-span-2 sm:col-span-1">
+        <div className="rounded-xl bg-black/30 p-3 border border-white/5 col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-1 text-[10px] text-slate-400">
-              <AlertTriangle className="h-3 w-3 text-amber-400" />
+            <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-300">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
               <span>{plainEnglishMode ? 'Dispute' : 'Contradiction'}</span>
             </div>
             <ContextHelpTooltip
@@ -183,37 +189,37 @@ export default function ClaimCard({ claim, isSelected, onSelect }: ClaimCardProp
               size="xs"
             />
           </div>
-          <div className="mt-1 font-mono text-xs font-bold">
+          <div className="mt-1.5 font-mono text-xs sm:text-sm font-bold">
             {claim.contradictionDetected ? (
               <span className="text-rose-400">Detected</span>
             ) : (
               <span className="text-emerald-400">None Flagged</span>
             )}
           </div>
-          <div className="text-[9px] text-slate-500">
+          <div className="text-xs text-slate-400 mt-0.5">
             Evidence polarities
           </div>
         </div>
       </div>
 
       {/* Decision Justification */}
-      <div className="mt-3 rounded-lg bg-slate-900/60 p-2.5 text-xs text-slate-300 border border-white/5">
-        <span className="font-semibold text-white">Reasoning: </span>
+      <div className="mt-4 rounded-xl bg-slate-900/80 p-3.5 text-xs sm:text-sm text-slate-200 border border-white/10 leading-relaxed">
+        <span className="font-bold text-white">Reasoning: </span>
         {claim.decisionReason}
       </div>
 
       {/* Action footer */}
-      <div className="mt-3 flex items-center justify-between text-xs pt-2">
-        <span className="text-[11px] text-slate-400 italic truncate max-w-[70%]">
+      <div className="mt-4 flex items-center justify-between text-xs sm:text-sm pt-3 border-t border-white/10">
+        <span className="text-xs sm:text-sm text-slate-300 italic truncate max-w-[65%]">
           Protocol: {claim.recommendedAction}
         </span>
         <Link
           href={`/claims/${claim.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex items-center space-x-1 font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+          className="flex items-center space-x-1.5 font-bold text-white hover:text-blue-300 transition-colors"
         >
           <span>Inspect Details & Math</span>
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 text-blue-400" />
         </Link>
       </div>
     </div>

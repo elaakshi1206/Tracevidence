@@ -52,15 +52,15 @@ export default function PipelineProgress({ progress, isAnalyzing }: PipelineProg
   const currentIdx = progress ? progress.stageIndex - 1 : 0;
 
   return (
-    <div className="w-full rounded-xl border border-cyan-500/30 bg-[#0d1424]/90 p-5 shadow-xl backdrop-blur-md">
-      <div className="flex items-center justify-between border-b border-white/10 pb-3">
-        <div className="flex items-center space-x-2">
+    <div className="w-full rounded-2xl border border-white/20 bg-gradient-to-b from-[#10182c] to-[#0d1424] p-6 sm:p-7 shadow-2xl backdrop-blur-xl">
+      <div className="flex items-center justify-between border-b border-white/12 pb-4">
+        <div className="flex items-center space-x-2.5">
           {isAnalyzing ? (
-            <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
           ) : (
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
           )}
-          <span className="font-mono text-xs font-bold uppercase tracking-wider text-cyan-300">
+          <span className="font-mono text-sm sm:text-base font-bold uppercase tracking-wider text-white">
             Multi-Stage Research Pipeline Execution
           </span>
           <ContextHelpTooltip
@@ -70,21 +70,21 @@ export default function PipelineProgress({ progress, isAnalyzing }: PipelineProg
             size="xs"
           />
         </div>
-        <span className="font-mono text-xs font-semibold text-slate-400">
+        <span className="font-mono text-sm sm:text-base font-extrabold text-white">
           {progress ? `${progress.progressPercent}%` : '0%'}
         </span>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+      {/* Progress Bar with Red-Blue-Green-White Gradient */}
+      <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-800/90 shadow-inner">
         <div
-          className="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400 transition-all duration-500"
+          className="h-full bg-gradient-to-r from-rose-500 via-blue-500 via-emerald-400 to-white transition-all duration-500 shadow-md"
           style={{ width: `${progress ? progress.progressPercent : 15}%` }}
         />
       </div>
 
       {/* Stage Nodes */}
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {STAGES.map((st, idx) => {
           const Icon = st.icon;
           const isDone = idx < currentIdx;
@@ -93,30 +93,30 @@ export default function PipelineProgress({ progress, isAnalyzing }: PipelineProg
           return (
             <div
               key={st.id}
-              className={`flex flex-col rounded-lg p-2.5 transition-all ${
+              className={`flex flex-col rounded-xl p-3.5 transition-all ${
                 isCurrent
-                  ? 'border border-cyan-400/50 bg-cyan-950/40 shadow-sm shadow-cyan-500/20'
+                  ? 'border border-blue-400 bg-blue-950/50 shadow-lg shadow-blue-500/20'
                   : isDone
-                  ? 'border border-emerald-500/30 bg-emerald-950/20 text-emerald-400'
-                  : 'border border-white/5 bg-slate-900/40 opacity-50'
+                  ? 'border border-emerald-500/40 bg-emerald-950/30 text-emerald-300'
+                  : 'border border-white/5 bg-slate-900/40 opacity-60'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-md text-xs font-bold ${
+                  className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
                     isDone
-                      ? 'bg-emerald-500/20 text-emerald-300'
+                      ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
                       : isCurrent
-                      ? 'bg-cyan-500/20 text-cyan-300'
+                      ? 'bg-blue-500/30 text-white border border-blue-400'
                       : 'bg-slate-800 text-slate-400'
                   }`}
                 >
-                  {isDone ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
+                  {isDone ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
                 </div>
-                <Icon className={`h-3.5 w-3.5 ${isCurrent ? 'text-cyan-400 animate-pulse' : 'text-slate-500'}`} />
+                <Icon className={`h-4 w-4 ${isCurrent ? 'text-blue-300 animate-pulse' : 'text-slate-400'}`} />
               </div>
-              <div className="mt-2 text-[11px] font-bold text-white leading-tight">{st.name}</div>
-              <div className="text-[10px] text-slate-400">{st.desc}</div>
+              <div className="mt-2.5 text-xs sm:text-sm font-bold text-white leading-tight">{st.name}</div>
+              <div className="text-xs text-slate-300 mt-0.5">{st.desc}</div>
             </div>
           );
         })}
@@ -124,8 +124,8 @@ export default function PipelineProgress({ progress, isAnalyzing }: PipelineProg
 
       {/* Current Step Detail */}
       {progress && (
-        <div className="mt-3 rounded-lg bg-slate-900/80 px-3 py-2 text-xs font-mono text-cyan-300/90 border border-cyan-500/20">
-          <span className="text-slate-400">STATUS:</span> {progress.detail}
+        <div className="mt-4 rounded-xl bg-slate-900/90 px-4 py-2.5 text-xs sm:text-sm font-mono text-white border border-white/10 shadow-sm">
+          <span className="text-blue-400 font-bold">STATUS:</span> {progress.detail}
         </div>
       )}
     </div>

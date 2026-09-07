@@ -34,14 +34,14 @@ export default function ClaimDetailPage() {
 
   if (!currentAnalysis) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-16 text-center">
-        <h2 className="text-xl font-bold text-white">No Active Analysis Found</h2>
-        <p className="mt-2 text-sm text-slate-400">
+      <div className="mx-auto max-w-5xl px-4 py-20 text-center space-y-4">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">No Active Analysis Found</h2>
+        <p className="text-base sm:text-lg text-slate-300">
           Please run an analysis or select a benchmark case first.
         </p>
         <Link
           href="/analyze"
-          className="mt-4 inline-flex items-center space-x-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400"
+          className="btn-gradient-rbgw inline-flex items-center space-x-2 rounded-xl px-6 py-3 text-sm sm:text-base font-bold text-white shadow-xl"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Go to Analyze Workspace</span>
@@ -54,11 +54,11 @@ export default function ClaimDetailPage() {
 
   if (!claim) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-16 text-center">
-        <h2 className="text-xl font-bold text-white">Claim Not Found</h2>
+      <div className="mx-auto max-w-5xl px-4 py-20 text-center space-y-4">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white">Claim Not Found</h2>
         <Link
           href="/analyze"
-          className="mt-4 inline-flex items-center space-x-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950"
+          className="btn-gradient-rbgw inline-flex items-center space-x-2 rounded-xl px-6 py-3 text-sm sm:text-base font-bold text-white shadow-xl"
         >
           <span>Return to Workspace</span>
         </Link>
@@ -72,20 +72,20 @@ export default function ClaimDetailPage() {
   const sourceMap = new Map(currentAnalysis.sources.map((s) => [s.id, s]));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 space-y-10">
       {/* Top Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-5 border-b border-white/12 pb-5">
         <Link
           href="/analyze"
-          className="flex items-center space-x-2 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors"
+          className="flex items-center space-x-2 text-sm sm:text-base font-mono font-bold text-blue-400 hover:text-white transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-5 w-5" />
           <span>Back to Analysis Results</span>
         </Link>
 
         <div className="flex items-center space-x-3">
-          <span className="font-mono text-xs text-slate-400">Claim Identifier:</span>
-          <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-cyan-300 font-bold border border-white/10">
+          <span className="font-mono text-sm text-slate-300 font-semibold">Claim Identifier:</span>
+          <span className="rounded-xl bg-slate-800 px-3 py-1 font-mono text-sm text-white font-black border border-white/15">
             {claim.id}
           </span>
           <ContextHelpTooltip
@@ -129,12 +129,12 @@ export default function ClaimDetailPage() {
       />
 
       {/* Hero: Claim Decision Banner */}
-      <div className="rounded-2xl border border-white/15 bg-gradient-to-br from-[#0e1628] via-[#0d111c] to-[#07090e] p-6 sm:p-8 shadow-2xl">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="rounded-3xl border border-white/20 bg-gradient-to-br from-[#121c2e] via-[#0d1424] to-[#0a0e18] p-7 sm:p-9 shadow-2xl">
+        <div className="flex flex-wrap items-start justify-between gap-5">
           <div>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-3">
               <DecisionBadge decision={claim.decision} size="lg" />
-              <span className="font-mono text-xs text-slate-400">
+              <span className="font-mono text-sm sm:text-base text-slate-200 font-bold">
                 Confidence: {(claim.confidence * 100).toFixed(0)}%
               </span>
               <ContextHelpTooltip
@@ -148,14 +148,14 @@ export default function ClaimDetailPage() {
                 }
               />
             </div>
-            <div className="mt-2 text-xs font-bold uppercase tracking-widest text-cyan-400">
+            <div className="mt-3 text-xs sm:text-sm font-bold uppercase tracking-widest text-blue-400 font-mono">
               Entity Target: {claim.targetEntity}
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-right">
-            <div className="flex items-center justify-end space-x-1">
-              <div className="text-[11px] font-mono text-slate-400">
+          <div className="rounded-2xl border border-white/15 bg-black/50 px-5 py-3.5 text-right shadow-md">
+            <div className="flex items-center justify-end space-x-1.5">
+              <div className="text-xs sm:text-sm font-mono text-slate-300">
                 {plainEnglishMode ? 'Source Originality' : 'Independence Ratio'}
               </div>
               <ContextHelpTooltip
@@ -165,11 +165,11 @@ export default function ClaimDetailPage() {
                 size="xs"
               />
             </div>
-            <div className="font-mono text-lg font-black text-cyan-400">
+            <div className="font-mono text-xl sm:text-2xl font-black text-blue-300 mt-0.5">
               {claim.apparentSourcesCount} sources &rarr; {claim.independentOriginsCount} origin
               {claim.independentOriginsCount > 1 ? 's' : ''}
             </div>
-            <div className="text-[10px] text-slate-500 font-mono">
+            <div className="text-xs text-slate-400 font-mono mt-0.5">
               {(claim.independenceRatio * 100).toFixed(1)}% Independent
             </div>
           </div>
@@ -177,16 +177,16 @@ export default function ClaimDetailPage() {
 
         {/* Claim Text */}
         <div className="mt-6">
-          <h1 className="text-xl sm:text-2xl font-serif font-medium text-white leading-relaxed">
+          <h1 className="text-2xl sm:text-3xl font-medium text-white leading-relaxed">
             &ldquo;{claim.text}&rdquo;
           </h1>
         </div>
 
         {/* Decision Rationale */}
-        <div className="mt-6 rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-4">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="h-4 w-4 text-cyan-400" />
-            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+        <div className="mt-6 rounded-2xl border border-blue-500/35 bg-blue-950/30 p-5 shadow-md">
+          <div className="flex items-center space-x-2.5">
+            <Sparkles className="h-5 w-5 text-blue-400" />
+            <h3 className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-blue-300">
               Why was this decision reached?
             </h3>
             <ContextHelpTooltip
@@ -195,51 +195,51 @@ export default function ClaimDetailPage() {
               size="xs"
             />
           </div>
-          <p className="mt-2 text-sm text-slate-200 leading-relaxed">
+          <p className="mt-2.5 text-sm sm:text-base text-slate-100 leading-relaxed font-normal">
             {claim.decisionReason}
           </p>
-          <div className="mt-3 pt-2 border-t border-cyan-500/20 text-xs font-mono text-amber-300">
+          <div className="mt-4 pt-3 border-t border-blue-500/25 text-xs sm:text-sm font-mono text-amber-300 font-semibold">
             <span className="font-bold">RECOMMENDED PROTOCOL:</span> {claim.recommendedAction}
           </div>
         </div>
 
         {/* Signal Indicators Row */}
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="rounded-lg bg-slate-900/60 p-3 border border-white/5 flex items-center space-x-3">
-            <GitFork className="h-5 w-5 text-cyan-400" />
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-xl bg-slate-900/80 p-4 border border-white/10 flex items-center space-x-3.5 shadow-sm">
+            <GitFork className="h-6 w-6 text-blue-400 shrink-0" />
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-400">
+              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
                 Corroboration Structure
               </div>
-              <div className="text-xs font-bold text-white font-mono">
+              <div className="text-sm font-bold text-white font-mono mt-0.5">
                 {claim.apparentSourcesCount} Visible / {claim.independentOriginsCount} Independent
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg bg-slate-900/60 p-3 border border-white/5 flex items-center space-x-3">
-            <Clock className="h-5 w-5 text-indigo-400" />
+          <div className="rounded-xl bg-slate-900/80 p-4 border border-white/10 flex items-center space-x-3.5 shadow-sm">
+            <Clock className="h-6 w-6 text-blue-300 shrink-0" />
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-400">
+              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
                 Temporal Freshness
               </div>
-              <div className="text-xs font-bold text-white font-mono">
+              <div className="text-sm font-bold text-white font-mono mt-0.5">
                 {claim.temporalStatus} (Score: {claim.freshnessScore})
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg bg-slate-900/60 p-3 border border-white/5 flex items-center space-x-3">
+          <div className="rounded-xl bg-slate-900/80 p-4 border border-white/10 flex items-center space-x-3.5 shadow-sm">
             <AlertTriangle
-              className={`h-5 w-5 ${
+              className={`h-6 w-6 shrink-0 ${
                 claim.contradictionDetected ? 'text-rose-400' : 'text-emerald-400'
               }`}
             />
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-400">
+              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
                 Contradiction Alert
               </div>
-              <div className="text-xs font-bold font-mono">
+              <div className="text-sm font-bold font-mono mt-0.5">
                 {claim.contradictionDetected ? (
                   <span className="text-rose-400">Conflict Detected</span>
                 ) : (
@@ -253,12 +253,12 @@ export default function ClaimDetailPage() {
 
       {/* Contradiction Alert Box (If present) */}
       {claim.contradictionDetected && claim.contradictionDetails && (
-        <div className="rounded-xl border border-rose-500/40 bg-rose-950/30 p-4 text-rose-200">
-          <div className="flex items-center space-x-2 font-bold text-sm text-rose-300 font-mono">
-            <AlertTriangle className="h-4 w-4 text-rose-400" />
+        <div className="rounded-2xl border border-rose-500/40 bg-rose-950/40 p-5 text-rose-200 shadow-xl">
+          <div className="flex items-center space-x-2.5 font-bold text-base text-rose-300 font-mono">
+            <AlertTriangle className="h-5 w-5 text-rose-400" />
             <span>EMPIRICAL CONTRADICTION ALERT</span>
           </div>
-          <p className="mt-1 text-xs text-rose-100/90 leading-relaxed">
+          <p className="mt-2 text-sm text-rose-100/90 leading-relaxed">
             {claim.contradictionDetails}
           </p>
         </div>
@@ -274,18 +274,18 @@ export default function ClaimDetailPage() {
       />
 
       {/* Evidence Quotations Breakdown */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Layers className="h-4 w-4 text-cyan-400" />
-            <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-white">
+          <div className="flex items-center space-x-2.5">
+            <Layers className="h-5 w-5 text-blue-400" />
+            <h3 className="font-mono text-base sm:text-lg font-bold uppercase tracking-wider text-white">
               Corroborating & Contradicting Evidence Snippets ({claimEvidences.length})
             </h3>
           </div>
-          <span className="text-xs text-slate-400">Direct snippet inspection</span>
+          <span className="text-xs sm:text-sm text-slate-300 font-semibold">Direct snippet inspection</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-5">
           {claimEvidences.map((evidence) => (
             <EvidenceSnippetCard
               key={evidence.id}
@@ -297,26 +297,26 @@ export default function ClaimDetailPage() {
       </div>
 
       {/* Deep LLM & Algorithmic Reasoning */}
-      <div className="rounded-xl border border-white/10 bg-[#0d1424] p-5 shadow-xl">
+      <div className="rounded-2xl border border-white/15 bg-gradient-to-b from-[#10182c] to-[#0d1424] p-6 shadow-2xl">
         <button
           onClick={() => setShowRawReasoning(!showRawReasoning)}
           className="flex w-full items-center justify-between text-left"
         >
-          <div className="flex items-center space-x-2">
-            <BrainCircuit className="h-4 w-4 text-indigo-400" />
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
+          <div className="flex items-center space-x-2.5">
+            <BrainCircuit className="h-5 w-5 text-blue-400" />
+            <span className="font-mono text-sm sm:text-base font-bold uppercase tracking-wider text-white">
               Epistemic Synthesis & LLM Trace
             </span>
           </div>
           <ChevronDown
-            className={`h-4 w-4 text-slate-400 transition-transform ${
+            className={`h-5 w-5 text-slate-300 transition-transform ${
               showRawReasoning ? 'rotate-180' : ''
             }`}
           />
         </button>
 
         {showRawReasoning && (
-          <div className="mt-4 pt-3 border-t border-white/5 text-xs text-slate-300 leading-relaxed space-y-2 font-mono">
+          <div className="mt-5 pt-4 border-t border-white/10 text-sm sm:text-base text-slate-200 leading-relaxed space-y-3 font-mono">
             <p>{claim.llmReasoning}</p>
           </div>
         )}
