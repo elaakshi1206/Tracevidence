@@ -29,9 +29,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-[#07090e] text-slate-100 antialiased selection:bg-cyan-500 selection:text-black">
+      <body className="min-h-screen bg-[#0a0e1a] text-slate-100 antialiased selection:bg-rose-500 selection:text-white relative">
+        {/* Organic Ambient Atmosphere - Red, Blue, Green, White lighting meshes */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          {/* Crimson / Coral Red Orb */}
+          <div className="ambient-rbgw-glow -top-32 -left-32 h-[550px] w-[550px] bg-rose-600/18" />
+          {/* Sapphire / Deep Blue Orb */}
+          <div className="ambient-rbgw-glow top-1/4 right-0 h-[600px] w-[600px] bg-blue-600/18" />
+          {/* Lush Emerald Green Orb */}
+          <div className="ambient-rbgw-glow bottom-1/4 left-1/3 h-[500px] w-[500px] bg-emerald-500/15" />
+          {/* Luminous Pure White Spotlight */}
+          <div className="ambient-rbgw-glow top-10 left-1/2 -translate-x-1/2 h-[350px] w-[350px] bg-white/10 blur-[140px]" />
+          {/* Subtle noise/grid blend texture */}
+          <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
+        </div>
+
         <TooltipProvider>
-          <div className="relative flex min-h-screen flex-col justify-between">
+          <div className="relative z-10 flex min-h-screen flex-col justify-between">
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
@@ -42,10 +56,13 @@ export default function RootLayout({
             position="bottom-right"
             toastOptions={{
               style: {
-                background: '#0d1424',
-                color: '#f1f5f9',
-                border: '1px solid rgba(6, 182, 212, 0.2)',
-                fontSize: '13px',
+                background: 'rgba(15, 23, 42, 0.95)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                fontSize: '15px',
+                fontWeight: '500',
+                backdropFilter: 'blur(12px)',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
               },
             }}
           />
