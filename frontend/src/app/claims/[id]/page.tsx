@@ -9,6 +9,7 @@ import SourceBadge from '@/components/common/SourceBadge';
 import ProvenanceTree from '@/components/graph/ProvenanceTree';
 import EvidenceSnippetCard from '@/components/claims/EvidenceSnippetCard';
 import TrustMathAudit from '@/components/claims/TrustMathAudit';
+import SourceVsUserComparison from '@/components/claims/SourceVsUserComparison';
 import PageTutorialBanner from '@/components/common/PageTutorialBanner';
 import ContextHelpTooltip from '@/components/common/ContextHelpTooltip';
 import {
@@ -375,6 +376,13 @@ export default function ClaimDetailPage() {
           </p>
         </div>
       )}
+
+      {/* Source Claims vs User Claim Comparison (Priority 1) */}
+      <SourceVsUserComparison
+        claim={claim}
+        evidences={claimEvidences}
+        sources={currentAnalysis.sources}
+      />
 
       {/* Mathematical Audit Card */}
       <TrustMathAudit claim={claim} />

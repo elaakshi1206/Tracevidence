@@ -137,11 +137,26 @@ export default function BenchmarksPage() {
 
               {/* Highlight Signal Tag */}
               <div className="mt-4 flex flex-wrap items-center gap-1.5">
-                <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-800 border border-amber-200">
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-mono font-bold border ${
+                    b.expectedOutcome === 'TRUST'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                      : b.expectedOutcome === 'ABSTAIN'
+                      ? 'bg-rose-50 text-rose-800 border-rose-300'
+                      : 'bg-amber-50 text-amber-800 border-amber-300'
+                  }`}
+                >
+                  {b.expectedOutcome === 'TRUST'
+                    ? '✓ Verified True Fact'
+                    : b.expectedOutcome === 'ABSTAIN'
+                    ? '🚫 Clear False / Misleading'
+                    : '⚠ Echo Chamber / Stale'}
+                </span>
+                <span className="rounded-md bg-slate-50 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-700 border border-slate-200">
                   ⚡ {b.highlightSignal}
                 </span>
                 <span className="rounded-md bg-slate-50 px-2 py-0.5 text-[10px] font-mono font-medium text-slate-600 border border-slate-200">
-                  {b.data.claims.length} Claims Extracted
+                  {b.data.claims.length} Claims
                 </span>
               </div>
             </div>

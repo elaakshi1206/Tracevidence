@@ -26,7 +26,7 @@ export default function Footer() {
           <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 space-y-1.5">
             <div className="flex items-center space-x-1.5 font-mono text-xs font-bold text-amber-800">
               <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
-              <span>Academic Prototype Disclaimer</span>
+              <span>Academic Research Disclaimer</span>
             </div>
             <p className="text-xs text-amber-900/80 leading-relaxed">
               Research prototype for investigating evidence provenance and selective prediction. Not an infallible truth oracle. Always verify important claims with primary sources.
@@ -43,7 +43,7 @@ export default function Footer() {
 {`@inproceedings{tracevidence2026,
   title={TRACEVIDENCE: Deep Provenance Tracing and Selective Trust Intelligence},
   author={Research Innovation Team},
-  booktitle={Proceedings of Avishkar Research Convention},
+  booktitle={Academic Research Proceedings},
   year={2026}
 }`}
             </pre>

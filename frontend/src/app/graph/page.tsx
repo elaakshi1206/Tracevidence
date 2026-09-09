@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { useAnalysisStore } from '@/lib/store/analysisStore';
 import EvidenceGraph from '@/components/graph/EvidenceGraph';
+import GraphConclusionGuide from '@/components/graph/GraphConclusionGuide';
+import SourceVsUserComparison from '@/components/claims/SourceVsUserComparison';
 import PageTutorialBanner from '@/components/common/PageTutorialBanner';
 import ContextHelpTooltip from '@/components/common/ContextHelpTooltip';
 import WorkflowStepper from '@/components/common/WorkflowStepper';
@@ -110,68 +112,15 @@ export default function GraphPage() {
         }}
       />
 
-      {/* Legend and Guidance Bar */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4 rounded-2xl border border-slate-200 bg-white p-5 text-xs shadow-2xs">
-        <div className="flex items-center space-x-3">
-          <div className="h-4 w-4 rounded-full border-2 border-[#14b8a6] bg-[#0f766e] shrink-0" />
-          <div>
-            <div className="font-bold text-[#0f172a] flex items-center space-x-1">
-              <span>Primary Origin Node</span>
-              <ContextHelpTooltip
-                title="Primary Origin Node"
-                simpleExplanation="The first published study, trial, or official data release."
-                size="xs"
-              />
-            </div>
-            <div className="text-[11px] text-[#475569]">First-published root data / study</div>
-          </div>
-        </div>
+      {/* Graph Conclusion (Priority 3) & Student Guide with Always-Visible Legend (Priority 6) */}
+      <GraphConclusionGuide analysis={currentAnalysis} />
 
-        <div className="flex items-center space-x-3">
-          <div className="h-4 w-4 rounded-md border-2 border-slate-400 bg-slate-200 shrink-0" />
-          <div>
-            <div className="font-bold text-[#0f172a] flex items-center space-x-1">
-              <span>Intermediate Source</span>
-              <ContextHelpTooltip
-                title="Intermediate Source"
-                simpleExplanation="Secondary outlets like newspapers, wire services, or blogs that report on the primary origin."
-                size="xs"
-              />
-            </div>
-            <div className="text-[11px] text-[#475569]">Reprint, wire agency, or blog</div>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <div className="h-4 w-4 rounded-md border-2 border-[#059669] bg-emerald-100 shrink-0" />
-          <div>
-            <div className="font-bold text-[#0f172a] flex items-center space-x-1">
-              <span>Claim Statement</span>
-              <ContextHelpTooltip
-                title="Claim Statement"
-                simpleExplanation="The specific factual assertion being verified."
-                size="xs"
-              />
-            </div>
-            <div className="text-[11px] text-[#475569]">Evaluated atomic statement</div>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <div className="h-1.5 w-7 bg-[#e11d48] animate-pulse rounded shrink-0" />
-          <div>
-            <div className="font-bold text-[#e11d48] flex items-center space-x-1">
-              <span>Contradiction Edge</span>
-              <ContextHelpTooltip
-                title="Contradiction Edge"
-                simpleExplanation="A direct disagreement or refutation link between two nodes."
-                size="xs"
-              />
-            </div>
-            <div className="text-[11px] text-[#475569]">Direct refutation link</div>
-          </div>
-        </div>
-      </div>
+      {/* ★ What Each Organisation Actually Claimed — below the explanation */}
+      <SourceVsUserComparison
+        claim={currentAnalysis.claims[0]}
+        evidences={currentAnalysis.evidences}
+        sources={currentAnalysis.sources}
+      />
 
       {/* Interactive Graph Canvas */}
       <EvidenceGraph analysis={currentAnalysis} />
@@ -187,14 +136,17 @@ export default function GraphPage() {
         </Link>
 
         <div className="flex items-center space-x-3">
-          <span className="text-xs text-[#475569] hidden sm:inline">
-            Want to see academic proofs, ECE calibration & statistical benchmarks?
-          </span>
           <Link
             href="/research"
+            className="flex items-center space-x-1.5 text-xs text-[#475569] hover:text-[#0f766e] font-semibold transition-colors"
+          >
+            <span>Judges Lab &rarr;</span>
+          </Link>
+          <Link
+            href="/research?tab=scoreboard"
             className="flex items-center space-x-2 rounded-xl bg-[#0f766e] px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#115e59] transition-all"
           >
-            <span>Proceed to Research Lab</span>
+            <span>Proceed to Scoreboard</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

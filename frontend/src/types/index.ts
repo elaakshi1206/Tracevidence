@@ -42,6 +42,10 @@ export interface Evidence {
   quote: string;
   relevanceScore: number; // 0-1
   verificationReasoning: string;
+  userClaim?: string;
+  sourceSaid?: string;
+  exactDifference?: string;
+  matchConfidence?: number;
 }
 
 export interface ProvenanceNode {

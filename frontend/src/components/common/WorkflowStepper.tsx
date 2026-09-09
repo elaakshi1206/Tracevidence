@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAnalysisStore } from '@/lib/store/analysisStore';
-import { Search, Network, BarChart3, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Search, Network, BarChart3, ArrowRight, ArrowLeft, CheckCircle2, Award } from 'lucide-react';
 
 interface WorkflowStepperProps {
   currentStep: 1 | 2 | 3;
@@ -31,10 +31,10 @@ export default function WorkflowStepper({ currentStep }: WorkflowStepperProps) {
     },
     {
       number: 3,
-      path: '/research',
-      title: plainEnglishMode ? '3. Research Lab' : '3. Research Benchmark',
-      subtitle: plainEnglishMode ? 'Accuracy proofs & test scores' : 'Avishkar validation & ECE metrics',
-      icon: BarChart3,
+      path: '/research?tab=scoreboard',
+      title: plainEnglishMode ? '3. Research & Scoreboard' : '3. Results & Research Lab',
+      subtitle: plainEnglishMode ? 'Audit summary & accuracy' : 'Verdict synthesis & metrics',
+      icon: Award,
     },
   ];
 
@@ -113,10 +113,10 @@ export default function WorkflowStepper({ currentStep }: WorkflowStepperProps) {
                 <span>Fact Check</span>
               </Link>
               <Link
-                href="/research"
-                className="flex items-center space-x-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-blue-700 transition-all"
+                href="/research?tab=scoreboard"
+                className="flex items-center space-x-1.5 rounded-xl bg-[#0f766e] px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-[#115e59] transition-all"
               >
-                <span>Next: Research Lab</span>
+                <span>Next: Research &amp; Scoreboard</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </>

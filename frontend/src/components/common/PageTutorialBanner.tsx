@@ -65,7 +65,7 @@ export default function PageTutorialBanner({
             onClick={() => openTour(0)}
             className="text-xs text-blue-700 hover:text-blue-900 font-mono font-medium underline underline-offset-2"
           >
-            Start Full Tour
+            Tour &amp; Training
           </button>
           <button
             onClick={() => togglePageTutorial(pageKey)}
@@ -177,7 +177,7 @@ export default function PageTutorialBanner({
           onClick={() => openTour(0)}
           className="btn-gradient-rbgw flex items-center space-x-1.5 rounded-lg px-3.5 py-1.5 font-mono text-xs font-bold shadow-2xs"
         >
-          <span>Launch Interactive Tour</span>
+          <span>Launch Tour &amp; Training</span>
           <ArrowRight className="h-3.5 w-3.5" />
         </button>
       </div>

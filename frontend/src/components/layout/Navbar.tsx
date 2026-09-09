@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAnalysisStore } from '@/lib/store/analysisStore';
@@ -17,13 +17,17 @@ import {
   X,
   Languages,
   FlaskConical,
+  MoreHorizontal,
+  BookOpen,
+  Play,
+  Map,
+  ChevronDown,
+  Zap,
 } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
   const {
-    judgeMode,
-    toggleJudgeMode,
     openTour,
     openPrologue,
     plainEnglishMode,
@@ -31,6 +35,19 @@ export default function Navbar() {
   } = useAnalysisStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close "More" dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setMoreMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-2xs">
@@ -51,7 +68,7 @@ export default function Navbar() {
                 </span>
               </div>
               <p className="hidden text-[11px] text-[#475569] sm:block">
-                Evidence Provenance & Uncertainty Intelligence
+                Evidence Provenance &amp; Uncertainty Intelligence
               </p>
             </div>
           </Link>
@@ -85,7 +102,9 @@ export default function Navbar() {
             <span>Evidence Graph</span>
           </Link>
 
-          {/* Research Dashboard */}
+
+
+          {/* Research Dashboard (For Judges / Academics) */}
           <Link
             href="/research"
             className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
@@ -97,57 +116,10 @@ export default function Navbar() {
             <BarChart3 className={`h-3.5 w-3.5 ${pathname === '/research' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
             <span>Research Dashboard</span>
           </Link>
-
-          {/* Training Mission (Interactive Trigger) */}
-          <button
-            onClick={() => openPrologue(0)}
-            className="flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all cursor-pointer"
-            title="Start Interactive Investigator Training Mission"
-          >
-            <Gamepad2 className="h-3.5 w-3.5 text-amber-600" />
-            <span>Training Mission</span>
-          </button>
-
-          {/* Tour (Interactive Trigger) */}
-          <button
-            onClick={() => openTour(0)}
-            className="flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all cursor-pointer"
-            title="Launch Feature-by-Feature Guided Tour"
-          >
-            <Sparkles className="h-3.5 w-3.5 text-teal-600" />
-            <span>Tour</span>
-          </button>
-
-          {/* Benchmarks (Dedicated Page Link) */}
-          <Link
-            href="/benchmarks"
-            className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              pathname === '/benchmarks'
-                ? 'bg-white text-[#0f766e] shadow-xs border border-slate-200/80 font-bold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-            }`}
-          >
-            <FlaskConical className={`h-3.5 w-3.5 ${pathname === '/benchmarks' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
-            <span>Benchmarks</span>
-          </Link>
-
-          {/* Judge Mode (Toggle Trigger) */}
-          <button
-            onClick={toggleJudgeMode}
-            className={`flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all cursor-pointer border ${
-              judgeMode
-                ? 'bg-purple-50 text-purple-700 border-purple-200 font-bold shadow-2xs'
-                : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-white/60'
-            }`}
-            title="Toggle Academic Reviewer & Evaluation Mode"
-          >
-            <Award className={`h-3.5 w-3.5 ${judgeMode ? 'text-purple-600' : 'text-slate-400'}`} />
-            <span>{judgeMode ? 'Judge Mode (ON)' : 'Judge Mode'}</span>
-          </button>
         </nav>
 
-        {/* Right Side: Plain English / Tech English toggle */}
-        <div className="hidden lg:flex items-center space-x-3 shrink-0">
+        {/* Right Side: Plain English toggle + More ⋯ dropdown */}
+        <div className="hidden lg:flex items-center space-x-2 shrink-0">
           <button
             onClick={togglePlainEnglishMode}
             className={`flex items-center space-x-2 rounded-xl px-3 py-1.5 text-xs font-bold transition-all border shadow-2xs cursor-pointer ${
@@ -160,6 +132,98 @@ export default function Navbar() {
             <Languages className="h-3.5 w-3.5" />
             <span>{plainEnglishMode ? 'Plain English' : 'Tech English'}</span>
           </button>
+
+          {/* ⋯ More dropdown */}
+          <div className="relative" ref={moreMenuRef}>
+            <button
+              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+              className={`flex items-center space-x-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all border shadow-2xs cursor-pointer ${
+                moreMenuOpen
+                  ? 'bg-slate-100 text-slate-900 border-slate-300'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+              title="More options: Tour, Training, Benchmarks, Examples"
+              aria-expanded={moreMenuOpen}
+              aria-haspopup="true"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+              <span>More</span>
+              <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${moreMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown Panel */}
+            {moreMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden animate-fade-in">
+                {/* Section: Get Started */}
+                <div className="px-3 pt-3 pb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Get Started</span>
+                </div>
+
+                <button
+                  onClick={() => { openTour(0); setMoreMenuOpen(false); }}
+                  className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-teal-50 hover:text-[#0f766e] transition-colors text-left group"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 border border-teal-200 shrink-0 group-hover:bg-teal-100 transition-colors">
+                    <Sparkles className="h-4 w-4 text-[#0f766e]" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-slate-800 group-hover:text-[#0f766e]">Tour &amp; Training</div>
+                    <div className="text-[11px] text-slate-500 font-normal">Interactive walkthrough &amp; mission</div>
+                  </div>
+                </button>
+
+                {/* Divider */}
+                <div className="border-t border-slate-100 mx-3 my-1" />
+
+                {/* Section: Research & Evaluation */}
+                <div className="px-3 pt-1 pb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Research &amp; Evaluation</span>
+                </div>
+
+                <Link
+                  href="/benchmarks"
+                  onClick={() => setMoreMenuOpen(false)}
+                  className="flex items-center space-x-3 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 border border-blue-200 shrink-0">
+                    <FlaskConical className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs">Benchmarks</div>
+                    <div className="text-[11px] text-slate-500 font-normal">Accuracy tests &amp; proofs</div>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/research?tab=benchmarks"
+                  onClick={() => setMoreMenuOpen(false)}
+                  className="flex items-center space-x-3 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 border border-purple-200 shrink-0">
+                    <BookOpen className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs">Case Library</div>
+                    <div className="text-[11px] text-slate-500 font-normal">Pre-analyzed example cases</div>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/research?tab=datasetEvaluator"
+                  onClick={() => setMoreMenuOpen(false)}
+                  className="flex items-center space-x-3 px-3 py-2.5 mb-1 text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-200 shrink-0">
+                    <Zap className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs">Pre-done Evaluations</div>
+                    <div className="text-[11px] text-slate-500 font-normal">Live dataset evaluation runner</div>
+                  </div>
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -200,6 +264,8 @@ export default function Navbar() {
             <span>Evidence Graph</span>
           </Link>
 
+
+
           <Link
             href="/research"
             onClick={() => setMobileMenuOpen(false)}
@@ -221,35 +287,13 @@ export default function Navbar() {
           <div className="border-t border-slate-100 pt-2 space-y-2">
             <button
               onClick={() => {
-                openPrologue(0);
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center space-x-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900"
-            >
-              <Gamepad2 className="h-4 w-4 text-amber-600" />
-              <span>Start Training Mission</span>
-            </button>
-
-            <button
-              onClick={() => {
                 openTour(0);
                 setMobileMenuOpen(false);
               }}
               className="w-full flex items-center space-x-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-bold text-teal-900"
             >
               <Sparkles className="h-4 w-4 text-[#0f766e]" />
-              <span>Guided Tour</span>
-            </button>
-
-            <button
-              onClick={() => {
-                toggleJudgeMode();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center space-x-2 rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-bold text-purple-900"
-            >
-              <Award className="h-4 w-4 text-purple-600" />
-              <span>{judgeMode ? 'Judge Mode: ON' : 'Toggle Judge Mode'}</span>
+              <span>Tour &amp; Training</span>
             </button>
           </div>
         </div>

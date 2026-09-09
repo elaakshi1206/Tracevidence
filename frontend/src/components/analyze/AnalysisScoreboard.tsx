@@ -55,15 +55,15 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
   const academicSources = sources.filter((s) => s.tier === 'Academic').length;
   const govSources = sources.filter((s) => s.tier === 'Government').length;
   const mediaSources = sources.filter(
-    (s) => s.tier === 'News/Media' || s.tier === 'Aggregator'
+    (s) => s.tier === 'Reputable Media' || s.tier === 'Aggregator/Blog'
   ).length;
   const totalSources = sources.length;
 
-  // Step 3: Provenance / Independence
+  // Step 3: Independence
   const independencePct = Math.round(m.averageIndependence * 100);
   const echoDetected = independencePct < 40;
 
-  // Step 4: Signal Verification
+  // Step 4: Freshness & Contradictions
   const freshnessPct = Math.round(m.averageFreshness * 100);
   const contradictionPct = Math.round(m.contradictionRate * 100);
   const hasContradictions = m.contradictionRate > 0.3;
@@ -80,49 +80,49 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
     {
       num: 1,
       icon: Scale,
-      name: 'Claim Extraction',
-      simpleName: 'Breaking into Facts',
-      finding: `${totalClaims} distinct statement${totalClaims !== 1 ? 's' : ''} found in your text.`,
+      name: 'Step 1: Breaking Your Text Into Individual Facts',
+      whyItMatters: 'A paragraph may contain 3 true statements and 1 false one. By splitting it apart, we can test each statement on its own — so one false claim cannot hide behind the true ones.',
+      finding: `${totalClaims} individual statement${totalClaims !== 1 ? 's' : ''} found in your text.`,
       conclusion:
         totalClaims === 1
-          ? 'A single focused claim was identified — easier to audit.'
-          : `Multiple claims were extracted and evaluated individually so that one false claim cannot hide behind true ones.`,
+          ? 'Only one statement was identified, making it easy to audit directly.'
+          : `${totalClaims} separate statements were extracted and each will be evaluated individually.`,
       status: stepStatus(true),
     },
     {
       num: 2,
       icon: Search,
-      name: 'Evidence Retrieval',
-      simpleName: 'Finding Sources',
-      finding: `${totalSources} source${totalSources !== 1 ? 's' : ''} retrieved — ${academicSources} academic, ${govSources} government, ${mediaSources} news/media.`,
+      name: 'Step 2: Finding Scientific Sources That Mention This',
+      whyItMatters: 'We look for sources in order of quality: academic papers (highest) → government reports → news/media (lowest). More peer-reviewed sources = more reliable results.',
+      finding: `${totalSources} source${totalSources !== 1 ? 's' : ''} found — ${academicSources} academic papers, ${govSources} government documents, ${mediaSources} news/media articles.`,
       conclusion:
         academicSources > 0
-          ? `Primary academic literature was found. Peer-reviewed sources carry the most weight.`
-          : `No academic papers were found — results rely on secondary or media sources only.`,
+          ? `Found peer-reviewed academic papers — these carry the most weight because other scientists checked them before publishing.`
+          : `No academic papers found — results depend on secondary sources like news or blogs, which are less reliable.`,
       status: stepStatus(academicSources > 0, totalSources > 0 && academicSources === 0),
     },
     {
       num: 3,
       icon: GitBranch,
-      name: 'Origin Tracing (TRACE-X)',
-      simpleName: 'Tracing Where It Came From',
-      finding: `Source independence: ${independencePct}%${echoDetected ? ' — echo chamber detected.' : ' — sources appear diverse.'}`,
+      name: 'Step 3: Checking If Sources Are Truly Independent',
+      whyItMatters: 'If 10 news websites all copied the same single study, that is NOT 10 separate proofs — it is 1 proof repeated 10 times. This step collapses all the copies to count only the real, unique origins.',
+      finding: `${independencePct}% of sources are genuinely independent${echoDetected ? ' — echo chamber detected!' : ' — sources come from different origins.'}`,
       conclusion: echoDetected
-        ? `⚠ Multiple sources traced to one root origin. What looks like many confirmations is actually one idea being repeated. This inflates apparent confidence.`
-        : `Sources come from genuinely independent origins — no echo chamber detected.`,
+        ? `⚠ Several sources were traced back to the same single original publication. What looks like widespread agreement is actually one idea being repeated many times. This inflates apparent confidence.`
+        : `Sources come from genuinely separate research groups — no copying detected.`,
       status: stepStatus(!echoDetected, independencePct < 60 && independencePct >= 40),
     },
     {
       num: 4,
       icon: Clock,
-      name: 'Signal Verification',
-      simpleName: 'Checking Age & Disputes',
-      finding: `Freshness: ${freshnessPct}% · Contradiction rate: ${contradictionPct}%`,
+      name: 'Step 4: Checking How Old the Data Is & Whether Experts Disagree',
+      whyItMatters: 'Old data can be wrong — science updates constantly. Also, if expert studies directly contradict a claim, it means scientists disagree, and you should read both sides before accepting it as fact.',
+      finding: `Data freshness: ${freshnessPct}% · Expert contradictions found: ${contradictionPct}%`,
       conclusion: hasContradictions
-        ? `⚠ Scientific studies that directly contradict this claim were found. It means experts disagree — you should read both sides.`
+        ? `⚠ Scientific studies that directly contradict this claim were found. This is an active scientific debate — experts do not agree. Do not treat it as a settled fact.`
         : isStale
-        ? `The sources are old. Older data may no longer reflect the current scientific understanding.`
-        : `No contradictions found and sources are reasonably recent.`,
+        ? `The sources are older. Newer research may have changed our understanding of this topic.`
+        : `No contradictions found, and sources are reasonably recent — a good sign.`,
       status: stepStatus(
         !hasContradictions && !isStale,
         (isStale && !hasContradictions) || (!isStale && hasContradictions)
@@ -131,10 +131,10 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
     {
       num: 5,
       icon: ShieldCheck,
-      name: 'Trust Engine',
-      simpleName: 'Final Calculation',
-      finding: `${trust} TRUST · ${verify} VERIFY · ${abstain} ABSTAIN across ${totalClaims} claims.`,
-      conclusion: `Based on origin diversity, contradiction signals, and source freshness — the system computed a weighted trust score for each claim.`,
+      name: 'Step 5: Computing the Final Trust Decision',
+      whyItMatters: 'The system combines all 4 previous steps into one final score using a formula. It weighs source independence, data freshness, and contradictions together. If the evidence is genuinely conflicted, it says ABSTAIN rather than guess.',
+      finding: `Result: ${trust} TRUST · ${verify} VERIFY · ${abstain} ABSTAIN across ${totalClaims} statement${totalClaims !== 1 ? 's' : ''}.`,
+      conclusion: `After weighing source diversity, data age, and expert disagreements, the system gave each statement a final verdict. See below for the overall result.`,
       status: stepStatus(trust > 0 && abstain === 0, verify > trust || abstain > 0),
     },
   ];
@@ -149,12 +149,12 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
       color: 'text-[#059669]',
       banner: 'bg-emerald-600',
       guidance: [
-        'The evidence is well-corroborated by independent primary sources.',
-        'You can use this information with confidence in academic or research contexts.',
-        'Still cite primary sources — never rely on a single tool as your final authority.',
-        'If this is for a high-stakes decision, always verify directly with the original study.',
+        'Multiple genuinely independent sources confirmed this from different research groups.',
+        'You can use this information confidently in academic or research contexts.',
+        'Always cite the original primary source — never just say "AI said so".',
+        'For high-stakes decisions (medical, legal), verify directly with the original published study.',
       ],
-      action: '✅ You can proceed — but always double-check primary sources yourself before submitting any academic work.',
+      action: '✅ You can proceed — but always cite the primary source and double-check it yourself before submitting academic work.',
     },
     VERIFY: {
       bg: 'bg-amber-50 border-amber-300',
@@ -166,10 +166,10 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
       guidance: [
         'The claim has some support but also significant uncertainty.',
         echoDetected
-          ? 'An echo chamber was detected — many sources actually repeat one original claim.'
-          : 'Evidence is plausible but may rely on secondary or older sources.',
-        hasContradictions ? 'Contradicting studies exist — the scientific community has not reached consensus.' : '',
-        'Do not use this as a standalone fact. Verify with additional independent sources.',
+          ? 'An echo chamber was detected — many sources are actually repeating one original publication, so apparent agreement is misleading.'
+          : 'Evidence is plausible but may rely on secondary or older sources that have not been independently verified.',
+        hasContradictions ? 'Scientific studies exist that contradict this claim — experts have not reached consensus.' : '',
+        'Do not use this as a standalone fact. Find at least 2–3 independent peer-reviewed papers first.',
       ].filter(Boolean),
       action: '⚠️ Do NOT treat this as confirmed. Find at least 2–3 independent peer-reviewed papers before relying on this claim.',
     },
@@ -181,12 +181,12 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
       color: 'text-[#e11d48]',
       banner: 'bg-rose-600',
       guidance: [
-        'Evidence is strongly contradicted, circular, or severely outdated.',
-        'The system cannot assign a confident verdict without risking a wrong conclusion.',
-        'Competing studies directly oppose each other — this is an active scientific controversy.',
-        'A definitive answer is not possible from available public literature alone.',
+        'The evidence is strongly contradicted, circular (all copies of one source), or severely outdated.',
+        'The system refuses to give a verdict because the risk of being wrong is too high.',
+        'Competing studies directly contradict each other — this is an active scientific controversy with no settled answer.',
+        'A reliable conclusion cannot be drawn from available public literature alone.',
       ],
-      action: '🚫 Do NOT cite this claim. The evidence is disputed or unreliable. Consult a domain expert or seek primary research from official scientific bodies.',
+      action: '🚫 Do NOT cite this claim. The evidence is disputed or unreliable. Consult a domain expert or find primary research from official scientific bodies.',
     },
   };
 
@@ -215,17 +215,32 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
           </div>
           <div>
             <div className="font-mono text-[11px] font-bold uppercase tracking-widest text-slate-400">
-              TRACEVIDENCE — Verdict Scoreboard
+              TRACEVIDENCE — Full Audit Summary
             </div>
             <h2 className="text-lg font-bold text-white mt-0.5">
-              {plainEnglishMode ? 'What Did We Find? Full Audit Summary' : 'Research Synthesis & Epistemic Verdict'}
+              What Did We Find? Here Is How We Decided.
             </h2>
           </div>
         </div>
         <p className="mt-2 text-xs text-slate-300 leading-relaxed">
-          Below is a transparent breakdown of every step the engine ran, what was found at each stage,
-          and how it all leads to the final verdict.
+          Every step the system ran is shown below — what was found, why it matters, and how it all leads to the final verdict. Nothing is hidden.
         </p>
+
+        {/* Quick Verdict Legend */}
+        <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-mono font-bold">
+          <span className="flex items-center space-x-1.5 rounded-lg bg-emerald-500/20 px-2.5 py-1 border border-emerald-400/30">
+            <span className="text-emerald-400">🟢 TRUST</span>
+            <span className="text-slate-300 font-normal">= Safe to cite (with source)</span>
+          </span>
+          <span className="flex items-center space-x-1.5 rounded-lg bg-amber-500/20 px-2.5 py-1 border border-amber-400/30">
+            <span className="text-amber-400">🟡 VERIFY</span>
+            <span className="text-slate-300 font-normal">= Double-check first</span>
+          </span>
+          <span className="flex items-center space-x-1.5 rounded-lg bg-rose-500/20 px-2.5 py-1 border border-rose-400/30">
+            <span className="text-rose-400">🔴 ABSTAIN</span>
+            <span className="text-slate-300 font-normal">= Do NOT cite</span>
+          </span>
+        </div>
       </div>
 
       {/* 5-Step Breakdown Table */}
@@ -262,12 +277,16 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
               <div className="flex-1 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-bold text-sm text-[#0f172a]">
-                    {plainEnglishMode ? step.simpleName : step.name}
+                    {step.name}
                   </span>
                   {statusIcon(step.status)}
                 </div>
+                {/* Why this step matters */}
+                <div className="text-[11px] text-[#0f766e] bg-teal-50 rounded-lg px-2.5 py-1.5 border border-teal-100 leading-snug font-medium">
+                  💡 Why this step: {step.whyItMatters}
+                </div>
                 <div className="text-[11px] font-mono text-[#475569] bg-white/70 rounded-lg px-2.5 py-1.5 border border-slate-200/60">
-                  📊 {step.finding}
+                  📊 What we found: {step.finding}
                 </div>
                 <div className="text-xs text-[#0f172a] leading-relaxed font-medium">
                   {step.conclusion}
@@ -280,8 +299,11 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
 
       {/* Score bar */}
       <div className="px-6 pt-5 pb-3 bg-slate-50 border-t border-slate-200">
-        <div className="text-xs font-mono font-bold text-[#475569] uppercase tracking-wider mb-2">
-          Verdict Distribution Across All Claims
+        <div className="text-xs font-mono font-bold text-[#475569] uppercase tracking-wider mb-1">
+          How many of your {total} statement{total !== 1 ? 's' : ''} got each result?
+        </div>
+        <div className="text-[11px] text-slate-500 mb-2 font-sans">
+          Green = TRUST (safe to use) · Amber = VERIFY (double-check) · Red = ABSTAIN (do not cite)
         </div>
         <div className="flex h-4 w-full rounded-full overflow-hidden gap-0.5 bg-slate-200">
           {trustPct > 0 && (
@@ -307,9 +329,9 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
           )}
         </div>
         <div className="mt-2 flex flex-wrap gap-3 text-[11px] font-mono font-bold">
-          <span className="text-[#059669]">■ {trustPct}% TRUST ({trust})</span>
-          <span className="text-[#d97706]">■ {verifyPct}% VERIFY ({verify})</span>
-          <span className="text-[#e11d48]">■ {abstainPct}% ABSTAIN ({abstain})</span>
+          <span className="text-[#059669]">■ {trustPct}% TRUST — {trust} statement{trust !== 1 ? 's' : ''} safe to use</span>
+          <span className="text-[#d97706]">■ {verifyPct}% VERIFY — {verify} need checking</span>
+          <span className="text-[#e11d48]">■ {abstainPct}% ABSTAIN — {abstain} should NOT be cited</span>
         </div>
       </div>
 
@@ -322,7 +344,7 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
         </div>
         <div className="flex-1">
           <div className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#475569]">
-            Final Verdict
+            Overall Final Verdict
           </div>
           <div className={`text-3xl font-extrabold font-mono tracking-wider ${config.color}`}>
             {config.title}
@@ -343,7 +365,7 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
         <div className="flex items-center space-x-2 mb-2">
           <Lightbulb className="h-5 w-5 text-[#f97316] shrink-0" />
           <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#f97316]">
-            What Should You Do?
+            What Should You Do Next?
           </span>
         </div>
         <p className="text-sm font-semibold text-white leading-relaxed">
@@ -355,14 +377,14 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
             className="flex items-center space-x-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 text-xs font-bold text-white transition-all"
           >
             <Network className="h-4 w-4" />
-            <span>See the Evidence Graph</span>
+            <span>See the Source Map (Evidence Graph)</span>
           </Link>
           <Link
             href="/research"
             className="flex items-center space-x-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 text-xs font-bold text-white transition-all"
           >
             <BookOpen className="h-4 w-4" />
-            <span>View Research Metrics</span>
+            <span>View Detailed Research Stats</span>
           </Link>
         </div>
       </div>

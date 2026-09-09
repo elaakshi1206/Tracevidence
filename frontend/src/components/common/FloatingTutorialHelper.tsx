@@ -41,8 +41,8 @@ export default function FloatingTutorialHelper() {
       a: 'If 10 different newspapers all report the same statistic, but they all cite 1 single press release, that is NOT 10 independent sources! Our TRACE-X engine collapses those 10 copies into 1 origin seed so repetition doesn\'t fool you.',
     },
     {
-      q: 'How do I present this to judges at Avishkar?',
-      a: 'Click "Avishkar Judge Mode" in the top navbar or visit the Research Dashboard. Emphasize: (1) Deep provenance vs naive citation, (2) Mathematical transparency with T(c), and (3) Selective prediction that drops false-confidence from 31% to 3.2%.',
+      q: 'How do I present this in a demo?',
+      a: 'Visit the Research Dashboard or Scoreboard. Emphasize: (1) Deep provenance vs naive citation, (2) Mathematical transparency with T(c), and (3) Selective prediction that drops false-confidence from 31% to 3.2%.',
     },
     {
       q: 'Can I test my own custom statements?',
@@ -114,29 +114,18 @@ export default function FloatingTutorialHelper() {
             <button
               onClick={() => {
                 setIsOpen(false);
-                openPrologue(0);
-              }}
-              className="w-full flex items-center justify-between rounded-xl border-2 border-amber-400 bg-amber-50 p-3 font-mono text-xs font-black text-amber-950 shadow-sm hover:bg-amber-100 transition-all"
-            >
-              <div className="flex items-center space-x-2">
-                <Gamepad2 className="h-4 w-4 text-amber-600 animate-pulse" />
-                <span>🎮 Play Training Mission</span>
-              </div>
-              <ChevronRight className="h-4 w-4" />
-            </button>
-
-            <button
-              onClick={() => {
-                setIsOpen(false);
                 openTour(0);
               }}
-              className="w-full flex items-center justify-between rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-3 font-mono text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:from-blue-500 hover:to-indigo-500 transition-all"
+              className="w-full flex items-center justify-between rounded-xl bg-gradient-to-r from-teal-600 via-teal-700 to-indigo-700 p-3 font-mono text-xs font-bold text-white shadow-md shadow-teal-900/30 hover:from-teal-500 hover:to-indigo-600 transition-all group"
             >
-              <div className="flex items-center space-x-2">
-                <BookOpen className="h-4 w-4 text-white" />
-                <span>Quick Feature Walkthrough</span>
+              <div className="flex items-center space-x-2.5">
+                <Sparkles className="h-4 w-4 text-amber-300 animate-pulse" />
+                <div className="text-left">
+                  <div className="font-bold">Interactive Tour &amp; Training</div>
+                  <div className="text-[10px] text-teal-100 font-normal font-sans">Walkthrough &amp; investigator mission</div>
+                </div>
               </div>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 text-teal-200 group-hover:translate-x-0.5 transition-transform" />
             </button>
 
             {/* Plain English Mode Toggle */}

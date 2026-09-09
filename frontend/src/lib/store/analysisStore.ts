@@ -9,7 +9,6 @@ interface AnalysisState {
   pipelineProgress: PipelineProgressUpdate | null;
   isAnalyzing: boolean;
   history: AnalysisResult[];
-  judgeMode: boolean;
   activeFilter: 'ALL' | 'TRUST' | 'VERIFY' | 'ABSTAIN';
 
   // Tutorials & User Understanding
@@ -32,7 +31,6 @@ interface AnalysisState {
   setPipelineProgress: (progress: PipelineProgressUpdate | null) => void;
   setIsAnalyzing: (loading: boolean) => void;
   setAnalysisMode: (mode: 'benchmark' | 'live') => void;
-  toggleJudgeMode: () => void;
   setActiveFilter: (filter: 'ALL' | 'TRUST' | 'VERIFY' | 'ABSTAIN') => void;
   loadBenchmarkCase: (benchmarkId: string) => void;
   resetAnalysis: () => void;
@@ -57,7 +55,6 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   pipelineProgress: null,
   isAnalyzing: false,
   history: BENCHMARK_CASES.map(b => b.data),
-  judgeMode: true,
   activeFilter: 'ALL',
   analysisMode: 'benchmark',
 
@@ -84,7 +81,6 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   setPipelineProgress: (progress) => set({ pipelineProgress: progress }),
   setIsAnalyzing: (loading) => set({ isAnalyzing: loading }),
   setAnalysisMode: (mode) => set({ analysisMode: mode }),
-  toggleJudgeMode: () => set((state) => ({ judgeMode: !state.judgeMode })),
   setActiveFilter: (filter) => set({ activeFilter: filter }),
 
   loadBenchmarkCase: (benchmarkId: string) => {
@@ -102,7 +98,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
 
   resetAnalysis: () => set({ currentAnalysis: null, selectedClaimId: null, pipelineProgress: null }),
 
-  openTour: (step = 0) => set({ isTourOpen: true, tourStep: step }),
+  openTour: (step = 0) => set({ isTourOpen: true, tourStep: step, isPrologueOpen: false }),
   closeTour: () => set({ isTourOpen: false }),
   setTourStep: (step) => set({ tourStep: step }),
   togglePlainEnglishMode: () => set((state) => ({ plainEnglishMode: !state.plainEnglishMode })),
@@ -114,9 +110,9 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       },
     })),
 
-  openPrologue: (step = 0) => set({ isPrologueOpen: true, prologueStep: step }),
-  closePrologue: () => set({ isPrologueOpen: false }),
-  setPrologueStep: (step: number) => set({ prologueStep: step }),
+  openPrologue: (step = 0) => set({ isTourOpen: true, tourStep: step, isPrologueOpen: false }),
+  closePrologue: () => set({ isTourOpen: false, isPrologueOpen: false }),
+  setPrologueStep: (step: number) => set({ tourStep: step }),
   completePrologue: () => {
     if (typeof window !== 'undefined') {
       try {
@@ -125,6 +121,6 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
         // ignore
       }
     }
-    set({ isPrologueOpen: false, hasCompletedPrologue: true });
+    set({ isTourOpen: false, isPrologueOpen: false, hasCompletedPrologue: true });
   },
 }));

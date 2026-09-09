@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
-  const { openPrologue, plainEnglishMode } = useAnalysisStore();
+  const { openTour, plainEnglishMode } = useAnalysisStore();
 
   return (
     <div className="space-y-20 py-10 sm:py-16">
@@ -35,7 +35,7 @@ export default function HomePage() {
         {/* Small badge */}
         <div className="inline-flex items-center space-x-2 rounded-full border border-teal-200 bg-white px-4 py-1.5 text-xs font-semibold text-[#0f766e] shadow-2xs">
           <Award className="h-4 w-4 text-amber-500" />
-          <span>Avishkar Research Prototype</span>
+          <span>Academic Research Tool</span>
         </div>
 
         {/* Large title */}
@@ -64,13 +64,13 @@ export default function HomePage() {
             <span>Analyze Information</span>
           </Link>
 
-          {/* Start Training Mission (Secondary) */}
+          {/* Tour & Training (Secondary) */}
           <button
-            onClick={() => openPrologue(0)}
+            onClick={() => openTour(0)}
             className="flex items-center space-x-2.5 rounded-xl bg-[#0f766e] px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-teal-900/15 hover:bg-[#115e59] hover:-translate-y-0.5 transition-all cursor-pointer"
           >
-            <Gamepad2 className="h-4 w-4 text-amber-300" />
-            <span>Start Training Mission</span>
+            <Sparkles className="h-4 w-4 text-amber-300" />
+            <span>Tour &amp; Training</span>
           </button>
 
           {/* Research Dashboard (Outline) */}
@@ -82,13 +82,26 @@ export default function HomePage() {
             <span>Research Dashboard</span>
           </Link>
         </div>
+        {/* Quick Verdict Glossary Strip */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs">
+          <span className="text-slate-500 font-semibold">Quick Guide:</span>
+          <span className="flex items-center space-x-1.5 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1.5 font-semibold text-emerald-700">
+            <span>🟢</span><span>TRUST = Safe to cite (with source)</span>
+          </span>
+          <span className="flex items-center space-x-1.5 rounded-lg bg-amber-50 border border-amber-200 px-3 py-1.5 font-semibold text-amber-700">
+            <span>🟡</span><span>VERIFY = Double-check before using</span>
+          </span>
+          <span className="flex items-center space-x-1.5 rounded-lg bg-rose-50 border border-rose-200 px-3 py-1.5 font-semibold text-rose-700">
+            <span>🔴</span><span>ABSTAIN = Do NOT cite this</span>
+          </span>
+        </div>
       </section>
 
       {/* 2. WHY IT MATTERS SECTION (Three Equal Cards) */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#0f766e]">
-            Core Epistemic Foundation
+            Why This Matters
           </span>
           <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-[#0f172a]">
             Why It Matters
@@ -298,7 +311,7 @@ export default function HomePage() {
             <span>Academic Research Disclaimer</span>
           </div>
           <p>
-            TRACEVIDENCE is an academic research prototype developed for the Avishkar Research Convention. It provides visible evidence provenance and uncertainty quantification, not an infallible truth oracle. Users should always consult primary literature for safety-critical decisions.
+            TRACEVIDENCE is an academic research tool. It provides visible evidence provenance and uncertainty quantification, not an infallible truth oracle. Users should always consult primary literature for safety-critical decisions.
           </p>
         </div>
       </section>

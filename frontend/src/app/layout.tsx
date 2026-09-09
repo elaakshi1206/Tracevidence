@@ -6,7 +6,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from 'react-hot-toast';
 import GuidedTourModal from '@/components/common/GuidedTourModal';
 import FloatingTutorialHelper from '@/components/common/FloatingTutorialHelper';
-import CompulsoryPrologueTutorial from '@/components/common/CompulsoryPrologueTutorial';
 
 export const metadata: Metadata = {
   title: 'TRACEVIDENCE — Trace the Evidence. Measure the Trust.',
@@ -17,7 +16,6 @@ export const metadata: Metadata = {
     'Decision Intelligence',
     'TRACE-X',
     'AIVIDENCE',
-    'Avishkar Research',
     'Selective Prediction',
     'Hallucination Auditing',
   ],
@@ -49,7 +47,6 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
-          <CompulsoryPrologueTutorial />
           <GuidedTourModal />
           <FloatingTutorialHelper />
           <Toaster
