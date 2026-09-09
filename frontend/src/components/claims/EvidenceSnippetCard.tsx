@@ -30,9 +30,15 @@ export default function EvidenceSnippetCard({ evidence, source }: EvidenceSnippe
       icon: XCircle,
       border: 'border-rose-200',
     },
+    IRRELEVANT: {
+      label: 'NOT DIRECTLY RELEVANT',
+      bg: 'bg-slate-100 text-slate-700 border-slate-300',
+      icon: AlertTriangle,
+      border: 'border-slate-200',
+    },
   };
 
-  const config = polarityConfigs[evidence.polarity];
+  const config = polarityConfigs[evidence.polarity] || polarityConfigs.PARTIAL;
   const Icon = config.icon;
 
   return (

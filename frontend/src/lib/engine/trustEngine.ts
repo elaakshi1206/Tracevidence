@@ -57,28 +57,40 @@ export function evaluateTrustDecision(params: {
   let llmReasoning = '';
   let reliabilityIndicator: ReliabilityLevel = 'Moderate Reliability';
 
-  // Rule 1: Empirical Contradiction or Critical Failure -> ABSTAIN
+  // Rule 1: Empirical Contradiction or Critical Factual Error -> ABSTAIN
   if (contradictionDetected) {
     decision = 'ABSTAIN';
     reliabilityIndicator = 'High Epistemic Uncertainty';
-    decisionReason = `Active empirical conflict detected. Peer-reviewed literature or authoritative audits contradict the stated figures or conclusions.`;
-    recommendedAction = 'Withhold factual endorsement. Issue conflict advisory and request secondary laboratory or regulatory audit.';
-    llmReasoning = `Under AIVIDENCE selective prediction protocol, the engine refrains from asserting truth because authoritative sources directly contest the proposition (${contradictionDetails || 'Contradictory empirical data'}).`;
+    decisionReason = contradictionDetails || `Active empirical conflict detected. Authoritative records or verified scientific literature contradict the asserted proposition.`;
+    recommendedAction = 'Withhold factual endorsement. Issue contradiction advisory and do not cite as true.';
+    llmReasoning = `Under AIVIDENCE selective prediction protocol, the engine refrains from asserting truth because authoritative sources directly contest the proposition (${contradictionDetails || 'Contradictory empirical data'}). Clear factual errors must receive ABSTAIN.`;
   }
-  // Rule 2: High corroboration, multiple independent origins, contemporary freshness -> TRUST
-  // Cautious bar: Must have at least 2 independent origins, good freshness, and no contradictions
+  // Rule 1B: Zero relevant sources found -> ABSTAIN
+  else if (apparentSourcesCount === 0 || independentOriginsCount === 0) {
+    decision = 'ABSTAIN';
+    reliabilityIndicator = 'High Epistemic Uncertainty';
+    decisionReason = 'No relevant, verifiable authoritative sources found addressing this proposition. The system refrains from endorsing ungrounded claims.';
+    recommendedAction = 'Withhold automated validation. Perform targeted manual research with specific keywords or verify against primary repositories.';
+    llmReasoning = 'The system queried multi-backend knowledge repositories but found zero relevant, verifiable sources that discuss the asserted proposition. Never force a match with unrelated content.';
+  }
+  // Rule 2: Clearly correct + strongly supported by real independent sources -> TRUST
   else if (
-    finalTrustScore >= 0.72 &&
-    independentOriginsCount >= 2 &&
-    independenceFactor >= 0.50 &&
-    freshnessDecay >= 0.60 &&
-    supportScore >= 0.70
+    !contradictionDetected &&
+    apparentSourcesCount >= 1 &&
+    independentOriginsCount >= 1 &&
+    supportScore >= 0.70 &&
+    (
+      // Multi-origin benchmark criteria:
+      (finalTrustScore >= 0.65 && independentOriginsCount >= 2 && independenceFactor >= 0.40) ||
+      // Or strong live retrieval corroboration from authoritative government/official/encyclopedic sources:
+      (isLiveRetrieval && supportScore >= 0.75 && independentOriginsCount >= 1 && apparentSourcesCount >= 1)
+    )
   ) {
     decision = 'TRUST';
     reliabilityIndicator = isLiveRetrieval ? 'Moderate Reliability' : 'High Rigor';
-    decisionReason = `Corroborated by ${independentOriginsCount} distinct, independent primary origins with contemporary freshness (${Math.round(freshnessDecay * 100)}%) and methodologically aligned evidence.`;
+    decisionReason = `Clearly corroborated by ${independentOriginsCount} verified, authoritative origin(s) with contemporary freshness (${Math.round(freshnessDecay * 100)}%) and factual alignment across retrieved evidence.`;
     recommendedAction = 'Admit into knowledge graph as verified proposition; maintain routine periodic temporal re-audit schedule.';
-    llmReasoning = `Multiple non-overlapping research teams or official bodies have independently replicated this finding. The independence ratio (${(independenceFactor * 100).toFixed(0)}%) eliminates corporate PR or wire duplication bias.`;
+    llmReasoning = `Evidence retrieved from authoritative independent records directly affirms the asserted proposition with high factual corroboration (${Math.round(supportScore * 100)}%).`;
   }
   // Rule 3: Echo Chamber / Syndication Collapse -> VERIFY
   else if (apparentSourcesCount >= 3 && independentOriginsCount <= 1) {
@@ -96,20 +108,21 @@ export function evaluateTrustDecision(params: {
     recommendedAction = 'Verify against contemporary 2024-2026 data or enacted legislative texts.';
     llmReasoning = `The primary source material reflects baseline conditions that have substantially evolved. Without updated empirical confirmation, high confidence cannot be assigned.`;
   }
-  // Rule 5: Insufficient corroboration / High uncertainty -> VERIFY or ABSTAIN
-  else if (finalTrustScore < 0.35 || independentOriginsCount === 0) {
+  // Rule 5: Insufficient corroboration / Clear factual mismatch / High uncertainty -> ABSTAIN
+  else if (finalTrustScore < 0.35 || supportScore < 0.45) {
     decision = 'ABSTAIN';
     reliabilityIndicator = 'High Epistemic Uncertainty';
-    decisionReason = `Insufficient verifiable literature retrieved to establish empirical validity (Calculated trust score: ${finalTrustScore}).`;
+    decisionReason = `Insufficient verifiable literature or factual mismatch detected (Support score: ${supportScore}, Trust score: ${finalTrustScore}).`;
     recommendedAction = 'Abstain from automated validation. Perform targeted manual literature review across indexed scientific databases.';
-    llmReasoning = `Selective prediction thresholds mandate withholding trust when corroborating evidence is minimal or ambiguous.`;
+    llmReasoning = `Selective prediction thresholds mandate withholding trust when corroborating evidence is minimal, conflicting, or ambiguous.`;
   }
+
   // Rule 6: Default Decision Support State -> VERIFY
   else {
     decision = 'VERIFY';
     reliabilityIndicator = isLiveRetrieval ? 'High Epistemic Uncertainty' : 'Moderate Reliability';
     decisionReason = `Plausible proposition, but corroboration threshold for definitive trust is not yet met (${independentOriginsCount} independent origin(s), ${(independenceFactor * 100).toFixed(0)}% independence).`;
-    recommendedAction = 'Examine primary DOI citations and verify methodology before citing as settled fact.';
+    recommendedAction = 'Examine primary citations and verify methodology before citing as settled fact.';
     llmReasoning = `While preliminary supporting citations were retrieved, the absence of multiple independent replications advises treating this as an unconfirmed working proposition.`;
   }
 

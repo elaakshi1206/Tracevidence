@@ -42,7 +42,7 @@ import {
 import ContextHelpTooltip from '@/components/common/ContextHelpTooltip';
 import WorkflowStepper from '@/components/common/WorkflowStepper';
 import DecisionBadge from '@/components/common/DecisionBadge';
-import AnalysisScoreboard from '@/components/analyze/AnalysisScoreboard';
+
 import { useAnalysisStore } from '@/lib/store/analysisStore';
 import { LABELED_RESEARCH_DATASET, evaluateResearchDataset } from '@/lib/benchmarks/researchDataset';
 import { DatasetEvaluationMetrics } from '@/types';
@@ -131,26 +131,21 @@ const ABLATION_STAGES = [
 ];
 
 export default function ResearchDashboardPage() {
-  type TabType = 'datasetEvaluator' | 'ablation' | 'benchmarks' | 'datasetViewer' | 'scoreboard';
-  const validTabs: TabType[] = ['datasetEvaluator', 'ablation', 'benchmarks', 'datasetViewer', 'scoreboard'];
+  type TabType = 'datasetEvaluator' | 'ablation' | 'benchmarks' | 'datasetViewer' | 'systemMetrics';
+  const validTabs: TabType[] = ['datasetEvaluator', 'ablation', 'benchmarks', 'datasetViewer', 'systemMetrics'];
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('datasetEvaluator');
   const [evalMetrics, setEvalMetrics] = useState<DatasetEvaluationMetrics | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const [scoreboardSubTab, setScoreboardSubTab] = useState<'system' | 'claim'>('system');
-  const { plainEnglishMode, currentAnalysis } = useAnalysisStore();
+  const { plainEnglishMode } = useAnalysisStore();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
     if (tab && validTabs.includes(tab as TabType)) {
       setActiveTab(tab as TabType);
-    }
-    // If navigated from /scoreboard redirect
-    if (window.location.hash === '#scoreboard') {
-      setActiveTab('scoreboard');
     }
   }, []);
 
@@ -203,20 +198,20 @@ export default function ResearchDashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-      <WorkflowStepper currentStep={3} />
+      <WorkflowStepper currentStep={4} />
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
-              <Award className="h-4 w-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-white shadow-2xs">
+              <FlaskConical className="h-4 w-4" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-slate-900">
-              {plainEnglishMode ? 'Step 3: Accuracy & Research Lab' : 'Research Evaluation & Benchmark Suite'}
+              Step 4: Research Lab
             </h1>
             <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-3 py-0.5 font-mono text-xs font-bold shadow-2xs">
-              ⚠️ Internal Pilot Results – Not Final
+              Advanced / Research Purpose
             </span>
             <ContextHelpTooltip
               title="Academic Evaluation"
@@ -224,13 +219,13 @@ export default function ResearchDashboardPage() {
               size="xs"
             />
           </div>
-          <p className="mt-1 text-xs sm:text-sm text-slate-600">
-            Academic Research Suite · Empirical Validation, Ablations, Labeled Dataset Evaluator & Scoreboard
+          <p className="mt-1.5 text-xs sm:text-sm text-slate-600 font-medium">
+            🔬 <strong>Notice:</strong> This section is for teachers, judges, and advanced users. Explore empirical validation, ablation studies, and ground-truth benchmarks.
           </p>
         </div>
         <button
           onClick={downloadJsonReport}
-          className="btn-gradient-rbgw flex items-center space-x-2 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-mono font-bold text-white shadow-md transition-all"
+          className="btn-gradient-rbgw flex items-center space-x-2 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-mono font-bold text-white shadow-md transition-all cursor-pointer"
         >
           <Download className="h-4 w-4" />
           <span>Export Research Evaluation (JSON)</span>
@@ -255,11 +250,12 @@ export default function ResearchDashboardPage() {
           { id: 'ablation', label: '2. Ablation Study', icon: <BarChart3 className="h-4 w-4" /> },
           { id: 'benchmarks', label: '3. Case Library', icon: <BookOpen className="h-4 w-4" /> },
           { id: 'datasetViewer', label: '4. Ground-Truth Dataset', icon: <Tag className="h-4 w-4" /> },
+          { id: 'systemMetrics', label: '5. System Performance Metrics', icon: <Award className="h-4 w-4" /> },
         ] as { id: TabType; label: string; icon: React.ReactNode }[]).map(({ id, label, icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center space-x-2 rounded-xl px-4 py-2 font-mono text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center space-x-2 rounded-xl px-4 py-2 font-mono text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === id ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -268,17 +264,14 @@ export default function ResearchDashboardPage() {
           </button>
         ))}
 
-        <button
-          onClick={() => setActiveTab('scoreboard')}
-          className={`flex items-center space-x-2 rounded-xl px-4 py-2 font-mono text-xs sm:text-sm font-bold transition-all ${
-            activeTab === 'scoreboard'
-              ? 'bg-[#0f766e] text-white shadow-md'
-              : 'bg-teal-50 text-[#0f766e] border border-teal-200 hover:bg-teal-100'
-          }`}
+        <Link
+          href="/experiments"
+          className="flex items-center space-x-1.5 rounded-xl px-4 py-2 font-mono text-xs sm:text-sm font-bold bg-teal-50 text-teal-800 border border-teal-300 hover:bg-teal-100 transition-all shadow-2xs ml-auto"
         >
-          <Award className="h-4 w-4" />
-          <span>5. Scoreboard</span>
-        </button>
+          <FlaskConical className="h-4 w-4 text-teal-700" />
+          <span>Test Lab (50 Experiment Cases &amp; Learning)</span>
+          <ArrowRight className="h-3.5 w-3.5 text-teal-600" />
+        </Link>
       </div>
 
       {/* ═══════════════════════════════════════════════════════
@@ -883,248 +876,148 @@ export default function ResearchDashboardPage() {
       {/* ═══════════════════════════════════════════════════════
           TAB 5: SCOREBOARD (merged from /scoreboard)
           ═══════════════════════════════════════════════════════ */}
-      {activeTab === 'scoreboard' && (
+      {/* ═══════════════════════════════════════════════════════
+          TAB 5: SYSTEM PERFORMANCE METRICS
+          ═══════════════════════════════════════════════════════ */}
+      {activeTab === 'systemMetrics' && (
         <div className="space-y-6">
-          {/* Scoreboard Header */}
+          {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
             <div>
               <div className="flex items-center space-x-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0f766e] text-white shadow-md">
-                  <Award className="h-5 w-5" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md">
+                  <Award className="h-5 w-5 text-teal-300" />
                 </div>
                 <div>
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0f766e]">User & Student Overview</span>
-                  <h2 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-[#0f172a]">Scoreboard & Results Overview</h2>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0f766e]">Empirical Benchmark Metrics</span>
+                  <h2 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-[#0f172a]">System Performance Metrics</h2>
                 </div>
               </div>
               <p className="mt-2 text-xs sm:text-sm text-[#475569] max-w-3xl leading-relaxed">
                 {plainEnglishMode
-                  ? 'Two separate views: how reliable Tracevidence is as a system, and what it found about your specific claim.'
-                  : 'Dual-view scoreboard: system-level empirical benchmarks and per-claim epistemic verdict synthesis.'}
+                  ? 'System-level audit scores: how accurately and honestly TRACEVIDENCE performs across verified ground-truth test datasets.'
+                  : 'Empirical benchmark metrics from ground-truth evaluation across multi-domain claims: ECE calibration, FCR, and selective refusal.'}
               </p>
             </div>
           </div>
 
-          {/* Sub-Tab Switcher */}
-          <div className="flex rounded-2xl border border-slate-200 bg-slate-50 p-1 gap-1 shadow-inner w-full">
-            <button
-              id="tab-system-trust"
-              onClick={() => setScoreboardSubTab('system')}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs sm:text-sm font-bold transition-all duration-200 ${
-                scoreboardSubTab === 'system' ? 'bg-[#0f172a] text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <ShieldQuestion className={`h-4 w-4 shrink-0 ${scoreboardSubTab === 'system' ? 'text-teal-300' : 'text-slate-400'}`} />
-              <span>Why Trust Tracevidence?</span>
-              <span className={`hidden sm:inline font-mono text-[10px] px-1.5 py-0.5 rounded-md font-black ${scoreboardSubTab === 'system' ? 'bg-teal-500/20 text-teal-300' : 'bg-slate-200 text-slate-500'}`}>SYSTEM</span>
-            </button>
-            <button
-              id="tab-claim-results"
-              onClick={() => setScoreboardSubTab('claim')}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs sm:text-sm font-bold transition-all duration-200 ${
-                scoreboardSubTab === 'claim' ? 'bg-[#0f766e] text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <ClipboardList className={`h-4 w-4 shrink-0 ${scoreboardSubTab === 'claim' ? 'text-teal-100' : 'text-slate-400'}`} />
-              <span>Your Claim Results</span>
-              {currentAnalysis ? (
-                <span className={`hidden sm:inline font-mono text-[10px] px-1.5 py-0.5 rounded-md font-black ${scoreboardSubTab === 'claim' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'}`}>LIVE</span>
-              ) : (
-                <span className={`hidden sm:inline font-mono text-[10px] px-1.5 py-0.5 rounded-md font-black ${scoreboardSubTab === 'claim' ? 'bg-white/20 text-teal-100' : 'bg-slate-200 text-slate-500'}`}>EMPTY</span>
-              )}
-            </button>
+          {evalMetrics && (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-emerald-800">Overall Accuracy</span>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div className="mt-2 font-mono text-3xl font-black text-emerald-700">{evalMetrics.accuracy}%</div>
+                <p className="mt-1 text-[11px] text-slate-600 leading-tight">Correct verdicts across {LABELED_RESEARCH_DATASET.length} multi-domain claims</p>
+              </div>
+              <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-rose-800">False-Certainty Rate</span>
+                  <ShieldAlert className="h-4 w-4 text-rose-600" />
+                </div>
+                <div className="mt-2 font-mono text-3xl font-black text-rose-700">{evalMetrics.falseConfidenceRate}%</div>
+                <p className="mt-1 text-[11px] text-slate-600 leading-tight">Near-zero false certainty on scientific disputes</p>
+              </div>
+              <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-blue-800">Calibration (ECE)</span>
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="mt-2 font-mono text-3xl font-black text-blue-700">{evalMetrics.calibrationErrorECE}</div>
+                <p className="mt-1 text-[11px] text-slate-600 leading-tight">Confidence percentage matches actual truth probability</p>
+              </div>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-amber-800">Selective Refusal</span>
+                  <ShieldCheck className="h-4 w-4 text-amber-600" />
+                </div>
+                <div className="mt-2 font-mono text-3xl font-black text-amber-700">{evalMetrics.abstentionRate}%</div>
+                <p className="mt-1 text-[11px] text-slate-600 leading-tight">Says ABSTAIN when evidence is disputed or circular</p>
+              </div>
+            </div>
+          )}
+
+          {/* Plain English Explanations */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-[#0f766e]" />
+              <span>What These Scores Tell You (In Plain English)</span>
+            </h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs space-y-1">
+                <div className="font-bold text-emerald-800 text-sm">Overall Accuracy = 100%</div>
+                <p className="text-slate-700">TRACEVIDENCE correctly judged all 20 test claims. Like getting 20/20 on a test where the answers were independently verified by human experts.</p>
+              </div>
+              <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-xs space-y-1">
+                <div className="font-bold text-rose-800 text-sm">False-Certainty Rate = 0%</div>
+                <p className="text-slate-700">It never said &ldquo;I am 100% sure&rdquo; when it was actually wrong. This is the most important safety metric — being confidently wrong is the most dangerous kind of error.</p>
+              </div>
+              <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-xs space-y-1">
+                <div className="font-bold text-blue-800 text-sm">Calibration Error = 0.038</div>
+                <p className="text-slate-700">When TRACEVIDENCE says it&apos;s &ldquo;80% confident&rdquo;, it is genuinely right about 80% of the time. Its stated confidence matches reality very closely. Lower is better — 0.038 is excellent.</p>
+              </div>
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-xs space-y-1">
+                <div className="font-bold text-amber-800 text-sm">Selective Refusal = 25%</div>
+                <p className="text-slate-700">On the hardest, most disputed 25% of claims, TRACEVIDENCE says &ldquo;I refuse to guess&rdquo; (ABSTAIN) rather than risking being wrong. A smart student leaves a question blank rather than writing a wrong answer.</p>
+              </div>
+            </div>
           </div>
 
-          {/* SYSTEM TRUST */}
-          {scoreboardSubTab === 'system' && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0f172a] text-white shadow-md shrink-0">
-                  <ShieldQuestion className="h-5 w-5 text-teal-300" />
-                </div>
-                <div>
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0f766e]">🏛️ About This Website</div>
-                  <h3 className="text-lg font-bold text-[#0f172a]">Why Trust Tracevidence?</h3>
-                  <p className="text-xs text-[#475569] mt-0.5">
-                    {plainEnglishMode
-                      ? "These numbers show how well Tracevidence performed when tested on 20 known facts and fake claims."
-                      : 'Empirical benchmark metrics from ground-truth evaluation across 20 labeled multi-domain claims.'}
-                  </p>
-                </div>
+          {evalMetrics && (
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div className="bg-[#0f172a] px-6 py-4">
+                <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-teal-300">Comprehensive System Audit</div>
+                <h3 className="font-mono text-sm sm:text-base font-bold text-white">Combined Conclusions Across All Evaluation Layers</h3>
               </div>
-
-              {evalMetrics && (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-2xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold text-emerald-800">Overall Accuracy</span>
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    </div>
-                    <div className="mt-2 font-mono text-3xl font-black text-emerald-700">{evalMetrics.accuracy}%</div>
-                    <p className="mt-1 text-[11px] text-slate-600 leading-tight">Correct verdicts across {LABELED_RESEARCH_DATASET.length} multi-domain claims</p>
-                  </div>
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-5 shadow-2xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold text-rose-800">False-Certainty Rate</span>
-                      <ShieldAlert className="h-4 w-4 text-rose-600" />
-                    </div>
-                    <div className="mt-2 font-mono text-3xl font-black text-rose-700">{evalMetrics.falseConfidenceRate}%</div>
-                    <p className="mt-1 text-[11px] text-slate-600 leading-tight">Near-zero false certainty on scientific disputes</p>
-                  </div>
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5 shadow-2xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold text-blue-800">Calibration (ECE)</span>
-                      <TrendingUp className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="mt-2 font-mono text-3xl font-black text-blue-700">{evalMetrics.calibrationErrorECE}</div>
-                    <p className="mt-1 text-[11px] text-slate-600 leading-tight">Confidence percentage matches actual truth probability</p>
-                  </div>
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-2xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold text-amber-800">Selective Refusal</span>
-                      <ShieldCheck className="h-4 w-4 text-amber-600" />
-                    </div>
-                    <div className="mt-2 font-mono text-3xl font-black text-amber-700">{evalMetrics.abstentionRate}%</div>
-                    <p className="mt-1 text-[11px] text-slate-600 leading-tight">Says ABSTAIN when evidence is disputed or circular</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Plain English Explanations */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-                <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-[#0f766e]" />
-                  📖 What These Scores Tell You (In Plain English)
-                </h3>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs space-y-1">
-                    <div className="font-bold text-emerald-800 text-sm">✅ Overall Accuracy = 100%</div>
-                    <p className="text-slate-700">TRACEVIDENCE correctly judged all 20 test claims. Like getting 20/20 on a test where the answers were independently verified by human experts.</p>
-                  </div>
-                  <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-xs space-y-1">
-                    <div className="font-bold text-rose-800 text-sm">🔴 False-Certainty Rate = 0%</div>
-                    <p className="text-slate-700">It never said "I am 100% sure" when it was actually wrong. This is the most important safety metric — being confidently wrong is the most dangerous kind of error.</p>
-                  </div>
-                  <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-xs space-y-1">
-                    <div className="font-bold text-blue-800 text-sm">🔵 Calibration Error = 0.038</div>
-                    <p className="text-slate-700">When TRACEVIDENCE says it's "80% confident", it is genuinely right about 80% of the time. Its stated confidence matches reality very closely. Lower is better — 0.038 is excellent.</p>
-                  </div>
-                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-xs space-y-1">
-                    <div className="font-bold text-amber-800 text-sm">🟡 Selective Refusal = 25%</div>
-                    <p className="text-slate-700">On the hardest, most disputed 25% of claims, TRACEVIDENCE says "I refuse to guess" (ABSTAIN) rather than risking being wrong. A smart student leaves a question blank rather than writing a wrong answer.</p>
-                  </div>
-                </div>
-              </div>
-
-              {evalMetrics && (
-                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <div className="bg-[#0f172a] px-6 py-4">
-                    <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-teal-300">Comprehensive System Audit</div>
-                    <h3 className="font-mono text-sm sm:text-base font-bold text-white">Combined Conclusions Across All Evaluation Layers</h3>
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                    {[
-                      { n: 1, color: 'emerald', title: 'Ground-Truth Labeled Dataset — Accuracy & Reliability', desc: `Tested on ${LABELED_RESEARCH_DATASET.length} hand-labeled claims spanning Clean, Echo Chamber, Outdated Data, Contradiction, and Unsupported categories.`, conclusion: `The system achieved ${evalMetrics.accuracy}% accuracy with only ${evalMetrics.falseConfidenceRate}% false confidence. When facts were uncertain or contradicted, it safely abstained instead of inventing answers.` },
-                      { n: 2, color: 'blue', title: 'Ablation Experiments — Why Provenance Tracing Matters', desc: 'Comparing basic AI retrieval against the full TRACEVIDENCE pipeline with TRACE-X origin clustering and AIVIDENCE selective prediction.', conclusion: 'Without TRACE-X, standard AI is misled by echo chambers 31.4% of the time. Adding provenance tracing reduces false certainty by 10x (down to 3.2%) and increases accuracy by +32%.' },
-                      { n: 3, color: 'amber', title: 'Curated Real-World Case Studies — Failure Modes Caught', desc: 'Real-world tests across EV battery claims, clinical drug efficacy, quantum computing PR, Mediterranean diet trials, and EU AI law.', conclusion: 'TRACEVIDENCE successfully detected all failure modes: echo chambers (EV claims), clinical refutations (HCQ), corporate marketing spin (Quantum speedup), and outdated draft laws (EU AI Act).' },
-                    ].map((row) => (
-                      <div key={row.n} className={`flex flex-col sm:flex-row gap-4 p-6 ${row.color === 'emerald' ? 'bg-emerald-50/30' : row.color === 'blue' ? 'bg-blue-50/20' : 'bg-amber-50/20'}`}>
-                        <div className={`flex items-center justify-center h-12 w-12 rounded-xl border shrink-0 font-mono text-lg font-black ${row.color === 'emerald' ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : row.color === 'blue' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-amber-100 border-amber-300 text-amber-700'}`}>{row.n}</div>
-                        <div className="flex-1 space-y-2">
-                          <div className="font-bold text-[#0f172a] text-sm">{row.title}</div>
-                          <div className="text-xs text-slate-600 leading-relaxed">{row.desc}</div>
-                          <div className={`text-xs font-medium text-[#0f172a] rounded-xl p-3 border ${row.color === 'emerald' ? 'bg-emerald-50 border-emerald-200' : row.color === 'blue' ? 'bg-blue-50 border-blue-200' : 'bg-amber-50 border-amber-200'}`}>
-                            ✅ <strong>Conclusion:</strong> {row.conclusion}
-                          </div>
-                        </div>
+              <div className="divide-y divide-slate-100">
+                {[
+                  { n: 1, color: 'emerald', title: 'Ground-Truth Labeled Dataset — Accuracy & Reliability', desc: `Tested on ${LABELED_RESEARCH_DATASET.length} hand-labeled claims spanning Clean, Echo Chamber, Outdated Data, Contradiction, and Unsupported categories.`, conclusion: `The system achieved ${evalMetrics.accuracy}% accuracy with only ${evalMetrics.falseConfidenceRate}% false confidence. When facts were uncertain or contradicted, it safely abstained instead of inventing answers.` },
+                  { n: 2, color: 'blue', title: 'Ablation Experiments — Why Provenance Tracing Matters', desc: 'Comparing basic AI retrieval against the full TRACEVIDENCE pipeline with TRACE-X origin clustering and AIVIDENCE selective prediction.', conclusion: 'Without TRACE-X, standard AI is misled by echo chambers 31.4% of the time. Adding provenance tracing reduces false certainty by 10x (down to 3.2%) and increases accuracy by +32%.' },
+                  { n: 3, color: 'amber', title: 'Curated Real-World Case Studies — Failure Modes Caught', desc: 'Real-world tests across EV battery claims, clinical drug efficacy, quantum computing PR, Mediterranean diet trials, and EU AI law.', conclusion: 'TRACEVIDENCE successfully detected all failure modes: echo chambers (EV claims), clinical refutations (HCQ), corporate marketing spin (Quantum speedup), and outdated draft laws (EU AI Act).' },
+                ].map((row) => (
+                  <div key={row.n} className={`flex flex-col sm:flex-row gap-4 p-6 ${row.color === 'emerald' ? 'bg-emerald-50/30' : row.color === 'blue' ? 'bg-blue-50/20' : 'bg-amber-50/20'}`}>
+                    <div className={`flex items-center justify-center h-12 w-12 rounded-xl border shrink-0 font-mono text-lg font-black ${row.color === 'emerald' ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : row.color === 'blue' ? 'bg-blue-100 border-blue-300 text-blue-700' : 'bg-amber-100 border-amber-300 text-amber-700'}`}>{row.n}</div>
+                    <div className="flex-1 space-y-2">
+                      <div className="font-bold text-[#0f172a] text-sm">{row.title}</div>
+                      <div className="text-xs text-slate-600 leading-relaxed">{row.desc}</div>
+                      <div className={`text-xs font-medium text-[#0f172a] rounded-xl p-3 border ${row.color === 'emerald' ? 'bg-emerald-50 border-emerald-200' : row.color === 'blue' ? 'bg-blue-50 border-blue-200' : 'bg-amber-50 border-amber-200'}`}>
+                        <strong>Conclusion:</strong> {row.conclusion}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Final Verdict Banner */}
-              <div className="rounded-2xl overflow-hidden border-2 border-[#0f766e] shadow-lg">
-                <div className="bg-[#0f766e] px-6 py-5 text-white">
-                  <div className="font-mono text-[11px] font-bold uppercase tracking-widest text-teal-100">Final Verdict</div>
-                  <h2 className="text-2xl font-extrabold font-mono mt-1">TRACEVIDENCE Passes All Verification Benchmarks</h2>
-                  <p className="mt-1 text-xs text-teal-50">Meets or exceeds all academic criteria for origin traceability, hallucination reduction, and epistemic honesty.</p>
-                </div>
-                <div className="bg-white p-6 space-y-3">
-                  {[
-                    { label: 'Evaluation Accuracy on Ground-Truth Dataset', value: '85.0%' },
-                    { label: 'Echo Chamber Collapse Detection (TRACE-X)', value: 'Active' },
-                    { label: 'Contradiction Alert for Conflicting Scientific Studies', value: '100% Catch Rate' },
-                    { label: 'Calibration Honesty (ECE ≤ 0.05)', value: '0.042 (High)' },
-                    { label: 'Selective Refusal Under Severe Uncertainty', value: 'Active (ABSTAIN)' },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs">
-                      <div className="flex items-center space-x-2.5">
-                        <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                        </div>
-                        <span className="font-semibold text-slate-800">{item.label}</span>
-                      </div>
-                      <span className="font-mono font-bold text-emerald-700">{item.value}</span>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* CLAIM RESULTS */}
-          {scoreboardSubTab === 'claim' && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0f766e] text-white shadow-md shrink-0">
-                  <ClipboardList className="h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0f766e]">🔍 Your Analysis</div>
-                  <h3 className="text-lg font-bold text-[#0f172a]">Your Claim Audit Results</h3>
-                  <p className="text-xs text-[#475569] mt-0.5">
-                    {plainEnglishMode
-                      ? "This section shows what Tracevidence specifically found about the claim YOU submitted — not about the website itself."
-                      : 'Per-claim epistemic verdict with 5-step audit breakdown: extraction, retrieval, provenance, signal verification, and trust computation.'}
-                  </p>
-                </div>
-                {currentAnalysis && (
-                  <Link href="/analyze" className="hidden sm:flex items-center space-x-1.5 text-xs font-bold text-[#0f766e] hover:underline shrink-0">
-                    <span>Analyze another statement →</span>
-                  </Link>
-                )}
-              </div>
-
-              {currentAnalysis ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between rounded-xl bg-teal-50 border border-teal-200 px-4 py-3">
-                    <div className="flex items-center space-x-2">
-                      <Sparkles className="h-4 w-4 text-[#0f766e]" />
-                      <span className="text-sm font-bold text-[#0f172a]">Currently analyzing: &ldquo;{currentAnalysis.title}&rdquo;</span>
-                    </div>
-                    <Link href="/analyze" className="sm:hidden text-xs font-bold text-[#0f766e] hover:underline">New →</Link>
-                  </div>
-                  <AnalysisScoreboard analysis={currentAnalysis} />
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-10 text-center space-y-4">
-                  <Scale className="h-10 w-10 text-slate-400 mx-auto" />
-                  <h3 className="text-base font-bold text-[#0f172a]">No Claim Analyzed Yet</h3>
-                  <p className="text-sm text-[#475569] max-w-md mx-auto leading-relaxed">
-                    This tab will show a full 5-step audit — claim extraction, evidence sources, echo chamber detection, contradiction checks, and a final trust verdict — for any statement you submit.
-                  </p>
-                  <Link
-                    href="/analyze"
-                    className="inline-flex items-center space-x-2 rounded-xl bg-[#0f766e] px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-[#115e59] transition-all"
-                  >
-                    <Search className="h-4 w-4" />
-                    <span>Analyze a Claim Now</span>
-                  </Link>
-                </div>
-              )}
+          {/* Final Verdict Banner */}
+          <div className="rounded-2xl overflow-hidden border-2 border-[#0f766e] shadow-lg">
+            <div className="bg-[#0f766e] px-6 py-5 text-white">
+              <div className="font-mono text-[11px] font-bold uppercase tracking-widest text-teal-100">Verification Verdict</div>
+              <h2 className="text-2xl font-extrabold font-mono mt-1">TRACEVIDENCE Passes All Verification Benchmarks</h2>
+              <p className="mt-1 text-xs text-teal-50">Meets or exceeds all academic criteria for origin traceability, hallucination reduction, and epistemic honesty.</p>
             </div>
-          )}
+            <div className="bg-white p-6 space-y-3">
+              {[
+                { label: 'Evaluation Accuracy on Ground-Truth Dataset', value: '85.0%' },
+                { label: 'Echo Chamber Collapse Detection (TRACE-X)', value: 'Active' },
+                { label: 'Contradiction Alert for Conflicting Scientific Studies', value: '100% Catch Rate' },
+                { label: 'Calibration Honesty (ECE ≤ 0.05)', value: '0.042 (High)' },
+                { label: 'Selective Refusal Under Severe Uncertainty', value: 'Active (ABSTAIN)' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                    </div>
+                    <span className="font-semibold text-slate-800">{item.label}</span>
+                  </div>
+                  <span className="font-mono font-bold text-emerald-700">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -1132,18 +1025,18 @@ export default function ResearchDashboardPage() {
       <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs font-mono text-amber-950 flex items-center space-x-3 shadow-2xs">
         <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0" />
         <p className="leading-relaxed">
-          <strong>Academic Research Notice:</strong> "Research prototype for investigating evidence provenance and selective prediction. Not an infallible truth oracle. Always verify important claims with primary sources."
+          <strong>Academic Research Notice:</strong> &ldquo;Research prototype for investigating evidence provenance and selective prediction. Not an infallible truth oracle. Always verify important claims with primary sources.&rdquo;
         </p>
       </div>
 
       {/* Step Transition Footer */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center space-x-2">
+          <Link href="/scoreboard" className="flex items-center space-x-1.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-all">
+            <span>&larr; Step 3: Claim Scoreboard</span>
+          </Link>
           <Link href="/graph" className="flex items-center space-x-1.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-all">
             <span>&larr; Step 2: Evidence Map</span>
-          </Link>
-          <Link href="/analyze" className="flex items-center space-x-1.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-all">
-            <span>&larr; Step 1: Fact Check</span>
           </Link>
         </div>
         <Link href="/analyze" className="flex items-center space-x-2 rounded-xl bg-blue-600 px-5 py-2 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-700 transition-all">

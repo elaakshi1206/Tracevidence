@@ -129,7 +129,12 @@ export function analyzeVerificationSignals(
   if (contradictionDetected && contradictingEvidences.length > 0) {
     const bestContradiction = contradictingEvidences[0];
     const src = sourceMap.get(bestContradiction.sourceId);
-    contradictionDetails = `Empirical contradiction from ${src?.publisher || 'primary authority'}: "${bestContradiction.quote.slice(0, 160)}..."`;
+
+    if (bestContradiction.exactDifference) {
+      contradictionDetails = bestContradiction.exactDifference;
+    } else {
+      contradictionDetails = `Empirical contradiction from ${src?.publisher || 'primary authority'}: "${bestContradiction.quote.slice(0, 160)}..."`;
+    }
 
     // Extract numerical conflict if available
     const claimedVal = claimText ? extractValueWithUnit(claimText) : null;
@@ -139,7 +144,7 @@ export function analyzeVerificationSignals(
       numericalConflict = {
         claimedValue: claimedVal,
         rebuttalValue: rebuttalVal,
-        deltaNote: `Asserted proposition states ${claimedVal}, but peer-reviewed findings report ${rebuttalVal}.`,
+        deltaNote: `Asserted proposition states ${claimedVal}, but authoritative findings report ${rebuttalVal}.`,
       };
     }
   }

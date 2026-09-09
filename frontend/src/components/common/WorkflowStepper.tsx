@@ -7,7 +7,7 @@ import { useAnalysisStore } from '@/lib/store/analysisStore';
 import { Search, Network, BarChart3, ArrowRight, ArrowLeft, CheckCircle2, Award } from 'lucide-react';
 
 interface WorkflowStepperProps {
-  currentStep: 1 | 2 | 3;
+  currentStep: 1 | 2 | 3 | 4;
 }
 
 export default function WorkflowStepper({ currentStep }: WorkflowStepperProps) {
@@ -31,10 +31,18 @@ export default function WorkflowStepper({ currentStep }: WorkflowStepperProps) {
     },
     {
       number: 3,
-      path: '/research?tab=scoreboard',
-      title: plainEnglishMode ? '3. Research & Scoreboard' : '3. Results & Research Lab',
-      subtitle: plainEnglishMode ? 'Audit summary & accuracy' : 'Verdict synthesis & metrics',
+      path: '/scoreboard',
+      title: plainEnglishMode ? '3. Claim Scoreboard' : '3. Claim Scoreboard',
+      subtitle: plainEnglishMode ? 'Final verdict & what to do next' : 'Calibrated decision synthesis',
       icon: Award,
+    },
+    {
+      number: 4,
+      path: '/research',
+      title: plainEnglishMode ? '4. Research Lab' : '4. Research Lab',
+      subtitle: plainEnglishMode ? 'For teachers, judges & metrics' : 'Empirical benchmark suite',
+      icon: BarChart3,
+      isAdvanced: true,
     },
   ];
 
@@ -76,7 +84,14 @@ export default function WorkflowStepper({ currentStep }: WorkflowStepperProps) {
                     {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> : step.number}
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold leading-none">{step.title}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold leading-none">{step.title}</span>
+                      {step.isAdvanced && (
+                        <span className="rounded bg-amber-100 px-1 py-0.2 text-[9px] font-mono font-bold text-amber-800 border border-amber-200">
+                          Advanced
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[10px] text-slate-500 hidden lg:block mt-0.5 font-normal">
                       {step.subtitle}
                     </div>
@@ -113,10 +128,10 @@ export default function WorkflowStepper({ currentStep }: WorkflowStepperProps) {
                 <span>Fact Check</span>
               </Link>
               <Link
-                href="/research?tab=scoreboard"
+                href="/scoreboard"
                 className="flex items-center space-x-1.5 rounded-xl bg-[#0f766e] px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-[#115e59] transition-all"
               >
-                <span>Next: Research &amp; Scoreboard</span>
+                <span>Next: Claim Scoreboard</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </>
@@ -132,10 +147,29 @@ export default function WorkflowStepper({ currentStep }: WorkflowStepperProps) {
                 <span>Evidence Map</span>
               </Link>
               <Link
+                href="/research"
+                className="flex items-center space-x-1.5 rounded-xl bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-slate-900 transition-all"
+              >
+                <span>Research Lab (Advanced)</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </>
+          )}
+
+          {currentStep === 4 && (
+            <>
+              <Link
+                href="/scoreboard"
+                className="flex items-center space-x-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-all"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Claim Scoreboard</span>
+              </Link>
+              <Link
                 href="/analyze"
                 className="flex items-center space-x-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-blue-700 transition-all"
               >
-                <span>Test New Claim</span>
+                <span>Fact Check Another Claim</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </>

@@ -32,16 +32,19 @@ export default function MajorStepConclusions({ analysis }: MajorStepConclusionsP
   const contradictionRate = Math.round(m.contradictionRate * 100);
   const hasContradiction = m.contradictionRate > 0.3;
 
+  const claims = analysis.claims;
   const { trust, verify, abstain } = analysis.overallDecisionCounts;
   const total = trust + verify + abstain;
 
   // Primary decision
   let primaryVerdict: 'TRUST' | 'VERIFY' | 'ABSTAIN' = 'VERIFY';
-  if (abstain > 0 && m.contradictionRate > 0.5) {
+  if (total === 1) {
+    primaryVerdict = claims[0]?.decision || (abstain > 0 ? 'ABSTAIN' : trust > 0 ? 'TRUST' : 'VERIFY');
+  } else if (abstain > 0 && (abstain >= trust || m.contradictionRate > 0.2 || claims.some((c: any) => c.decision === 'ABSTAIN' && c.contradictionDetected))) {
     primaryVerdict = 'ABSTAIN';
   } else if (trust > verify && trust > abstain) {
     primaryVerdict = 'TRUST';
-  } else if (verify >= trust) {
+  } else {
     primaryVerdict = 'VERIFY';
   }
 

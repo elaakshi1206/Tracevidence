@@ -1,19 +1,43 @@
 import { Source, SourceTier } from '@/types';
+import { performMultiSearch, SearchResultItem } from './searchService';
 
 export interface RetrievalResult {
   sources: Source[];
-  backendUsed: 'Tavily Search API' | 'Scholarly Public Index' | 'Multi-Tier Heuristic Fallback';
+  backendUsed: string;
   queryTerms: string[];
   retrievalTimestamp: string;
 }
 
 /**
- * Classifies publisher into a credibility tier
+ * Classifies publisher into a credibility tier, prioritizing government,
+ * educational, and verified encyclopedic authorities.
  */
 export function classifySourceTier(publisher: string, url?: string): SourceTier {
   const p = publisher.toLowerCase();
   const u = (url || '').toLowerCase();
 
+  // Government & Sovereign bodies
+  if (
+    p.includes('government') ||
+    p.includes('ministry') ||
+    p.includes('department') ||
+    p.includes('parliament') ||
+    p.includes('assembly') ||
+    p.includes('who') ||
+    p.includes('fda') ||
+    p.includes('epa') ||
+    p.includes('eea') ||
+    p.includes('archive.india.gov.in') ||
+    p.includes('knowindia.india.gov.in') ||
+    u.includes('.gov.in') ||
+    u.includes('.nic.in') ||
+    u.includes('.gov') ||
+    u.includes('.europa.eu')
+  ) {
+    return 'Government';
+  }
+
+  // Academic & Peer-Reviewed
   if (
     p.includes('nature') ||
     p.includes('science') ||
@@ -25,6 +49,8 @@ export function classifySourceTier(publisher: string, url?: string): SourceTier 
     p.includes('institute') ||
     p.includes('laboratory') ||
     p.includes('consortium') ||
+    p.includes('jstor') ||
+    p.includes('springer') ||
     u.includes('.edu') ||
     u.includes('doi.org') ||
     u.includes('arxiv.org')
@@ -32,52 +58,50 @@ export function classifySourceTier(publisher: string, url?: string): SourceTier 
     return 'Academic';
   }
 
+  // Official Standards, Historical Authorities, and Canonical Encyclopedias
   if (
-    p.includes('government') ||
-    p.includes('commission') ||
-    p.includes('ministry') ||
-    p.includes('department') ||
-    p.includes('who') ||
-    p.includes('fda') ||
-    p.includes('epa') ||
-    p.includes('eea') ||
-    u.includes('.gov') ||
-    u.includes('.europa.eu')
-  ) {
-    return 'Government';
-  }
-
-  if (
+    p.includes('wikipedia') ||
+    p.includes('britannica') ||
     p.includes('standard') ||
     p.includes('iso') ||
     p.includes('regulatory') ||
     p.includes('statutory') ||
-    p.includes('official')
+    p.includes('official') ||
+    u.includes('wikipedia.org') ||
+    u.includes('britannica.com')
   ) {
     return 'Official';
   }
 
+  // Reputable International & National Media
   if (
     p.includes('reuters') ||
     p.includes('associated press') ||
     p.includes('ap news') ||
     p.includes('bbc') ||
     p.includes('bloomberg') ||
-    p.includes('times') ||
-    p.includes('handelsblatt') ||
+    p.includes('the hindu') ||
+    p.includes('times of india') ||
+    p.includes('indian express') ||
+    p.includes('ndtv') ||
+    p.includes('press trust of india') ||
+    p.includes('pti') ||
     p.includes('wsj') ||
-    p.includes('economist')
+    p.includes('economist') ||
+    p.includes('theguardian')
   ) {
     return 'Reputable Media';
   }
 
+  // Content aggregators / blogs
   if (
     p.includes('blog') ||
     p.includes('daily') ||
     p.includes('wire') ||
     p.includes('buzz') ||
     p.includes('insider') ||
-    p.includes('digest')
+    p.includes('digest') ||
+    p.includes('forum')
   ) {
     return 'Aggregator/Blog';
   }
@@ -90,160 +114,210 @@ export function classifySourceTier(publisher: string, url?: string): SourceTier 
  */
 export function getTierCredibility(tier: SourceTier): number {
   switch (tier) {
+    case 'Government':
+      return 0.98;
     case 'Academic':
       return 0.95;
-    case 'Government':
-      return 0.92;
     case 'Official':
-      return 0.88;
+      return 0.92;
     case 'Reputable Media':
-      return 0.76;
+      return 0.78;
     case 'Aggregator/Blog':
-      return 0.48;
+      return 0.45;
     case 'Unverified':
-      return 0.35;
     default:
-      return 0.50;
+      return 0.35;
   }
 }
 
 /**
- * Queries Tavily Search API if key is available
+ * Domains that should be filtered out because they are spam, ad farms, or unreliable scrapers
  */
-async function queryTavilySearch(query: string, apiKey: string): Promise<Source[]> {
-  try {
-    const response = await fetch('https://api.tavily.com/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        api_key: apiKey,
-        query,
-        search_depth: 'advanced',
-        include_domains: [],
-        exclude_domains: [],
-        max_results: 5,
-      }),
-    });
+const LOW_QUALITY_DOMAINS = [
+  'pinterest.com',
+  'quora.com',
+  'reddit.com',
+  'facebook.com',
+  'instagram.com',
+  'tiktok.com',
+  'twitter.com',
+  'x.com',
+  'linkedin.com',
+  'blogspot.com',
+  'wordpress.com',
+  'tumblr.com',
+];
 
-    if (!response.ok) {
-      throw new Error(`Tavily API responded with status ${response.status}`);
-    }
+import { extractSubstantiveTokens, computeLexicalOverlap } from './searchService';
 
-    const data = await response.json();
-    const results: any[] = data.results || [];
+/**
+ * Checks whether a retrieved search item is topical and substantive to the user's claim(s)
+ */
+export function evaluateSourceRelevance(
+  item: SearchResultItem,
+  claimTexts: string[]
+): { isRelevant: boolean; relevanceScore: number } {
+  const combinedClaims = claimTexts.join(' ').toLowerCase();
+  const sourceContent = `${item.title} ${item.snippet}`.toLowerCase();
 
-    return results.map((r, idx) => {
-      const tier = classifySourceTier(r.title || '', r.url);
-      const isPrimary = idx === 0 || tier === 'Academic' || tier === 'Government';
-      return {
-        id: `tavily-src-${idx + 1}`,
-        title: r.title || `Retrieved Document #${idx + 1}`,
-        url: r.url,
-        publisher: new URL(r.url).hostname.replace(/^www\./, ''),
-        tier,
-        publishedDate: r.published_date || new Date(Date.now() - idx * 86400000 * 45).toISOString().split('T')[0],
-        isPrimaryOrigin: isPrimary,
-        credibilityScore: getTierCredibility(tier),
-        snippet: r.content || r.snippet || '',
-      };
-    });
-  } catch (err) {
-    console.warn('Tavily search query failed, falling back to scholarly multi-tier retrieval:', err);
-    return [];
+  const queryTokens = extractSubstantiveTokens(combinedClaims);
+  if (queryTokens.length === 0) {
+    return { isRelevant: true, relevanceScore: 0.5 };
   }
+
+  // 1. Immediate rejection of known entertainment/fiction or ballot measures if query does not ask for them
+  const queryAsksEntertainment = /(film|movie|song|album|series|actor|actress|band|fiction|book|play|musical)/i.test(combinedClaims);
+  const queryAsksBallot = /(proposition|ballot|referendum|election|vote|measure)/i.test(combinedClaims);
+
+  if (!queryAsksEntertainment) {
+    if (
+      item.title.toLowerCase().includes('(tv series)') ||
+      item.title.toLowerCase().includes('(film)') ||
+      item.title.toLowerCase().includes('(song)') ||
+      item.title.toLowerCase().includes('(album)') ||
+      item.title.toLowerCase().includes('(fairy-tale)') ||
+      item.snippet.toLowerCase().includes('is an american drama television series') ||
+      item.snippet.toLowerCase().includes('is a television series') ||
+      item.snippet.toLowerCase().includes('is a musical with') ||
+      item.snippet.toLowerCase().includes('is a norwegian fairy-tale')
+    ) {
+      return { isRelevant: false, relevanceScore: 0.05 };
+    }
+  }
+
+  if (!queryAsksBallot) {
+    if (
+      /\bcalifornia proposition\b/i.test(item.title) ||
+      /\bproposition \d+\b/i.test(item.title) ||
+      item.snippet.toLowerCase().includes('california proposition')
+    ) {
+      return { isRelevant: false, relevanceScore: 0.05 };
+    }
+  }
+
+  // 2. Compute lexical overlap across title + snippet
+  const overlap = computeLexicalOverlap(combinedClaims, sourceContent);
+
+  // 3. Subject presence check
+  // For short claims (<= 4 substantive tokens), at least 1 primary substantive noun/entity must appear
+  const sourceTokens = new Set(extractSubstantiveTokens(sourceContent));
+  const hasSubjectOverlap = queryTokens.some(qt => sourceTokens.has(qt) || Array.from(sourceTokens).some(st => st.startsWith(qt) || qt.startsWith(st)));
+
+  // If the source does not even mention a single substantive token from the claim, it is completely irrelevant
+  if (!hasSubjectOverlap) {
+    return { isRelevant: false, relevanceScore: 0.10 };
+  }
+
+  // Minimum threshold of 0.28 lexical overlap required to be considered relevant
+  const isRelevant = overlap >= 0.28;
+  const relevanceScore = Math.max(0.10, Math.min(1.0, Number(overlap.toFixed(2))));
+
+  return { isRelevant, relevanceScore };
 }
 
 /**
  * Multi-backend evidence retriever
+ * 1. Queries Tavily, Serper/Exa, and Open Web reference indices simultaneously.
+ * 2. Combines, deduplicates, and filters search results strictly for topic relevance.
+ * 3. Never invents fake sources or retains unrelated pages.
  */
 export async function retrieveEvidenceForClaims(
   claimTexts: string[],
   targetEntity: string
 ): Promise<RetrievalResult> {
-  const query = `${targetEntity} ${claimTexts[0] || ''}`.slice(0, 200);
-  const tavilyKey = process.env.TAVILY_API_KEY || process.env.NEXT_PUBLIC_TAVILY_API_KEY;
+  const firstClaim = claimTexts[0] || '';
+  const cleanTarget = targetEntity && !targetEntity.startsWith('Proposition Target') ? targetEntity : '';
 
-  if (tavilyKey) {
-    const tavilySources = await queryTavilySearch(query, tavilyKey);
-    if (tavilySources.length > 0) {
-      return {
-        sources: tavilySources,
-        backendUsed: 'Tavily Search API',
-        queryTerms: query.split(/\s+/).slice(0, 6),
-        retrievalTimestamp: new Date().toISOString(),
-      };
-    }
+  // Avoid repeating entity if claim already contains it
+  const targetTokens = cleanTarget.toLowerCase().split(/\s+/).filter(Boolean);
+  const claimAlreadyHasTarget = targetTokens.length > 0 && targetTokens.every(t => firstClaim.toLowerCase().includes(t));
+  const query = (cleanTarget && !claimAlreadyHasTarget)
+    ? `${cleanTarget} ${firstClaim}`.trim().slice(0, 180)
+    : firstClaim.trim().slice(0, 180);
+
+  const retrievalTimestamp = new Date().toISOString();
+
+  let rawResults: SearchResultItem[] = [];
+  let providersUsed: string[] = [];
+
+  try {
+    const searchRes = await performMultiSearch(query);
+    rawResults = searchRes.results;
+    providersUsed = searchRes.activeProviders;
+  } catch (err) {
+    console.warn('performMultiSearch failed:', err);
   }
 
-  // Fallback: Multi-tier scholarly & media synthesis
-  const dateNow = new Date();
-  const yearCurrent = dateNow.getFullYear();
+  // Deduplicate and process results with strict relevance filtering
+  const seenUrls = new Set<string>();
+  const seenTitles = new Set<string>();
+  const processedSources: (Source & { rawRelevance: number })[] = [];
 
-  const sources: Source[] = [
-    {
-      id: 'src-live-1',
-      title: `Peer-Reviewed Empirical Literature: ${targetEntity}`,
-      publisher: 'International Journal of Empirical Science',
-      tier: 'Academic',
-      publishedDate: `${yearCurrent - 1}-04-12`,
-      isPrimaryOrigin: true,
-      credibilityScore: 0.94,
-      snippet: `Controlled empirical investigation into ${targetEntity}. Authors establish baseline methodology and quantify observational variance within 95% confidence intervals.`,
-      doi: `10.1016/j.evidence.${yearCurrent - 1}.004`,
-    },
-    {
-      id: 'src-live-2',
-      title: `Press Syndicate Wire Report on ${targetEntity}`,
-      publisher: 'Global News Wire Service',
-      tier: 'Reputable Media',
-      publishedDate: `${yearCurrent}-02-18`,
-      isPrimaryOrigin: false,
-      originId: 'src-live-1',
-      verbatimOverlapRatio: 0.68,
-      credibilityScore: 0.72,
-      snippet: `Wire syndication repeating headline findings regarding ${targetEntity}, citing initial university research announcements.`,
-    },
-    {
-      id: 'src-live-3',
-      title: `Regulatory Standards & Compliance Directive`,
-      publisher: 'Federal Standards & Safety Board',
-      tier: 'Government',
-      publishedDate: `${yearCurrent - 2}-11-05`,
-      isPrimaryOrigin: true,
-      credibilityScore: 0.96,
-      snippet: `Statutory framework specifying verified tolerance parameters and safety compliance bounds for ${targetEntity}.`,
-    },
-    {
-      id: 'src-live-4',
-      title: `Independent Multi-Center Replication Study`,
-      publisher: 'Consortium of Scientific Laboratories',
-      tier: 'Academic',
-      publishedDate: `${yearCurrent}-01-20`,
-      isPrimaryOrigin: true,
-      credibilityScore: 0.95,
-      snippet: `Multi-laboratory blinded replication testing ${targetEntity}. Re-evaluates reported claims and highlights boundary limitations under non-ideal operating environments.`,
-      doi: `10.1038/s41586-${yearCurrent}-019`,
-    },
-    {
-      id: 'src-live-5',
-      title: `Industry Sector Technical Blog & Derivative Commentary`,
-      publisher: 'TechMarket Analysis Digest',
-      tier: 'Aggregator/Blog',
-      publishedDate: `${yearCurrent}-05-02`,
-      isPrimaryOrigin: false,
-      originId: 'src-live-2',
-      verbatimOverlapRatio: 0.79,
-      credibilityScore: 0.44,
-      snippet: `Commercial commentary summarizing the news release on ${targetEntity} with speculative market impact extrapolations.`,
-    },
-  ];
+  for (const item of rawResults) {
+    if (!item.url || !item.snippet || item.snippet.trim().length < 20) continue;
+
+    // Filter low-quality scraper / social media domains
+    const lowerUrl = item.url.toLowerCase();
+    if (LOW_QUALITY_DOMAINS.some(bad => lowerUrl.includes(bad))) {
+      continue;
+    }
+
+    // STRICT RELEVANCE FILTER: Discard sources about completely different topics
+    const { isRelevant, relevanceScore } = evaluateSourceRelevance(item, claimTexts);
+    if (!isRelevant) {
+      continue;
+    }
+
+    // Deduplicate by clean URL or title
+    const cleanUrl = item.url.split('?')[0].replace(/\/$/, '');
+    const normTitle = (item.title || '').toLowerCase().trim();
+
+    if (seenUrls.has(cleanUrl) || (normTitle && seenTitles.has(normTitle))) {
+      continue;
+    }
+    seenUrls.add(cleanUrl);
+    if (normTitle) seenTitles.add(normTitle);
+
+    const publisher = item.publisher || new URL(item.url).hostname.replace(/^www\./, '');
+    const tier = classifySourceTier(publisher, item.url);
+    const credibility = getTierCredibility(tier);
+
+    processedSources.push({
+      id: `src-live-${processedSources.length + 1}`,
+      title: item.title || `Retrieved Document #${processedSources.length + 1}`,
+      url: item.url,
+      publisher,
+      authorOrOrg: publisher,
+      tier,
+      publishedDate: item.publishedDate || new Date().toISOString().split('T')[0],
+      isPrimaryOrigin: tier === 'Government' || tier === 'Academic' || tier === 'Official',
+      credibilityScore: credibility,
+      snippet: item.snippet,
+      rawRelevance: relevanceScore,
+    });
+  }
+
+  // Sort sources by combined relevance and credibility descending
+  processedSources.sort((a, b) => {
+    const scoreA = a.rawRelevance * 0.6 + a.credibilityScore * 0.4;
+    const scoreB = b.rawRelevance * 0.6 + b.credibilityScore * 0.4;
+    return scoreB - scoreA;
+  });
+
+  const finalSources: Source[] = processedSources.slice(0, 8).map(s => {
+    const { rawRelevance, ...rest } = s;
+    return rest;
+  });
+
+  const backendUsed = providersUsed.length > 0
+    ? `Live Retrieval (${providersUsed.join(' + ')})`
+    : 'Live Search Index';
 
   return {
-    sources,
-    backendUsed: 'Multi-Tier Heuristic Fallback',
-    queryTerms: [targetEntity, 'empirical baseline', 'methodology audit'],
-    retrievalTimestamp: new Date().toISOString(),
+    sources: finalSources,
+    backendUsed,
+    queryTerms: query.split(/\s+/).slice(0, 6),
+    retrievalTimestamp,
   };
 }
+

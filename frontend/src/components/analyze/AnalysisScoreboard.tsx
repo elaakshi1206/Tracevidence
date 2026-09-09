@@ -27,6 +27,10 @@ interface AnalysisScoreboardProps {
 export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps) {
   const { plainEnglishMode } = useAnalysisStore();
 
+  const m = analysis.aggregateMetrics;
+  const claims = analysis.claims;
+  const sources = analysis.sources;
+
   // Determine overall verdict
   const { trust, verify, abstain } = analysis.overallDecisionCounts;
   const total = trust + verify + abstain;
@@ -36,17 +40,16 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
 
   // Figure out primary verdict
   let primaryVerdict: 'TRUST' | 'VERIFY' | 'ABSTAIN' = 'VERIFY';
-  if (abstain > 0 && analysis.aggregateMetrics.contradictionRate > 0.5) {
+  if (total === 1) {
+    // Single claim: overall verdict must match the exact claim decision!
+    primaryVerdict = claims[0]?.decision || (abstain > 0 ? 'ABSTAIN' : trust > 0 ? 'TRUST' : 'VERIFY');
+  } else if (abstain > 0 && (abstain >= trust || m.contradictionRate > 0.2 || claims.some((c) => c.decision === 'ABSTAIN' && c.contradictionDetected))) {
     primaryVerdict = 'ABSTAIN';
   } else if (trust > verify && trust > abstain) {
     primaryVerdict = 'TRUST';
-  } else if (verify >= trust) {
+  } else {
     primaryVerdict = 'VERIFY';
   }
-
-  const m = analysis.aggregateMetrics;
-  const claims = analysis.claims;
-  const sources = analysis.sources;
 
   // Step 1: Claim Extraction
   const totalClaims = claims.length;
@@ -60,12 +63,12 @@ export default function AnalysisScoreboard({ analysis }: AnalysisScoreboardProps
   const totalSources = sources.length;
 
   // Step 3: Independence
-  const independencePct = Math.round(m.averageIndependence * 100);
+  const independencePct = isNaN(m.averageIndependence) ? 50 : Math.round((m.averageIndependence || 0) * 100);
   const echoDetected = independencePct < 40;
 
   // Step 4: Freshness & Contradictions
-  const freshnessPct = Math.round(m.averageFreshness * 100);
-  const contradictionPct = Math.round(m.contradictionRate * 100);
+  const freshnessPct = isNaN(m.averageFreshness) ? 50 : Math.round((m.averageFreshness || 0) * 100);
+  const contradictionPct = isNaN(m.contradictionRate) ? 0 : Math.round((m.contradictionRate || 0) * 100);
   const hasContradictions = m.contradictionRate > 0.3;
   const isStale = freshnessPct < 50;
 

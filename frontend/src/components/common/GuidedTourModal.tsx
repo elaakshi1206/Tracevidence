@@ -28,6 +28,7 @@ import {
   FileText,
   ExternalLink,
   Compass,
+  BarChart3,
 } from 'lucide-react';
 
 export default function GuidedTourModal() {
@@ -700,24 +701,31 @@ export default function GuidedTourModal() {
               <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5">
                 <button
                   onClick={() => handleJumpToPage('/analyze')}
-                  className="flex items-center space-x-2 rounded-xl bg-teal-600 hover:bg-teal-500 px-4 py-2.5 font-mono text-xs font-bold text-white shadow-md transition-all cursor-pointer"
+                  className="flex items-center space-x-2 rounded-xl bg-teal-600 hover:bg-teal-500 px-3.5 py-2.5 font-mono text-xs font-bold text-white shadow-md transition-all cursor-pointer"
                 >
-                  <span>1. Start Analyzing Now</span>
+                  <span>1. Fact Check</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={() => handleJumpToPage('/graph')}
-                  className="flex items-center space-x-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2.5 font-mono text-xs font-bold text-teal-300 border border-teal-500/30 transition-all cursor-pointer"
+                  className="flex items-center space-x-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-3.5 py-2.5 font-mono text-xs font-bold text-teal-300 border border-teal-500/30 transition-all cursor-pointer"
                 >
-                  <span>2. Explore the Evidence Map</span>
+                  <span>2. Evidence Map</span>
                   <Network className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={() => handleJumpToPage('/research')}
-                  className="flex items-center space-x-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-2.5 font-mono text-xs font-bold text-amber-300 border border-amber-500/30 transition-all cursor-pointer"
+                  onClick={() => handleJumpToPage('/scoreboard')}
+                  className="flex items-center space-x-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-3.5 py-2.5 font-mono text-xs font-bold text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer"
                 >
-                  <span>3. View Research Stats</span>
+                  <span>3. Claim Scoreboard</span>
                   <Award className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => handleJumpToPage('/research')}
+                  className="flex items-center space-x-2 rounded-xl bg-slate-800 hover:bg-slate-700 px-3.5 py-2.5 font-mono text-xs font-bold text-amber-300 border border-amber-500/30 transition-all cursor-pointer"
+                >
+                  <span>4. Research Lab</span>
+                  <BarChart3 className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>

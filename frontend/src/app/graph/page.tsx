@@ -132,7 +132,7 @@ export default function GraphPage() {
           className="flex items-center space-x-2 rounded-xl border border-slate-200 bg-slate-50 px-5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-all"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Back to Analyze Workspace</span>
+          <span>&larr; Step 1: Fact Check</span>
         </Link>
 
         <div className="flex items-center space-x-3">
@@ -140,13 +140,13 @@ export default function GraphPage() {
             href="/research"
             className="flex items-center space-x-1.5 text-xs text-[#475569] hover:text-[#0f766e] font-semibold transition-colors"
           >
-            <span>Judges Lab &rarr;</span>
+            <span>Research Lab (Advanced) &rarr;</span>
           </Link>
           <Link
-            href="/research?tab=scoreboard"
+            href="/scoreboard"
             className="flex items-center space-x-2 rounded-xl bg-[#0f766e] px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#115e59] transition-all"
           >
-            <span>Proceed to Scoreboard</span>
+            <span>Next: Step 3 Claim Scoreboard</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

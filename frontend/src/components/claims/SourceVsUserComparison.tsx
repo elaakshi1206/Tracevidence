@@ -33,30 +33,39 @@ function MatchMeter({ score, polarity }: { score: number; polarity: string }) {
 
   const isContradict = polarity === 'CONTRADICT';
   const isPartial = polarity === 'PARTIAL';
+  const isIrrelevant = polarity === 'IRRELEVANT';
 
   // Color theme based on polarity
   const barColor = isContradict
     ? 'bg-rose-500'
     : isPartial
     ? 'bg-amber-500'
+    : isIrrelevant
+    ? 'bg-slate-400'
     : 'bg-emerald-500';
 
   const bgColor = isContradict
     ? 'bg-rose-100'
     : isPartial
     ? 'bg-amber-100'
+    : isIrrelevant
+    ? 'bg-slate-100'
     : 'bg-emerald-100';
 
   const textColor = isContradict
     ? 'text-rose-700'
     : isPartial
     ? 'text-amber-700'
+    : isIrrelevant
+    ? 'text-slate-600'
     : 'text-emerald-700';
 
   const label = isContradict
     ? 'Conflict Match'
     : isPartial
     ? 'Partial Match'
+    : isIrrelevant
+    ? 'Not Related'
     : 'Statement Match';
 
   return (
@@ -83,7 +92,7 @@ export default function SourceVsUserComparison({
   sources,
 }: SourceVsUserComparisonProps) {
   const { plainEnglishMode } = useAnalysisStore();
-  const [filterType, setFilterType] = useState<'ALL' | 'SUPPORT' | 'CONTRADICT' | 'PARTIAL'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'SUPPORT' | 'CONTRADICT' | 'PARTIAL' | 'IRRELEVANT'>('ALL');
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   const sourceMap = new Map(sources.map((s) => [s.id, s]));
@@ -97,18 +106,18 @@ export default function SourceVsUserComparison({
       const polarity = ev.polarity;
       const isContradiction = polarity === 'CONTRADICT';
       const isPartial = polarity === 'PARTIAL';
+      const isIrrelevant = polarity === 'IRRELEVANT' || ev.relevanceScore < 0.25;
 
       // --- Match Score Calculation ---
-      // For SUPPORT: how closely does the source back the claim → use relevanceScore directly
-      // For CONTRADICT: score represents "how strongly it contradicts" (inverted for visual match)
-      // For PARTIAL: midpoint of relevance
       let matchScore: number;
       let matchNote: string;
 
       if (isContradiction) {
-        // relevanceScore tells how strongly it contradicts — show as conflict %
         matchScore = ev.relevanceScore;
         matchNote = `This source contradicts the user claim with ${Math.round(ev.relevanceScore * 100)}% relevance to the same topic.`;
+      } else if (isIrrelevant) {
+        matchScore = 0.05;
+        matchNote = 'This source does not address the entities or core subject matter of the user claim.';
       } else if (isPartial) {
         matchScore = ev.relevanceScore * 0.6; // partial support, discounted
         matchNote = `This source partially aligns — it agrees on ${Math.round(matchScore * 100)}% of the claim's specifics.`;
@@ -122,14 +131,18 @@ export default function SourceVsUserComparison({
         }
       }
 
-      // Supported Status
-      let supportedStatus: 'Supports' | 'Partially Supports' | 'Contradicts' = 'Supports';
+      // Supported Status (Supports / Partially Supports / Contradicts / Irrelevant)
+      let supportedStatus: 'Supports' | 'Partially Supports' | 'Contradicts' | 'Irrelevant' = 'Supports';
       let statusColor = 'bg-emerald-100 text-emerald-800 border-emerald-300';
       let StatusIcon = CheckCircle2;
 
       if (isContradiction) {
         supportedStatus = 'Contradicts';
         statusColor = 'bg-rose-100 text-rose-800 border-rose-300';
+        StatusIcon = XCircle;
+      } else if (isIrrelevant) {
+        supportedStatus = 'Irrelevant';
+        statusColor = 'bg-slate-100 text-slate-700 border-slate-300';
         StatusIcon = XCircle;
       } else if (isPartial || ev.relevanceScore < 0.7 || claim.independenceRatio < 0.35) {
         supportedStatus = 'Partially Supports';
@@ -138,8 +151,6 @@ export default function SourceVsUserComparison({
       }
 
       // What the organization actually stated (their own voice)
-      // Primary: use the evidence quote (direct excerpt from the source)
-      // Fallback: source snippet
       const orgStatement = ev.quote && ev.quote.trim()
         ? ev.quote.trim()
         : src.snippet;
@@ -151,36 +162,43 @@ export default function SourceVsUserComparison({
       const orgTier = src.tier;
 
       // Difference explanation
-      let difference = '';
-      if (isContradiction) {
-        if (claim.numericalConflict) {
-          difference = `The user claimed ${claim.numericalConflict.claimedValue}. ${src.publisher} measured ${claim.numericalConflict.rebuttalValue}. ${claim.numericalConflict.deltaNote}`;
+      let difference = ev.exactDifference || '';
+      if (!difference) {
+        if (isContradiction) {
+          if (claim.numericalConflict) {
+            difference = `The user claimed ${claim.numericalConflict.claimedValue}. ${src.publisher} measured ${claim.numericalConflict.rebuttalValue}. ${claim.numericalConflict.deltaNote}`;
+          } else {
+            difference = `The user stated: "${claim.text.slice(0, 100)}…" — but ${src.publisher} found the opposite: "${orgStatement.slice(0, 120)}…" These are empirically incompatible.`;
+          }
+        } else if (isIrrelevant) {
+          difference = 'This source discusses an unrelated topic and does not corroborate or refute the claim.';
+        } else if (claim.temporalStatus === 'Outdated' && polarity === 'SUPPORT') {
+          difference = `The user claim repeats an older figure from ${orgYear || 'an earlier report'} which was later superseded by updated scientific measurements. The source agrees with the claim, but both are now outdated.`;
+        } else if (claim.collapseEvidence && src.originId) {
+          difference = `This source does not perform new independent testing — it re-states the original finding from ${claim.collapseEvidence.commonOrigin || 'a primary source'} with ${src.verbatimOverlapRatio ? Math.round(src.verbatimOverlapRatio * 100) + '% text overlap' : 'high similarity'}.`;
         } else {
-          difference = `The user stated: "${claim.text.slice(0, 100)}…" — but ${src.publisher} found the opposite: "${orgStatement.slice(0, 120)}…" These are empirically incompatible.`;
+          difference = `The source directly validates the user's assertion with no discrepancy. Primary data points and conclusions match.`;
         }
-      } else if (claim.temporalStatus === 'Outdated' && polarity === 'SUPPORT') {
-        difference = `The user claim repeats an older figure from ${orgYear || 'an earlier report'} which was later superseded by updated scientific measurements. The source agrees with the claim, but both are now outdated.`;
-      } else if (claim.collapseEvidence && src.originId) {
-        difference = `This source does not perform new independent testing — it re-states the original finding from ${claim.collapseEvidence.commonOrigin || 'a primary source'} with ${src.verbatimOverlapRatio ? Math.round(src.verbatimOverlapRatio * 100) + '% text overlap' : 'high similarity'}.`;
-      } else {
-        difference = `The source directly validates the user's assertion with no discrepancy. Primary data points and conclusions match.`;
       }
 
-      // Final judgment
+      // Final judgment: STOP false verdicts when source is not actually supporting
       let judgment = '';
-      let JudgmentIcon = isContradiction ? TrendingDown : isPartial ? Minus : TrendingUp;
+      let JudgmentIcon = isContradiction ? TrendingDown : (isPartial || isIrrelevant) ? Minus : TrendingUp;
 
       if (isContradiction) {
-        judgment = `Source is closer to truth: Backed by ${orgTier.toLowerCase()} research from ${src.publisher}, it refutes the user statement with stronger empirical evidence.`;
+        judgment = `Source refutes claim: Backed by ${orgTier.toLowerCase()} records from ${src.publisher}, this source refutes the assertion with empirical evidence.`;
+      } else if (isIrrelevant) {
+        judgment = 'Not related: This source discusses an unrelated subject and cannot support or contest this proposition.';
       } else if (claim.temporalStatus === 'Outdated' && polarity === 'SUPPORT') {
         judgment = `Neither fully current: The user claim relied on this source, but newer studies supersede this historical estimate.`;
         JudgmentIcon = Minus;
-      } else if (orgTier === 'Academic' || orgTier === 'Government' || orgTier === 'Official') {
+      } else if (polarity === 'SUPPORT' && ev.relevanceScore >= 0.70) {
         judgment = `Both well-supported: The user statement faithfully represents verified findings from ${src.publisher}.`;
       } else {
-        judgment = `Partially supported: The source agrees with the user but relies on secondary journalistic reporting, not primary research.`;
+        judgment = `Partially supported: The source addresses related context but does not independently establish the full claim.`;
         JudgmentIcon = Minus;
       }
+
 
       return {
         evidenceId: ev.id,
@@ -212,6 +230,17 @@ export default function SourceVsUserComparison({
   const supportCount = comparisons.filter((c) => c?.polarity === 'SUPPORT').length;
   const contradictCount = comparisons.filter((c) => c?.polarity === 'CONTRADICT').length;
   const partialCount = comparisons.filter((c) => c?.polarity === 'PARTIAL').length;
+  const irrelevantCount = comparisons.filter((c) => c?.polarity === 'IRRELEVANT').length;
+
+  const filterTabs: ('ALL' | 'SUPPORT' | 'PARTIAL' | 'CONTRADICT' | 'IRRELEVANT')[] = [
+    'ALL',
+    'SUPPORT',
+    'PARTIAL',
+    'CONTRADICT',
+  ];
+  if (irrelevantCount > 0) {
+    filterTabs.push('IRRELEVANT');
+  }
 
   return (
     <div className="rounded-2xl border-2 border-[#0f766e]/30 bg-white shadow-sm space-y-0 overflow-hidden">
@@ -253,12 +282,18 @@ export default function SourceVsUserComparison({
               <div className="text-lg font-black text-rose-700 font-mono leading-none">{contradictCount}</div>
               <div className="text-[10px] font-mono font-bold text-rose-600 uppercase">Contradict</div>
             </div>
+            {irrelevantCount > 0 && (
+              <div className="rounded-lg bg-slate-100 border border-slate-300 px-3 py-1.5 text-center min-w-[56px]">
+                <div className="text-lg font-black text-slate-700 font-mono leading-none">{irrelevantCount}</div>
+                <div className="text-[10px] font-mono font-bold text-slate-600 uppercase">Irrelevant</div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Filter Tabs */}
         <div className="mt-4 flex items-center space-x-1.5 rounded-xl bg-white border border-slate-200 p-1 w-fit shadow-2xs">
-          {(['ALL', 'SUPPORT', 'PARTIAL', 'CONTRADICT'] as const).map((t) => (
+          {filterTabs.map((t) => (
             <button
               key={t}
               onClick={() => setFilterType(t)}
@@ -270,15 +305,18 @@ export default function SourceVsUserComparison({
                     ? 'bg-emerald-600 text-white shadow-2xs'
                     : t === 'PARTIAL'
                     ? 'bg-amber-500 text-white shadow-2xs'
-                    : 'bg-rose-600 text-white shadow-2xs'
+                    : t === 'CONTRADICT'
+                    ? 'bg-rose-600 text-white shadow-2xs'
+                    : 'bg-slate-600 text-white shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              {t === 'ALL' ? 'All Sources' : t === 'SUPPORT' ? '✓ Supporting' : t === 'PARTIAL' ? '~ Partial' : '✕ Contradicting'}
+              {t === 'ALL' ? 'All Sources' : t === 'SUPPORT' ? '✓ Supporting' : t === 'PARTIAL' ? '~ Partial' : t === 'CONTRADICT' ? '✕ Contradicting' : '⊘ Irrelevant'}
             </button>
           ))}
         </div>
       </div>
+
 
       {/* User Claim Reference Bar */}
       <div className="bg-blue-50/70 border-b border-blue-200 px-6 py-3 flex items-start gap-3">

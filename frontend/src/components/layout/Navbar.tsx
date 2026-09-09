@@ -76,45 +76,59 @@ export default function Navbar() {
 
         {/* Center: Main Navigation Links */}
         <nav className="hidden lg:flex items-center space-x-1 rounded-xl bg-slate-100/90 p-1 border border-slate-200/70">
-          {/* Analyze Workspace */}
+          {/* Step 1: Fact Check */}
           <Link
             href="/analyze"
-            className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
               pathname === '/analyze'
                 ? 'bg-white text-[#0f766e] shadow-xs border border-slate-200/80 font-bold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
             <Search className={`h-3.5 w-3.5 ${pathname === '/analyze' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
-            <span>Analyze Workspace</span>
+            <span>1. Fact Check</span>
           </Link>
 
-          {/* Evidence Graph */}
+          {/* Step 2: Evidence Map */}
           <Link
             href="/graph"
-            className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
               pathname === '/graph'
                 ? 'bg-white text-[#0f766e] shadow-xs border border-slate-200/80 font-bold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
             <Network className={`h-3.5 w-3.5 ${pathname === '/graph' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
-            <span>Evidence Graph</span>
+            <span>2. Evidence Map</span>
           </Link>
 
+          {/* Step 3: Claim Scoreboard */}
+          <Link
+            href="/scoreboard"
+            className={`flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
+              pathname === '/scoreboard'
+                ? 'bg-white text-[#0f766e] shadow-xs border border-slate-200/80 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            }`}
+          >
+            <Award className={`h-3.5 w-3.5 ${pathname === '/scoreboard' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
+            <span>3. Claim Scoreboard</span>
+          </Link>
 
-
-          {/* Research Dashboard (For Judges / Academics) */}
+          {/* Step 4: Research Lab (Advanced) */}
           <Link
             href="/research"
-            className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
               pathname === '/research'
                 ? 'bg-white text-[#0f766e] shadow-xs border border-slate-200/80 font-bold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
             <BarChart3 className={`h-3.5 w-3.5 ${pathname === '/research' ? 'text-[#0f766e]' : 'text-slate-500'}`} />
-            <span>Research Dashboard</span>
+            <span>4. Research Lab</span>
+            <span className="rounded bg-amber-100 px-1 py-0.2 text-[9px] font-mono font-bold text-amber-800 border border-amber-200">
+              Adv
+            </span>
           </Link>
         </nav>
 
@@ -180,13 +194,33 @@ export default function Navbar() {
                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Research &amp; Evaluation</span>
                 </div>
 
+                {/* Dedicated Test Lab & Experiment Cases */}
+                <Link
+                  href="/experiments"
+                  onClick={() => setMoreMenuOpen(false)}
+                  className="flex items-center space-x-3 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition-colors group"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 border border-teal-200 shrink-0 group-hover:bg-teal-100 transition-colors">
+                    <FlaskConical className="h-4 w-4 text-teal-700" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs flex items-center gap-1.5 text-slate-800 group-hover:text-teal-800">
+                      <span>Experiment Cases</span>
+                      <span className="rounded bg-teal-100 px-1 py-0.2 text-[9px] font-mono font-bold text-teal-800 border border-teal-300">
+                        50 Tests
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 font-normal">Difficult test lab &amp; self-learning</div>
+                  </div>
+                </Link>
+
                 <Link
                   href="/benchmarks"
                   onClick={() => setMoreMenuOpen(false)}
                   className="flex items-center space-x-3 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 border border-blue-200 shrink-0">
-                    <FlaskConical className="h-4 w-4 text-blue-600" />
+                    <BarChart3 className="h-4 w-4 text-blue-600" />
                   </div>
                   <div>
                     <div className="font-bold text-xs">Benchmarks</div>
@@ -252,7 +286,7 @@ export default function Navbar() {
             className="flex items-center space-x-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             <Search className="h-4 w-4 text-[#0f766e]" />
-            <span>Analyze Workspace</span>
+            <span>1. Fact Check</span>
           </Link>
 
           <Link
@@ -261,18 +295,44 @@ export default function Navbar() {
             className="flex items-center space-x-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             <Network className="h-4 w-4 text-[#0f766e]" />
-            <span>Evidence Graph</span>
+            <span>2. Evidence Map</span>
           </Link>
 
-
+          <Link
+            href="/scoreboard"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center space-x-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <Award className="h-4 w-4 text-[#0f766e]" />
+            <span>3. Claim Scoreboard</span>
+          </Link>
 
           <Link
             href="/research"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center space-x-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
-            <BarChart3 className="h-4 w-4 text-[#0f766e]" />
-            <span>Research Dashboard</span>
+            <div className="flex items-center space-x-2.5">
+              <BarChart3 className="h-4 w-4 text-[#0f766e]" />
+              <span>4. Research Lab</span>
+            </div>
+            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-mono font-bold text-amber-800 border border-amber-200">
+              Advanced
+            </span>
+          </Link>
+
+          <Link
+            href="/experiments"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-teal-50"
+          >
+            <div className="flex items-center space-x-2.5">
+              <FlaskConical className="h-4 w-4 text-[#0f766e]" />
+              <span>Experiment Cases</span>
+            </div>
+            <span className="rounded bg-teal-100 px-1.5 py-0.5 text-[10px] font-mono font-bold text-teal-800 border border-teal-200">
+              50 Tests
+            </span>
           </Link>
 
           <Link
@@ -280,7 +340,7 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
             className="flex items-center space-x-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
-            <FlaskConical className="h-4 w-4 text-[#0f766e]" />
+            <BarChart3 className="h-4 w-4 text-[#0f766e]" />
             <span>Benchmarks</span>
           </Link>
 

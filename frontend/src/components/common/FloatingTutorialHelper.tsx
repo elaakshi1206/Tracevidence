@@ -65,11 +65,18 @@ export default function FloatingTutorialHelper() {
         action: 'Explore Graph',
       };
     }
+    if (pathname === '/scoreboard') {
+      return {
+        title: 'You are on the Claim Scoreboard (Step 3)',
+        tip: 'This is the main decision page! Check the final TRUST/VERIFY/ABSTAIN verdict, step conclusions, and what you should do next.',
+        action: 'Review Decision',
+      };
+    }
     if (pathname === '/research') {
       return {
-        title: 'You are on the Research Dashboard',
-        tip: 'This page proves the mathematical rigor of TRACEVIDENCE with ablation studies, Macro F1, and ECE calibration curves.',
-        action: 'View Metrics',
+        title: 'You are in the Research Lab (Step 4)',
+        tip: 'This section is for teachers, judges, and researchers to inspect ablation studies, benchmark evaluations, and ECE calibration metrics.',
+        action: 'View Research Tools',
       };
     }
     return {

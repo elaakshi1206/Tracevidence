@@ -16,6 +16,7 @@ import { clusterSourcesByIndependence } from './independenceCluster';
 import { analyzeVerificationSignals, calculateFreshnessDecay } from './signalAnalyzer';
 import { evaluateTrustDecision } from './trustEngine';
 import { retrieveEvidenceForClaims } from './evidenceRetriever';
+import { compareClaimWithSource } from './factualMatcher';
 import { BENCHMARK_CASES } from '../benchmarks/demoCases';
 
 export type PipelineStage =
@@ -160,44 +161,66 @@ export async function executeTracevidencePipeline(
     uncertaintyEstimate: 'Checking for conflicting empirical findings',
   });
 
-  const evidences: Evidence[] = [];
+  const allEvidences: Evidence[] = [];
   const processedClaims: Claim[] = extractedClaims.map((claimCandidate, idx) => {
     const claimId = `claim-live-${idx + 1}`;
 
-    // Construct evidence items linking to sources
-    const claimEvidences: Evidence[] = sources.slice(0, 3).map((src, srcIdx) => ({
-      id: `ev-live-${idx + 1}-${srcIdx + 1}`,
-      claimId,
-      sourceId: src.id,
-      polarity: srcIdx === 0 ? 'SUPPORT' : srcIdx === 1 ? 'PARTIAL' : 'SUPPORT',
-      quote: src.snippet,
-      relevanceScore: Math.max(0.70, Number((0.92 - srcIdx * 0.08).toFixed(2))),
-      verificationReasoning: `Document retrieved from ${src.publisher} (${src.tier} tier).`,
-    }));
+    const rawClaimEvidences: Evidence[] = sources.map((src, srcIdx) => {
+      const comparison = compareClaimWithSource(claimCandidate.text, src);
+      return {
+        id: `ev-live-${idx + 1}-${srcIdx + 1}`,
+        claimId,
+        sourceId: src.id,
+        polarity: comparison.polarity,
+        quote: src.snippet,
+        relevanceScore: comparison.relevanceScore,
+        verificationReasoning: comparison.exactDifference,
+        userClaim: comparison.userClaim,
+        sourceSaid: comparison.sourceSaid,
+        exactDifference: comparison.exactDifference,
+        matchConfidence: comparison.matchConfidence,
+      };
+    });
 
-    evidences.push(...claimEvidences);
+    // Strictly retain only relevant evidences (discard IRRELEVANT)
+    const relevantEvidences = rawClaimEvidences.filter(e => e.polarity !== 'IRRELEVANT' && e.relevanceScore >= 0.25);
+    allEvidences.push(...relevantEvidences);
+
+    const relevantSourceIds = new Set(relevantEvidences.map(e => e.sourceId));
+    const activeClaimSources = sources.filter(s => relevantSourceIds.has(s.id));
+
+    const claimClustering = activeClaimSources.length > 0
+      ? clusterSourcesByIndependence(activeClaimSources)
+      : {
+          clusters: [],
+          independentOriginsCount: 0,
+          apparentSourcesCount: 0,
+          independenceRatio: 0,
+          provenanceConfidence: 'Low' as const,
+          independenceConfidence: 'Low' as const,
+        };
 
     const signalResult = analyzeVerificationSignals(
-      claimEvidences,
-      sources,
+      relevantEvidences,
+      activeClaimSources,
       claimCandidate.text,
       'technology'
     );
 
-    const provChain = reconstructProvenanceChain(claimId, sources);
+    const provChain = reconstructProvenanceChain(claimId, activeClaimSources);
 
     const decisionOutput = evaluateTrustDecision({
       supportScore: signalResult.supportScore,
-      independenceFactor: clustering.independenceRatio,
+      independenceFactor: claimClustering.independenceRatio,
       freshnessDecay: signalResult.freshnessScore,
       contradictionDetected: signalResult.contradictionDetected,
       contradictionDetails: signalResult.contradictionDetails,
-      apparentSourcesCount: sources.length,
-      independentOriginsCount: clustering.independentOriginsCount,
+      apparentSourcesCount: activeClaimSources.length,
+      independentOriginsCount: claimClustering.independentOriginsCount,
       isLiveRetrieval: true,
     });
 
-    const matchingCluster = clustering.clusters[0];
+    const matchingCluster = claimClustering.clusters[0];
 
     return {
       id: claimId,
@@ -209,23 +232,28 @@ export async function executeTracevidencePipeline(
       decisionReason: decisionOutput.decisionReason,
       recommendedAction: decisionOutput.recommendedAction,
       reliabilityIndicator: decisionOutput.reliabilityIndicator,
-      provenanceConfidence: clustering.provenanceConfidence,
-      independenceConfidence: clustering.independenceConfidence,
+      provenanceConfidence: claimClustering.provenanceConfidence,
+      independenceConfidence: claimClustering.independenceConfidence,
       collapseEvidence: matchingCluster?.collapseEvidence,
-      apparentSourcesCount: sources.length,
-      independentOriginsCount: clustering.independentOriginsCount,
-      independenceRatio: clustering.independenceRatio,
+      apparentSourcesCount: activeClaimSources.length,
+      independentOriginsCount: claimClustering.independentOriginsCount,
+      independenceRatio: claimClustering.independenceRatio,
       freshnessScore: signalResult.freshnessScore,
       temporalStatus: signalResult.temporalStatus,
       contradictionDetected: signalResult.contradictionDetected,
       contradictionDetails: signalResult.contradictionDetails,
       numericalConflict: signalResult.numericalConflict,
-      evidenceIds: claimEvidences.map(e => e.id),
+      evidenceIds: relevantEvidences.map(e => e.id),
       provenanceChain: provChain,
       mathBreakdown: decisionOutput.mathBreakdown,
       llmReasoning: decisionOutput.llmReasoning,
     };
   });
+
+  // Filter global sources down to only those that provided relevant evidence
+  const globalRelevantSourceIds = new Set(allEvidences.map(e => e.sourceId));
+  const activeSources = sources.filter(s => globalRelevantSourceIds.has(s.id));
+  const finalClustering = activeSources.length > 0 ? clusterSourcesByIndependence(activeSources) : clustering;
 
   onProgress?.({
     stage: 'trust_decision',
@@ -235,7 +263,7 @@ export async function executeTracevidencePipeline(
     progressPercent: 100,
   });
 
-  // Construct graph representation
+  // Construct graph representation (only with active, relevant sources)
   const nodes: EvidenceGraphNode[] = [
     ...processedClaims.map(c => ({
       id: c.id,
@@ -245,7 +273,7 @@ export async function executeTracevidencePipeline(
       decision: c.decision,
       rawEvidenceSnippet: c.text,
     })),
-    ...sources.map(s => ({
+    ...activeSources.map(s => ({
       id: s.id,
       type: s.isPrimaryOrigin ? ('origin' as const) : ('source' as const),
       label: s.publisher,
@@ -260,24 +288,26 @@ export async function executeTracevidencePipeline(
   ];
 
   const edges: EvidenceGraphEdge[] = [];
-  processedClaims.forEach(c => {
-    edges.push({
-      id: `edge-${c.id}-src0`,
-      source: sources[0].id,
-      target: c.id,
-      relationType: 'supports',
-      label: 'Corroborating',
+  if (activeSources.length > 0) {
+    processedClaims.forEach(c => {
+      edges.push({
+        id: `edge-${c.id}-src0`,
+        source: activeSources[0].id,
+        target: c.id,
+        relationType: c.contradictionDetected ? 'contradicts' : 'supports',
+        label: c.contradictionDetected ? 'Empirical Contradiction' : 'Corroborating',
+      });
     });
-  });
 
-  if (sources.length > 1) {
-    edges.push({
-      id: 'edge-s1-s2',
-      source: sources[0].id,
-      target: sources[1].id,
-      relationType: 'syndicates',
-      label: 'Wire Syndication',
-    });
+    if (activeSources.length > 1) {
+      edges.push({
+        id: 'edge-s1-s2',
+        source: activeSources[0].id,
+        target: activeSources[1].id,
+        relationType: 'syndicates',
+        label: 'Wire Syndication',
+      });
+    }
   }
 
   const overallDecisionCounts = {
@@ -288,10 +318,10 @@ export async function executeTracevidencePipeline(
 
   const executionTimeMs = Date.now() - startTime;
 
-  const avgIndependence = clustering.independenceRatio;
-  const avgFreshness = Number(
-    (sources.reduce((acc, s) => acc + calculateFreshnessDecay(s.publishedDate), 0) / sources.length).toFixed(2)
-  );
+  const avgIndependence = finalClustering.independenceRatio;
+  const avgFreshness = activeSources.length > 0
+    ? Number((activeSources.reduce((acc, s) => acc + calculateFreshnessDecay(s.publishedDate), 0) / activeSources.length).toFixed(2))
+    : 0.50;
 
   const overallReliability: ReliabilityLevel =
     processedClaims.some(c => c.decision === 'ABSTAIN')
@@ -308,7 +338,7 @@ export async function executeTracevidencePipeline(
     analysisMode: 'live',
     modeBadgeLabel: 'Live Retrieval',
     timestamp: new Date().toISOString(),
-    executiveSummary: `Live analysis decomposed input into ${processedClaims.length} atomic proposition(s) across ${sources.length} retrieved document(s). TRACE-X clustered citations into ${clustering.independentOriginsCount} independent origin(s) (${Math.round(avgIndependence * 100)}% independence ratio). Evaluated via selective prediction decision support.`,
+    executiveSummary: `Live analysis decomposed input into ${processedClaims.length} atomic proposition(s) across ${activeSources.length} verified relevant document(s). TRACE-X clustered citations into ${finalClustering.independentOriginsCount} independent origin(s) (${Math.round(avgIndependence * 100)}% independence ratio). Evaluated via selective prediction decision support.`,
     overallDecisionCounts,
     aggregateMetrics: {
       averageIndependence: avgIndependence,
@@ -321,12 +351,12 @@ export async function executeTracevidencePipeline(
       ),
       riskCoverageScore: 0.86,
       overallReliability,
-      provenanceConfidence: clustering.provenanceConfidence,
-      independenceConfidence: clustering.independenceConfidence,
+      provenanceConfidence: finalClustering.provenanceConfidence,
+      independenceConfidence: finalClustering.independenceConfidence,
     },
     claims: processedClaims,
-    sources,
-    evidences,
+    sources: activeSources,
+    evidences: allEvidences,
     provenanceChains: processedClaims.map(c => c.provenanceChain!).filter(Boolean),
     graphData: {
       nodes,

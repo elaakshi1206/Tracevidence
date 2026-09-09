@@ -14,7 +14,7 @@ export type SourceTier =
   | 'Aggregator/Blog'
   | 'Unverified';
 
-export type PolarityType = 'SUPPORT' | 'PARTIAL' | 'CONTRADICT';
+export type PolarityType = 'SUPPORT' | 'PARTIAL' | 'CONTRADICT' | 'IRRELEVANT';
 
 export type ProvenanceLevel = 'Directly Traceable' | 'Partially Traceable' | 'Untraceable';
 

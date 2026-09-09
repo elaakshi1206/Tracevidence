@@ -56,7 +56,72 @@ export default function AnalyzePage() {
     if (!inputText.trim()) return;
     setIsAnalyzing(true);
 
+    setPipelineProgress({
+      stage: 'claim_extraction',
+      stageIndex: 1,
+      stageName: 'Atomic Claim Extraction',
+      detail: 'Decomposing input text into atomic, falsifiable propositions...',
+      progressPercent: 20,
+    });
+
     try {
+      const pTimer1 = setTimeout(() => {
+        setPipelineProgress({
+          stage: 'evidence_retrieval',
+          stageIndex: 2,
+          stageName: 'Evidence Retrieval & Source Tiering',
+          detail: 'Querying authoritative multi-backend indices and filtering for strict topic relevance...',
+          progressPercent: 45,
+        });
+      }, 400);
+
+      const pTimer2 = setTimeout(() => {
+        setPipelineProgress({
+          stage: 'provenance_clustering',
+          stageIndex: 3,
+          stageName: 'TRACE-X Provenance & Independence',
+          detail: 'Tracing independent origins and clustering syndicated reports...',
+          progressPercent: 70,
+        });
+      }, 900);
+
+      const pTimer3 = setTimeout(() => {
+        setPipelineProgress({
+          stage: 'signal_verification',
+          stageIndex: 4,
+          stageName: 'Verification & Signal Auditing',
+          detail: 'Auditing factual polarity and evaluating empirical corroboration...',
+          progressPercent: 88,
+        });
+      }, 1400);
+
+      // Execute on server via /api/analyze to ensure full access without browser CORS / header blocks
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: inputText, mode: analysisMode }),
+      });
+
+      clearTimeout(pTimer1);
+      clearTimeout(pTimer2);
+      clearTimeout(pTimer3);
+
+      if (res.ok) {
+        const body = await res.json();
+        if (body.success && body.data) {
+          setPipelineProgress({
+            stage: 'trust_decision',
+            stageIndex: 5,
+            stageName: 'AIVIDENCE Trust Decision Engine',
+            detail: 'Synthesizing decision support verdicts with selective prediction...',
+            progressPercent: 100,
+          });
+          setAnalysis(body.data);
+          return;
+        }
+      }
+
+      // Client-side fallback if server endpoint is unavailable
       const result = await executeTracevidencePipeline(inputText, {
         mode: analysisMode,
         onProgress: (progress) => {
@@ -70,6 +135,7 @@ export default function AnalyzePage() {
       setIsAnalyzing(false);
     }
   };
+
 
   const filteredClaims = currentAnalysis
     ? currentAnalysis.claims.filter((c) => {
@@ -349,14 +415,43 @@ export default function AnalyzePage() {
       {/* Live Pipeline Progress Indicator */}
       <PipelineProgress progress={pipelineProgress} isAnalyzing={isAnalyzing} />
 
-      {/* Major Step Conclusions (Priority 2) */}
+      {/* Step 1 Quick Finding Summary Card */}
       {currentAnalysis && !isAnalyzing && (
-        <MajorStepConclusions analysis={currentAnalysis} />
-      )}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-teal-200 bg-teal-50/70 p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center space-x-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0f766e] text-white font-mono text-sm font-bold shadow-xs shrink-0">
+              1
+            </div>
+            <div>
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#0f766e]">
+                Step 1 Complete
+              </span>
+              <h3 className="text-sm sm:text-base font-bold text-[#0f172a]">
+                Extracted {currentAnalysis.claims.length} Testable Statement{currentAnalysis.claims.length !== 1 ? 's' : ''} &amp; Found {currentAnalysis.sources.length} Sources
+              </h3>
+              <p className="text-xs text-[#475569] mt-0.5">
+                Review each statement below, then explore the Evidence Map or check the final Scoreboard.
+              </p>
+            </div>
+          </div>
 
-      {/* Verdict Scoreboard — shown immediately after pipeline completes */}
-      {currentAnalysis && !isAnalyzing && (
-        <AnalysisScoreboard analysis={currentAnalysis} />
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/graph"
+              className="flex items-center space-x-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-2xs transition-all"
+            >
+              <Network className="h-3.5 w-3.5" />
+              <span>Step 2: Evidence Map &rarr;</span>
+            </Link>
+            <Link
+              href="/scoreboard"
+              className="flex items-center space-x-1.5 rounded-xl bg-[#0f766e] hover:bg-[#115e59] px-4 py-2 text-xs font-bold text-white shadow-2xs transition-all"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>Step 3: Scoreboard &rarr;</span>
+            </Link>
+          </div>
+        </div>
       )}
 
       {/* Analysis Results Section */}
@@ -555,13 +650,22 @@ export default function AnalyzePage() {
               </p>
             </div>
 
-            <Link
-              href="/graph"
-              className="flex items-center space-x-2 rounded-xl bg-[#0f766e] px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#115e59] transition-all shrink-0"
-            >
-              <span>Explore Evidence Graph</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Link
+                href="/graph"
+                className="flex items-center space-x-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-700 transition-all"
+              >
+                <span>Step 2: Evidence Map</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/scoreboard"
+                className="flex items-center space-x-2 rounded-xl bg-[#0f766e] px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#115e59] transition-all"
+              >
+                <span>Step 3: Scoreboard</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       )}
