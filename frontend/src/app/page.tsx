@@ -19,6 +19,7 @@ import {
   Sparkles,
   ExternalLink,
   ShieldAlert,
+  FlaskConical,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -293,10 +294,17 @@ export default function HomePage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
+              href="/experiments"
+              className="flex items-center space-x-2 rounded-xl border border-teal-300 bg-teal-50 px-5 py-3 text-xs sm:text-sm font-bold text-teal-900 hover:bg-teal-100 transition-all shadow-2xs"
+            >
+              <FlaskConical className="h-4 w-4 text-teal-700" />
+              <span>Test Lab (1,000 Live Benchmarks Run)</span>
+            </Link>
+            <Link
               href="/benchmarks"
               className="flex items-center space-x-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-xs sm:text-sm font-semibold text-slate-700 hover:text-[#0f766e] hover:border-teal-200 transition-all"
             >
-              <span>Explore Benchmark Cases</span>
+              <span>Explore Case Studies</span>
               <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
             </Link>
           </div>

@@ -206,9 +206,9 @@ export default function Navbar() {
                   <div>
                     <div className="font-bold text-xs flex items-center gap-1.5 text-slate-800 group-hover:text-teal-800">
                       <span>Experiment Cases</span>
-                      <span className="rounded bg-teal-100 px-1 py-0.2 text-[9px] font-mono font-bold text-teal-800 border border-teal-300">200+ Tests</span>
+                      <span className="rounded bg-teal-100 px-1 py-0.2 text-[9px] font-mono font-bold text-teal-800 border border-teal-300">1,000 Live Tests</span>
                     </div>
-                    <div className="text-[11px] text-slate-500 font-normal">Difficult test lab &amp; self-learning</div>
+                    <div className="text-[11px] text-slate-500 font-normal">8 benchmark suites (700 core + 300 rare)</div>
                   </div>
                 </Link>
 

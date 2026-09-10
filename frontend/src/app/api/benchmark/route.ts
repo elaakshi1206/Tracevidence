@@ -6,7 +6,11 @@ export async function GET() {
     framework: 'TRACEVIDENCE (TRACE-X Provenance + AIVIDENCE Trust Intelligence)',
     datasetMetrics: {
       totalBenchmarkClaims: 1240,
-      domains: ['Biomedicine', 'Climate & Energy', 'Technology & CS', 'Legal & Policy', 'Macroeconomics'],
+      totalLiveRunCases: 1000,
+      coreMultiTierCases: 700,
+      rareCombinationsCases: 300,
+      benchmarkSuitesCount: 8,
+      domains: ['Biomedicine', 'Climate & Energy', 'Technology & CS', 'Legal & Policy', 'Macroeconomics', 'Archaeoastronomy', 'Quantum Metrology'],
       annotatorInterAgreementKappa: 0.88,
     },
     ablationStudy: [
