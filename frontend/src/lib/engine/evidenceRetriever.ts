@@ -165,9 +165,36 @@ export function evaluateSourceRelevance(
     return { isRelevant: true, relevanceScore: 0.5 };
   }
 
-  // 1. Immediate rejection of known entertainment/fiction or ballot measures if query does not ask for them
+  // 1. Immediate rejection of known entertainment/fiction, numbers, festivals, or ballot measures if query does not ask for them
   const queryAsksEntertainment = /(film|movie|song|album|series|actor|actress|band|fiction|book|play|musical)/i.test(combinedClaims);
   const queryAsksBallot = /(proposition|ballot|referendum|election|vote|measure)/i.test(combinedClaims);
+  const queryAsksNumber = /\b(?:prime number|integer|even number|odd number|numeral)\b/i.test(combinedClaims);
+  const queryAsksFestival = /(festival|ceremony|award|carnival)/i.test(combinedClaims);
+
+  // Pure number pages (e.g. "24 (number)", "23 (number)")
+  if (!queryAsksNumber && (/\b\d+\s*\(number\)/i.test(item.title) || /\b\d+\s*\(disambiguation\)/i.test(item.title))) {
+    return { isRelevant: false, relevanceScore: 0.05 };
+  }
+
+  // Festivals / film awards
+  if (!queryAsksFestival && (
+    item.title.toLowerCase().includes('film festival') ||
+    item.title.toLowerCase().includes('festival of india') ||
+    item.title.toLowerCase().includes('annual awards')
+  )) {
+    return { isRelevant: false, relevanceScore: 0.05 };
+  }
+
+  // Unrelated biographies and geographical places when claim is about science, nature, or emblems
+  if (!queryAsksEntertainment && (
+    item.snippet.toLowerCase().includes('was a pakistani') ||
+    item.snippet.toLowerCase().includes('is a pakistani') ||
+    item.snippet.toLowerCase().includes('was a computer prodigy') ||
+    item.snippet.toLowerCase().includes('is a beach in') ||
+    item.snippet.toLowerCase().includes('is an ancient egyptian')
+  )) {
+    return { isRelevant: false, relevanceScore: 0.05 };
+  }
 
   if (!queryAsksEntertainment) {
     if (
@@ -210,6 +237,54 @@ export function evaluateSourceRelevance(
     }
   }
 
+  // 1B. Domain-Specific Strict Topic Consistency Checks
+  // A. Flag of India / Ashoka Chakra: Reject generic world heraldry or political colour pages
+  if ((combinedClaims.includes('flag') && combinedClaims.includes('india')) || combinedClaims.includes('ashoka chakra')) {
+    const isRelatedFlagOrSymbol = sourceContent.includes('flag of india') ||
+      sourceContent.includes('national flag') ||
+      sourceContent.includes('ashoka chakra') ||
+      sourceContent.includes('flag code') ||
+      sourceContent.includes('lion capital') ||
+      sourceContent.includes('tiranga') ||
+      sourceContent.includes('dharmachakra') ||
+      sourceContent.includes('tricolour');
+    if (!isRelatedFlagOrSymbol) {
+      return { isRelevant: false, relevanceScore: 0.08 };
+    }
+  }
+
+  // B. Solar Motion / Sunrise / Sunset: Reject unrelated non-astronomy pages
+  if (combinedClaims.includes('sun') && (combinedClaims.includes('set') || combinedClaims.includes('rise') || combinedClaims.includes('east') || combinedClaims.includes('west'))) {
+    const isRelatedSolar = sourceContent.includes('sun') ||
+      sourceContent.includes('sunset') ||
+      sourceContent.includes('sunrise') ||
+      sourceContent.includes('solar') ||
+      sourceContent.includes('rotation') ||
+      sourceContent.includes('cardinal direction') ||
+      sourceContent.includes('horizon');
+    if (!isRelatedSolar) {
+      return { isRelevant: false, relevanceScore: 0.08 };
+    }
+  }
+
+  // C. National Bird / Animal of India: Reject non-fauna pages
+  if ((combinedClaims.includes('national bird') || combinedClaims.includes('national animal')) && combinedClaims.includes('india')) {
+    const isRelatedIndianFauna = sourceContent.includes('national bird') ||
+      sourceContent.includes('national animal') ||
+      sourceContent.includes('national symbol') ||
+      sourceContent.includes('peafowl') ||
+      sourceContent.includes('peacock') ||
+      sourceContent.includes('pavo cristatus') ||
+      sourceContent.includes('panthera tigris') ||
+      sourceContent.includes('tiger') ||
+      sourceContent.includes('eagle') ||
+      sourceContent.includes('birds of india') ||
+      sourceContent.includes('symbols of india');
+    if (!isRelatedIndianFauna) {
+      return { isRelevant: false, relevanceScore: 0.08 };
+    }
+  }
+
   // 2. Compute lexical overlap across title + snippet
   const overlap = computeLexicalOverlap(combinedClaims, sourceContent);
 
@@ -247,7 +322,6 @@ export function evaluateSourceRelevance(
   }
 
   // Minimum threshold of 0.32 lexical overlap required to be considered relevant
-  // (raised from 0.28 to reduce loosely-related off-topic sources)
   const isRelevant = overlap >= 0.32;
   const relevanceScore = Math.max(0.10, Math.min(1.0, Number(overlap.toFixed(2))));
 

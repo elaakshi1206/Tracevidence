@@ -195,13 +195,47 @@ async function queryWikipedia(query: string): Promise<SearchResultItem[]> {
     const queryMentionsEntertainment = /(film|movie|song|album|series|actor|actress|band|fiction|book|play|musical)/i.test(queryLower);
     const queryMentionsBallot = /(proposition|ballot|referendum|election|vote|measure)/i.test(queryLower);
 
-    // Filter out obviously irrelevant noise (disambiguation pages, unrelated fiction/movies/ballots)
+    // Filter out obviously irrelevant noise (disambiguation pages, unrelated fiction/movies/ballots/numbers/festivals/biographies)
+    const queryAsksPerson = /(who is|born|died|biography|politician|scientist|person|actor|actress|author|president|minister)/i.test(queryLower);
+    const queryAsksNumber = /\b(?:prime number|integer|even number|odd number|numeral)\b/i.test(queryLower);
+    const queryAsksFestival = /(festival|ceremony|award|carnival)/i.test(queryLower);
+
     const validCandidates = searchResults.filter((item: any) => {
       const title = item.title || '';
       const snippet = (item.snippet || '').replace(/<[^>]+>/g, '').toLowerCase();
+      const titleLower = title.toLowerCase();
 
       // Disambiguation pages
-      if (title.toLowerCase().includes('(disambiguation)')) return false;
+      if (titleLower.includes('(disambiguation)')) return false;
+
+      // Pure number pages (e.g. "24 (number)", "23 (number)") unless query asks for number theory
+      if (!queryAsksNumber && (/\b\d+\s*\(number\)/i.test(title) || /\b\d+\s*\(disambiguation\)/i.test(title))) {
+        return false;
+      }
+
+      // Festivals / awards / ceremonies unless requested
+      if (!queryAsksFestival && (
+        /\b(?:international\s+)?film\s+festival\b/i.test(title) ||
+        /\b(?:annual\s+)?awards?\b/i.test(title) ||
+        titleLower.includes('film festival')
+      )) {
+        return false;
+      }
+
+      // Unrelated biographies when query is about natural science, astronomy, or state symbols
+      if (!queryAsksPerson && (
+        snippet.includes('was a pakistani') ||
+        snippet.includes('is a pakistani') ||
+        snippet.includes('was an american') ||
+        snippet.includes('was an english') ||
+        snippet.includes('was an indian actor') ||
+        snippet.includes('was an indian cricketer') ||
+        snippet.includes('was born on') ||
+        snippet.includes('was a computer prodigy') ||
+        /\bwas an? (?:actor|actress|cricketer|footballer|singer|politician|poet|prodigy)\b/i.test(snippet)
+      )) {
+        return false;
+      }
 
       // Unrelated pop culture / fiction pages
       if (!queryMentionsEntertainment && ENTERTAINMENT_DISAMBIG_REGEX.test(title)) {
@@ -213,7 +247,9 @@ async function queryWikipedia(query: string): Promise<SearchResultItem[]> {
         snippet.includes('is a musical') ||
         snippet.includes('is a norwegian fairy-tale') ||
         snippet.includes('is a film directed by') ||
-        snippet.includes('is a song recorded by')
+        snippet.includes('is a song recorded by') ||
+        snippet.includes('is a beach in') ||
+        snippet.includes('is an ancient egyptian')
       )) {
         return false;
       }
@@ -240,15 +276,13 @@ async function queryWikipedia(query: string): Promise<SearchResultItem[]> {
     // Sort by overlap descending
     scoredCandidates.sort((a, b) => b.overlap - a.overlap);
 
-    // Keep top candidates with minimum overlap (at least 0.25)
+    // Keep top candidates with strict minimum overlap (at least 0.28)
+    // NEVER force low-overlap (< 0.28) candidates: if none pass, return empty
     const topCandidates = scoredCandidates
-      .filter(c => c.overlap >= 0.25)
+      .filter(c => c.overlap >= 0.28)
       .slice(0, 4);
 
-    // If none passed threshold, fallback to top 2 if non-empty, otherwise empty
-    const candidatesToFetch = topCandidates.length > 0
-      ? topCandidates
-      : (scoredCandidates.length > 0 && scoredCandidates[0].overlap >= 0.15 ? scoredCandidates.slice(0, 2) : []);
+    const candidatesToFetch = topCandidates;
 
     const items: SearchResultItem[] = [];
     for (const cand of candidatesToFetch) {
@@ -366,6 +400,29 @@ async function queryDuckDuckGo(query: string): Promise<SearchResultItem[]> {
 
 
 /**
+ * Extracts a canonical search topic from a claim to guide Wikipedia toward authoritative encyclopedic articles
+ */
+export function extractCanonicalSearchTopic(query: string): string | null {
+  const q = query.toLowerCase();
+  if (q.includes('ashoka chakra') || (q.includes('chakra') && (q.includes('spoke') || q.includes('flag')))) {
+    return 'Ashoka Chakra';
+  }
+  if ((q.includes('flag') || q.includes('tiranga') || q.includes('tricolour')) && (q.includes('india') || q.includes('indian'))) {
+    return 'Flag of India';
+  }
+  if (q.includes('sun') && (q.includes('set') || q.includes('setting') || q.includes('rise') || q.includes('rising') || q.includes('east') || q.includes('west'))) {
+    return 'Sunset';
+  }
+  if (q.includes('national bird') && q.includes('india')) {
+    return 'Indian peafowl';
+  }
+  if (q.includes('national animal') && q.includes('india')) {
+    return 'Royal Bengal tiger';
+  }
+  return null;
+}
+
+/**
  * Unified multi-search service combining Tavily, Serper/Exa, and Open Reference APIs
  */
 export async function performMultiSearch(query: string): Promise<{
@@ -422,6 +479,12 @@ export async function performMultiSearch(query: string): Promise<{
   // 4. Always include authoritative open web encyclopedia search (Wikipedia + DuckDuckGo)
   promises.push(queryWikipedia(query));
   activeProviders.push('Wikipedia');
+
+  // If a canonical topic is recognized, query Wikipedia for the authoritative page as well
+  const canonicalTopic = extractCanonicalSearchTopic(query);
+  if (canonicalTopic && canonicalTopic.toLowerCase() !== query.toLowerCase()) {
+    promises.push(queryWikipedia(canonicalTopic));
+  }
 
   promises.push(queryDuckDuckGo(query));
   activeProviders.push('OpenWeb');
