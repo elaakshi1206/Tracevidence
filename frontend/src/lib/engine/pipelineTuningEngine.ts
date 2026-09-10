@@ -104,9 +104,9 @@ export interface TuningResult {
  * Instead of memorizing a single case, this shifts mathematical boundaries across all cases!
  */
 export function autoTuneForFailures(
-  failedCases: ExperimentTestCase[],
+  testCases: ExperimentTestCase[],
   results: Record<string, TestCaseRunResult>,
-  currentAccuracy: number
+  currentAccuracy: number = 80
 ): TuningResult {
   const current = getTunedHyperparameters();
   const previous = { ...current };
@@ -122,7 +122,15 @@ export function autoTuneForFailures(
     'None (Passed)': 0,
   };
 
-  failedCases.forEach(tc => {
+  // Extract failed cases if full test case list passed
+  const failedCases = testCases.filter(tc => {
+    const res = results[tc.id];
+    return res && res.status === 'FAILED';
+  });
+
+  const casesToAnalyze = failedCases.length > 0 ? failedCases : testCases;
+
+  casesToAnalyze.forEach(tc => {
     const res = results[tc.id];
     const stage = res?.failedStage || 'Stage 6: Final Trust Decision';
     if (failureCounts[stage] !== undefined) {

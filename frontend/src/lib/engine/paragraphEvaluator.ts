@@ -423,7 +423,7 @@ export async function runSingleParagraphTestCase(
 
   // 1. Check for active learned correction memory
   const activeLearnedMemory = withLearnedFeedback
-    ? findMatchingLearnedCorrection(testCase.paragraph, testCase.targetEntity, testCase.id)
+    ? findMatchingLearnedCorrection(testCase.paragraph, testCase.targetEntity)
     : null;
 
   // 2. Fetch past mistake examples (few-shot context injection with difficulty weighting)

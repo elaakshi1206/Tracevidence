@@ -1237,7 +1237,7 @@ export default function ExperimentsPage() {
 
   // Auto-tune global pipeline thresholds across failure clusters
   const handleAutoTunePipeline = () => {
-    const tuneRes = autoTuneForFailures(activeSingleResults, activeSingleCases);
+    const tuneRes = autoTuneForFailures(activeSingleCases, activeSingleResults);
     setHyperparameters(tuneRes.updatedParams);
     setTuningNotice(tuneRes.summary);
     setTimeout(() => setTuningNotice(null), 7000);
@@ -5154,6 +5154,8 @@ export default function ExperimentsPage() {
             </div>
           </div>
         </div>
+      )}
+
       {/* ── Global Pipeline Hyperparameter Auto-Tuning Modal ──────────────── */}
       {isTuningModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-xs animate-fade-in">
