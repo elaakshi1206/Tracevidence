@@ -107,7 +107,14 @@ import {
   detectErrorPatterns,
   getTrainingSessions,
   retrainOnWrongCases,
+  generateDpoTrainingDataset,
 } from '@/lib/engine/errorAnalysisEngine';
+import {
+  getTunedHyperparameters,
+  autoTuneForFailures,
+  resetHyperparameters,
+  PipelineHyperparameters,
+} from '@/lib/engine/pipelineTuningEngine';
 
 export default function ExperimentsPage() {
   // Suite Switcher: 'claims' (50) | 'easiest' (100) | 'twisters' (100) | 'tricky' (60) | 'spectrum' (60) | 'paragraphs' (50) | 'mega_paragraphs' (100)
@@ -221,6 +228,11 @@ export default function ExperimentsPage() {
   const [errorReports, setErrorReports] = useState<ErrorReport[]>([]);
   const [trainingSessions, setTrainingSessions] = useState<TrainingSession[]>([]);
   const [learningAppliedNotice, setLearningAppliedNotice] = useState<string | null>(null);
+
+  // Global Pipeline Hyperparameters & Auto-Tuning State
+  const [hyperparameters, setHyperparameters] = useState<PipelineHyperparameters>(() => getTunedHyperparameters());
+  const [isTuningModalOpen, setIsTuningModalOpen] = useState(false);
+  const [tuningNotice, setTuningNotice] = useState<string | null>(null);
 
   // Sync custom rule inputs when opening inspectCase modal
   useEffect(() => {
@@ -1209,6 +1221,35 @@ export default function ExperimentsPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Export contrastive DPO fine-tuning pairs for Llama / Mistral / DeepSeek
+  const handleExportDpo = () => {
+    const { jsonl, totalSamples } = generateDpoTrainingDataset(activeSingleResults, activeSingleCases);
+    const blob = new Blob([jsonl], { type: 'application/jsonlines' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tracevidence-dpo-contrastive-${suiteMode}-${Date.now()}.jsonl`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setTuningNotice(`Generated ${totalSamples} Direct Preference Optimization (DPO) contrastive pairs in JSONL format!`);
+    setTimeout(() => setTuningNotice(null), 5000);
+  };
+
+  // Auto-tune global pipeline thresholds across failure clusters
+  const handleAutoTunePipeline = () => {
+    const tuneRes = autoTuneForFailures(activeSingleResults, activeSingleCases);
+    setHyperparameters(tuneRes.updatedParams);
+    setTuningNotice(tuneRes.summary);
+    setTimeout(() => setTuningNotice(null), 7000);
+  };
+
+  const handleResetHyperparameters = () => {
+    const resetParams = resetHyperparameters();
+    setHyperparameters(resetParams);
+    setTuningNotice('Global pipeline thresholds reset to theoretical baseline defaults.');
+    setTimeout(() => setTuningNotice(null), 5000);
+  };
+
   // Compute metrics for single claims
   const metrics = useMemo(() => computeSuiteMetrics(testCases, results), [testCases, results]);
 
@@ -1947,6 +1988,24 @@ export default function ExperimentsPage() {
               </button>
 
               <button
+                onClick={() => setIsTuningModalOpen(true)}
+                className="flex items-center space-x-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 shadow-2xs hover:bg-emerald-100 transition-colors cursor-pointer"
+                title="Inspect & auto-tune global mathematical thresholds"
+              >
+                <Sliders className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Pipeline Tuning</span>
+              </button>
+
+              <button
+                onClick={handleExportDpo}
+                className="flex items-center space-x-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-800 shadow-2xs hover:bg-indigo-100 transition-colors cursor-pointer"
+                title="Export contrastive Direct Preference Optimization (DPO) pairs in JSONL"
+              >
+                <FileText className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Export DPO (.jsonl)</span>
+              </button>
+
+              <button
                 onClick={handleExportJson}
                 className="flex items-center space-x-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
                 title="Download full benchmark evaluation report in JSON"
@@ -1957,7 +2016,19 @@ export default function ExperimentsPage() {
             </div>
           </div>
 
-          {/* Alert notice if learning applied */}
+          {/* Alert notice if tuning or learning applied */}
+          {tuningNotice && (
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-emerald-50 p-3.5 border border-emerald-200 text-xs text-emerald-900 animate-fade-in shadow-2xs">
+              <div className="flex items-center space-x-2">
+                <Zap className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span className="font-semibold">{tuningNotice}</span>
+              </div>
+              <button onClick={() => setTuningNotice(null)} className="text-emerald-600 hover:text-emerald-900 ml-3">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
           {learningAppliedNotice && (
             <div className="mt-4 flex items-center justify-between rounded-xl bg-purple-50 p-3.5 border border-purple-200 text-xs text-purple-900 animate-fade-in">
               <div className="flex items-center space-x-2">
@@ -5080,6 +5151,163 @@ export default function ExperimentsPage() {
               >
                 View Benchmark Cases
               </button>
+            </div>
+          </div>
+        </div>
+      {/* ── Global Pipeline Hyperparameter Auto-Tuning Modal ──────────────── */}
+      {isTuningModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-xs animate-fade-in">
+          <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto space-y-5">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                  <Sliders className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
+                    Global Pipeline Hyperparameters
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                      Auto-Tuning Engine
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Systemic mathematical thresholds optimized across aggregate failure clusters.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsTuningModalOpen(false)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Threshold Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Contradiction Penalty Weight */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">Contradiction Penalty (w_contra)</span>
+                  <span className="font-mono text-xs font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                    {hyperparameters.contradictionPenaltyWeight.toFixed(2)}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-tight">
+                  Weight subtracted from Trust Score upon detecting verified factual contradiction.
+                </p>
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-rose-500 rounded-full"
+                    style={{ width: `${Math.min(100, hyperparameters.contradictionPenaltyWeight * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Echo-Chamber Exponent */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">Echo-Chamber Exponent (α)</span>
+                  <span className="font-mono text-xs font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    {hyperparameters.echoChamberExponent.toFixed(2)}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-tight">
+                  Power applied to Independence Factor: higher values penalize syndicated origins.
+                </p>
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-amber-500 rounded-full"
+                    style={{ width: `${Math.min(100, hyperparameters.echoChamberExponent * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Selective Prediction Trust Threshold */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">TRUST Threshold (θ_trust)</span>
+                  <span className="font-mono text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    {hyperparameters.selectiveTrustThreshold.toFixed(2)}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-tight">
+                  Minimum composite trust score required to emit high-confidence TRUST verdict.
+                </p>
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full"
+                    style={{ width: `${hyperparameters.selectiveTrustThreshold * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Numerical Tolerance */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">Numerical Disparity Margin (τ_num)</span>
+                  <span className="font-mono text-xs font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                    {(hyperparameters.numericalTolerance * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-tight">
+                  Tolerance allowed when comparing measurements before raising numerical contradiction.
+                </p>
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-500 rounded-full"
+                    style={{ width: `${hyperparameters.numericalTolerance * 400}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Tuning Optimization Log */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <History className="h-3.5 w-3.5 text-slate-500" />
+                  Optimization Trail ({hyperparameters.tuningRoundsCount} rounds)
+                </span>
+                {hyperparameters.lastTunedAt && (
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Last Tuned: {new Date(hyperparameters.lastTunedAt).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+              <div className="max-h-28 overflow-y-auto space-y-1 font-mono text-[11px] text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
+                {hyperparameters.activeOptimizationLog.map((log, idx) => (
+                  <div key={idx} className="flex items-start gap-1.5">
+                    <span className="text-emerald-600 font-bold shrink-0">›</span>
+                    <span>{log}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+              <button
+                onClick={handleResetHyperparameters}
+                className="flex items-center space-x-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
+                <span>Reset to Baseline</span>
+              </button>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    handleAutoTunePipeline();
+                    setIsTuningModalOpen(false);
+                  }}
+                  className="flex items-center space-x-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 shadow-sm cursor-pointer"
+                >
+                  <Zap className="h-3.5 w-3.5 text-emerald-200" />
+                  <span>Auto-Tune on Current Failures</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

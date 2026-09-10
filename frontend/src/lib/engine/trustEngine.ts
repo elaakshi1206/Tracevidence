@@ -1,4 +1,5 @@
 import { DecisionType, TrustScoreBreakdown, ReliabilityLevel } from '@/types';
+import { getTunedHyperparameters, PipelineHyperparameters } from './pipelineTuningEngine';
 
 export interface TrustDecisionOutput {
   decision: DecisionType;
@@ -24,6 +25,7 @@ export function evaluateTrustDecision(params: {
   apparentSourcesCount: number;
   independentOriginsCount: number;
   isLiveRetrieval?: boolean;
+  hyperparameters?: PipelineHyperparameters;
 }): TrustDecisionOutput {
   const {
     supportScore,
@@ -34,19 +36,22 @@ export function evaluateTrustDecision(params: {
     apparentSourcesCount,
     independentOriginsCount,
     isLiveRetrieval = false,
+    hyperparameters,
   } = params;
+
+  const hp = hyperparameters || getTunedHyperparameters();
 
   // Live retrieval inherently carries higher uncertainty due to open-web noise
   const liveUncertaintyPenalty = isLiveRetrieval ? 0.08 : 0.0;
   const contradictionPenalty = contradictionDetected ? 0.70 : 0.04;
 
-  // Core Trust Formula calibrated on research benchmarks:
-  // T(c) = max(0, min(1, (S(c) * sqrt(I(c)) * (0.4 + 0.6 * F(c))) - 0.4 * C(c) - penalty))
+  // Core Trust Formula calibrated on research benchmarks and tuned hyperparameters:
+  // T(c) = max(0, min(1, (S(c) * (I(c)^alpha) * (0.4 + 0.6 * F(c))) - w_contra * C(c) - penalty))
   const rawTrust =
     supportScore *
-      Math.sqrt(Math.max(0.08, independenceFactor)) *
+      Math.pow(Math.max(0.08, independenceFactor), hp.echoChamberExponent) *
       (0.4 + 0.6 * freshnessDecay) -
-    0.38 * contradictionPenalty -
+    hp.contradictionPenaltyWeight * contradictionPenalty -
     liveUncertaintyPenalty;
 
   const finalTrustScore = Math.max(0.02, Math.min(0.96, Number(rawTrust.toFixed(3))));
@@ -84,14 +89,14 @@ export function evaluateTrustDecision(params: {
     apparentSourcesCount >= 2 &&
     independentOriginsCount >= 2 &&
     supportScore >= 0.70 &&
-    finalTrustScore >= 0.65 &&
+    finalTrustScore >= hp.selectiveTrustThreshold &&
     independenceFactor >= 0.40
   ) {
     decision = 'TRUST';
     reliabilityIndicator = isLiveRetrieval ? 'Moderate Reliability' : 'High Rigor';
     decisionReason = `Corroborated by ${independentOriginsCount} verified, independent authoritative origin(s) with freshness factor ${Math.round(freshnessDecay * 100)}%, support score ${Math.round(supportScore * 100)}%, and independence ratio ${Math.round(independenceFactor * 100)}%. No contradiction detected.`;
     recommendedAction = 'Admit into knowledge graph as verified proposition; maintain routine periodic temporal re-audit schedule.';
-    llmReasoning = `Evidence retrieved from ${independentOriginsCount} genuinely independent authoritative records directly affirms the asserted proposition. Support score: ${Math.round(supportScore * 100)}%. Independence ratio: ${Math.round(independenceFactor * 100)}%. Trust score: ${finalTrustScore.toFixed(3)}. All TRUST thresholds met: no contradiction, ≥2 independent origins, high factual corroboration.`;
+    llmReasoning = `Evidence retrieved from ${independentOriginsCount} genuinely independent authoritative records directly affirms the asserted proposition. Support score: ${Math.round(supportScore * 100)}%. Independence ratio: ${Math.round(independenceFactor * 100)}%. Trust score: ${finalTrustScore.toFixed(3)}. All TRUST thresholds met (tuned threshold: ${hp.selectiveTrustThreshold}): no contradiction, ≥2 independent origins, high factual corroboration.`;
   }
   // Rule 3: Echo Chamber / Syndication Collapse -> VERIFY
   else if (apparentSourcesCount >= 3 && independentOriginsCount <= 1) {
@@ -109,14 +114,13 @@ export function evaluateTrustDecision(params: {
     recommendedAction = 'Verify against contemporary 2024-2026 data or enacted legislative texts.';
     llmReasoning = `The primary source material reflects baseline conditions that have substantially evolved. Without updated empirical confirmation, high confidence cannot be assigned.`;
   }
-  // Rule 5: Insufficient corroboration / Clear factual mismatch / High uncertainty -> ABSTAIN
-  // Threshold: supportScore < 0.40 (tightened from 0.45 to reduce false-VERIFY on clearly weak claims)
-  else if (finalTrustScore < 0.35 || supportScore < 0.40) {
+  // Rule 5: Insufficient corroboration / Clear factual mismatch / Below Verify threshold -> ABSTAIN
+  else if (finalTrustScore < hp.selectiveVerifyThreshold || supportScore < 0.40) {
     decision = 'ABSTAIN';
     reliabilityIndicator = 'High Epistemic Uncertainty';
-    decisionReason = `Insufficient verifiable literature or factual mismatch detected. Support score: ${Math.round(supportScore * 100)}% (threshold: 40%). Trust score: ${finalTrustScore.toFixed(3)} (threshold: 0.35).`;
+    decisionReason = `Insufficient verifiable literature or factual mismatch detected. Support score: ${Math.round(supportScore * 100)}% (threshold: 40%). Trust score: ${finalTrustScore.toFixed(3)} (tuned threshold: ${hp.selectiveVerifyThreshold}).`;
     recommendedAction = 'Abstain from automated validation. Perform targeted manual literature review across indexed scientific databases.';
-    llmReasoning = `Selective prediction thresholds mandate withholding trust when corroborating evidence is minimal, conflicting, or ambiguous. Support: ${Math.round(supportScore * 100)}%, Trust: ${finalTrustScore.toFixed(3)} — both below the required thresholds for either TRUST or VERIFY decisions.`;
+    llmReasoning = `Selective prediction thresholds mandate withholding trust when corroborating evidence is minimal, conflicting, or ambiguous. Support: ${Math.round(supportScore * 100)}%, Trust: ${finalTrustScore.toFixed(3)} — both below the tuned thresholds for TRUST (${hp.selectiveTrustThreshold}) or VERIFY (${hp.selectiveVerifyThreshold}).`;
   }
 
   // Rule 6: Default Decision Support State -> VERIFY

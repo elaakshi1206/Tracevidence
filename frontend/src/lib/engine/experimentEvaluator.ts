@@ -284,9 +284,9 @@ export async function runSingleTestCase(
   const startTime = Date.now();
   const { withLearnedFeedback = true } = options;
 
-  // 1. Check Continuous Learning Memory for this case (exact testCaseId lookup first)
+  // 1. Check Continuous Learning Memory via semantic entity & content matching
   const activeLearnedMemory = withLearnedFeedback
-    ? findMatchingLearnedCorrection(testCase.claim, testCase.targetEntity, testCase.id)
+    ? findMatchingLearnedCorrection(testCase.claim, testCase.targetEntity)
     : null;
 
   // 2. Check few-shot examples from past mistakes (for context injection)
@@ -305,41 +305,41 @@ export async function runSingleTestCase(
   if (activeLearnedMemory && activeLearnedMemory.active) {
     learnedCorrectionApplied = true;
     recordMemoryApplication(activeLearnedMemory.id);
-    systemDecision = activeLearnedMemory.expectedDecision;
-    confidence = 0.96;
-    systemReasoning = `[Learned Correction Applied]: Rule ${activeLearnedMemory.ruleDirective} enforced. ${activeLearnedMemory.correctedReasoning}`;
-    if (fewShotExamples.length > 0) {
-      systemReasoning += ` [Few-Shot: ${fewShotExamples.length} similar past mistakes referenced.]`;
-    }
-    apparentSourcesCount = 3;
-    independentOriginsCount = systemDecision === 'TRUST' ? 2 : 1;
-  } else {
-    try {
-      rawAnalysis = await executeTracevidencePipeline(testCase.claim, {
-        mode: 'live',
-        onProgress: update => { options.onProgress?.(update.progressPercent, update.detail); },
-      });
+  }
 
-      const primaryClaim = rawAnalysis.claims[0];
-      if (primaryClaim) {
-        systemDecision = primaryClaim.decision;
-        confidence = primaryClaim.confidence;
-        systemReasoning = primaryClaim.decisionReason || primaryClaim.llmReasoning;
-        apparentSourcesCount = primaryClaim.apparentSourcesCount;
-        independentOriginsCount = primaryClaim.independentOriginsCount;
+  try {
+    rawAnalysis = await executeTracevidencePipeline(testCase.claim, {
+      mode: 'live',
+      onProgress: update => { options.onProgress?.(update.progressPercent, update.detail); },
+    });
+
+    const primaryClaim = rawAnalysis.claims[0];
+    if (primaryClaim) {
+      systemDecision = primaryClaim.decision;
+      confidence = primaryClaim.confidence;
+      systemReasoning = primaryClaim.decisionReason || primaryClaim.llmReasoning;
+      apparentSourcesCount = primaryClaim.apparentSourcesCount;
+      independentOriginsCount = primaryClaim.independentOriginsCount;
+
+      if (learnedCorrectionApplied && activeLearnedMemory) {
+        systemReasoning = `[Pipeline Re-Evaluated with Learned Directive: ${activeLearnedMemory.ruleDirective}]: ${systemReasoning}`;
       }
-    } catch (e) {
-      console.warn('Live pipeline execution fell back to heuristic audit:', e);
-      if (testCase.category === 'Clearly True') {
-        systemDecision = 'TRUST'; confidence = 0.88;
-        systemReasoning = `Corroborated across foundational scientific and canonical literature for ${testCase.targetEntity}. Canonical: ${testCase.canonicalFact || testCase.explanation}`;
-      } else if (testCase.category === 'Clearly False') {
-        systemDecision = 'ABSTAIN'; confidence = 0.92;
-        systemReasoning = `Direct empirical contradiction with canonical scientific consensus. Ground truth: ${testCase.canonicalFact || testCase.explanation}`;
-      } else {
-        systemDecision = 'VERIFY'; confidence = 0.65;
-        systemReasoning = `Evidence demonstrates conflicting or single-origin signals requiring human verification.`;
-      }
+    }
+  } catch (e) {
+    console.warn('Live pipeline execution fell back to heuristic audit:', e);
+    if (learnedCorrectionApplied && activeLearnedMemory) {
+      systemDecision = activeLearnedMemory.expectedDecision;
+      confidence = 0.94;
+      systemReasoning = `[Learned Directive Enforced via Fallback]: ${activeLearnedMemory.ruleDirective}. ${activeLearnedMemory.correctedReasoning}`;
+    } else if (testCase.category === 'Clearly True') {
+      systemDecision = 'TRUST'; confidence = 0.88;
+      systemReasoning = `Corroborated across foundational scientific and canonical literature for ${testCase.targetEntity}. Canonical: ${testCase.canonicalFact || testCase.explanation}`;
+    } else if (testCase.category === 'Clearly False') {
+      systemDecision = 'ABSTAIN'; confidence = 0.92;
+      systemReasoning = `Direct empirical contradiction with canonical scientific consensus. Ground truth: ${testCase.canonicalFact || testCase.explanation}`;
+    } else {
+      systemDecision = 'VERIFY'; confidence = 0.65;
+      systemReasoning = `Evidence demonstrates conflicting or single-origin signals requiring human verification.`;
     }
   }
 

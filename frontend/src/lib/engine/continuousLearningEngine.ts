@@ -297,49 +297,88 @@ export function storeLearnedCorrection(
 }
 
 /**
- * Finds applicable active learned memories for a given claim, entity, or testCaseId.
- * Prioritizes exact testCaseId match, then targetEntity, then high semantic overlap.
+ * Finds applicable active learned memories based on semantic entity & claim content matching.
+ * Eliminates artificial testCaseId short-circuits to ensure the system re-evaluates
+ * propositions using learned negative constraints rather than hardcoded lookup tables.
  */
 export function findMatchingLearnedCorrection(
   claimText: string,
-  targetEntity?: string,
-  testCaseId?: string
+  targetEntity?: string
 ): LearnedCorrectionMemory | null {
   const memories = getLearnedMemories().filter(m => m.active);
   if (memories.length === 0) return null;
 
-  // 1. Highest Priority: Direct testCaseId match (guarantees 100% precision on retesting)
-  if (testCaseId) {
-    const idMatch = memories.find(m => m.testCaseId.toLowerCase() === testCaseId.toLowerCase());
-    if (idMatch) return idMatch;
-  }
-
   const lowerClaim = claimText.toLowerCase();
-  const lowerTarget = (targetEntity || '').toLowerCase();
+  const lowerTarget = (targetEntity || '').toLowerCase().trim();
 
-  // 2. Direct target entity match
-  if (lowerTarget) {
-    for (const mem of memories) {
-      if (mem.targetEntity.toLowerCase() === lowerTarget) {
-        return mem;
+  let bestMatch: LearnedCorrectionMemory | null = null;
+  let highestScore = 0;
+
+  // Extract non-trivial claim tokens
+  const claimTokens = new Set(
+    lowerClaim
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(t => t.length > 3)
+  );
+
+  for (const mem of memories) {
+    let score = 0;
+    const memEntity = (mem.targetEntity || '').toLowerCase().trim();
+
+    // 1. Direct Target Entity Match (Weight: 0.60)
+    if (lowerTarget && memEntity) {
+      if (lowerTarget === memEntity) {
+        score += 0.65;
+      } else if (lowerTarget.includes(memEntity) || memEntity.includes(lowerTarget)) {
+        score += 0.45;
       }
     }
-  }
 
-  // 3. High semantic overlap with target entity tokens
-  for (const mem of memories) {
-    const memTokens = mem.targetEntity.toLowerCase().split(/\s+/).filter(t => t.length > 3);
-    if (memTokens.length > 0 && memTokens.every(t => lowerClaim.includes(t))) {
-      return mem;
+    // 2. Entity presence in claim text (Weight: 0.35)
+    if (memEntity && lowerClaim.includes(memEntity)) {
+      score += 0.35;
     }
 
-    // Check direct substring
-    if (mem.targetEntity && lowerClaim.includes(mem.targetEntity.toLowerCase())) {
-      return mem;
+    // 3. Token Overlap with Memory Snippet and Entity
+    const memTokens = (mem.targetEntity + ' ' + mem.claimSnippet)
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(t => t.length > 3);
+
+    let sharedTokens = 0;
+    for (const t of memTokens) {
+      if (claimTokens.has(t)) {
+        sharedTokens++;
+      }
+    }
+
+    const overlapRatio = memTokens.length > 0 ? sharedTokens / memTokens.length : 0;
+    score += overlapRatio * 0.40;
+
+    // Minimum semantic relevance threshold
+    if (score >= 0.50 && score > highestScore) {
+      highestScore = score;
+      bestMatch = mem;
     }
   }
 
-  return null;
+  return bestMatch;
+}
+
+/**
+ * Formats active learned correction memories into a structured negative-constraint prompt
+ * for pipeline re-evaluation and LLM verification stages.
+ */
+export function formatNegativeConstraintsPrompt(memories: LearnedCorrectionMemory[]): string {
+  if (!memories || memories.length === 0) return '';
+
+  const directives = memories.slice(0, 3).map((m, idx) => {
+    return `[NEGATIVE_CONSTRAINT_${idx + 1}]: When evaluating entity "${m.targetEntity}", DO NOT commit mistake: "${m.mistakePattern}". Mandate: ${m.ruleDirective}. Canonical Ground Truth: ${m.canonicalCorrection || m.correctedReasoning}`;
+  });
+
+  return `\n### LEARNED EPISTEMIC DIRECTIVES (Negative Constraints):\n${directives.join('\n')}\n`;
 }
 
 /**
