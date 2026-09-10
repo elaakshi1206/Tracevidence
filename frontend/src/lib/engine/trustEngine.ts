@@ -58,12 +58,14 @@ export function evaluateTrustDecision(params: {
   let reliabilityIndicator: ReliabilityLevel = 'Moderate Reliability';
 
   // Rule 1: Empirical Contradiction or Critical Factual Error -> ABSTAIN
+  // Contradiction takes absolute priority: even strong support scores cannot override
+  // a confirmed factual contradiction from canonical knowledge or multi-source evidence.
   if (contradictionDetected) {
     decision = 'ABSTAIN';
     reliabilityIndicator = 'High Epistemic Uncertainty';
-    decisionReason = contradictionDetails || `Active empirical conflict detected. Authoritative records or verified scientific literature contradict the asserted proposition.`;
+    decisionReason = contradictionDetails || `Active empirical conflict detected. Authoritative records or verified scientific literature directly contradict the asserted proposition.`;
     recommendedAction = 'Withhold factual endorsement. Issue contradiction advisory and do not cite as true.';
-    llmReasoning = `Under AIVIDENCE selective prediction protocol, the engine refrains from asserting truth because authoritative sources directly contest the proposition (${contradictionDetails || 'Contradictory empirical data'}). Clear factual errors must receive ABSTAIN.`;
+    llmReasoning = `Under AIVIDENCE selective prediction protocol, the engine refrains from asserting truth because authoritative sources directly contest the proposition. Contradiction evidence: ${contradictionDetails || 'Confirmed factual mismatch against canonical literature'}. Support score (${Math.round(supportScore * 100)}%) is overridden by contradiction — correct behaviour per locked decision rules.`;
   }
   // Rule 1B: Zero relevant sources found -> ABSTAIN
   else if (apparentSourcesCount === 0 || independentOriginsCount === 0) {
@@ -73,24 +75,23 @@ export function evaluateTrustDecision(params: {
     recommendedAction = 'Withhold automated validation. Perform targeted manual research with specific keywords or verify against primary repositories.';
     llmReasoning = 'The system queried multi-backend knowledge repositories but found zero relevant, verifiable sources that discuss the asserted proposition. Never force a match with unrelated content.';
   }
-  // Rule 2: Clearly correct + strongly supported by real independent sources -> TRUST
+  // Rule 2: Clearly correct + strongly supported by MULTIPLE independent sources -> TRUST
+  // Locked rule: TRUST requires >= 2 independent origins in ALL modes (including live retrieval).
+  // A single source, no matter how authoritative, is insufficient to TRUST — it may be
+  // a single-origin echo chamber or contain undiscovered errors.
   else if (
     !contradictionDetected &&
-    apparentSourcesCount >= 1 &&
-    independentOriginsCount >= 1 &&
+    apparentSourcesCount >= 2 &&
+    independentOriginsCount >= 2 &&
     supportScore >= 0.70 &&
-    (
-      // Multi-origin benchmark criteria:
-      (finalTrustScore >= 0.65 && independentOriginsCount >= 2 && independenceFactor >= 0.40) ||
-      // Or strong live retrieval corroboration from authoritative government/official/encyclopedic sources:
-      (isLiveRetrieval && supportScore >= 0.75 && independentOriginsCount >= 1 && apparentSourcesCount >= 1)
-    )
+    finalTrustScore >= 0.65 &&
+    independenceFactor >= 0.40
   ) {
     decision = 'TRUST';
     reliabilityIndicator = isLiveRetrieval ? 'Moderate Reliability' : 'High Rigor';
-    decisionReason = `Clearly corroborated by ${independentOriginsCount} verified, authoritative origin(s) with contemporary freshness (${Math.round(freshnessDecay * 100)}%) and factual alignment across retrieved evidence.`;
+    decisionReason = `Corroborated by ${independentOriginsCount} verified, independent authoritative origin(s) with freshness factor ${Math.round(freshnessDecay * 100)}%, support score ${Math.round(supportScore * 100)}%, and independence ratio ${Math.round(independenceFactor * 100)}%. No contradiction detected.`;
     recommendedAction = 'Admit into knowledge graph as verified proposition; maintain routine periodic temporal re-audit schedule.';
-    llmReasoning = `Evidence retrieved from authoritative independent records directly affirms the asserted proposition with high factual corroboration (${Math.round(supportScore * 100)}%).`;
+    llmReasoning = `Evidence retrieved from ${independentOriginsCount} genuinely independent authoritative records directly affirms the asserted proposition. Support score: ${Math.round(supportScore * 100)}%. Independence ratio: ${Math.round(independenceFactor * 100)}%. Trust score: ${finalTrustScore.toFixed(3)}. All TRUST thresholds met: no contradiction, ≥2 independent origins, high factual corroboration.`;
   }
   // Rule 3: Echo Chamber / Syndication Collapse -> VERIFY
   else if (apparentSourcesCount >= 3 && independentOriginsCount <= 1) {
@@ -109,12 +110,13 @@ export function evaluateTrustDecision(params: {
     llmReasoning = `The primary source material reflects baseline conditions that have substantially evolved. Without updated empirical confirmation, high confidence cannot be assigned.`;
   }
   // Rule 5: Insufficient corroboration / Clear factual mismatch / High uncertainty -> ABSTAIN
-  else if (finalTrustScore < 0.35 || supportScore < 0.45) {
+  // Threshold: supportScore < 0.40 (tightened from 0.45 to reduce false-VERIFY on clearly weak claims)
+  else if (finalTrustScore < 0.35 || supportScore < 0.40) {
     decision = 'ABSTAIN';
     reliabilityIndicator = 'High Epistemic Uncertainty';
-    decisionReason = `Insufficient verifiable literature or factual mismatch detected (Support score: ${supportScore}, Trust score: ${finalTrustScore}).`;
+    decisionReason = `Insufficient verifiable literature or factual mismatch detected. Support score: ${Math.round(supportScore * 100)}% (threshold: 40%). Trust score: ${finalTrustScore.toFixed(3)} (threshold: 0.35).`;
     recommendedAction = 'Abstain from automated validation. Perform targeted manual literature review across indexed scientific databases.';
-    llmReasoning = `Selective prediction thresholds mandate withholding trust when corroborating evidence is minimal, conflicting, or ambiguous.`;
+    llmReasoning = `Selective prediction thresholds mandate withholding trust when corroborating evidence is minimal, conflicting, or ambiguous. Support: ${Math.round(supportScore * 100)}%, Trust: ${finalTrustScore.toFixed(3)} — both below the required thresholds for either TRUST or VERIFY decisions.`;
   }
 
   // Rule 6: Default Decision Support State -> VERIFY

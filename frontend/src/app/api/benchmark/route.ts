@@ -77,6 +77,18 @@ export async function GET() {
       claimCount: b.data.claims.length,
       sourceCount: b.data.sources.length,
     })),
+    // --- Transparency & Honesty Fields (Requirement #9) ---
+    // These fields must be included in every benchmark API response so that any
+    // display layer or academic evaluator can clearly distinguish internal pilot
+    // numbers from peer-reviewed, externally validated results.
+    evaluationStatus: 'Pilot' as const,
+    testCaseCount: BENCHMARK_CASES.length,
+    pilotDisclaimer:
+      `Internal Pilot Results \u2013 Not Final. ` +
+      `Ablation metrics are based on ${BENCHMARK_CASES.length} curated benchmark cases ` +
+      `evaluated in controlled internal conditions. ` +
+      `These figures have not been externally peer-reviewed or validated on an independent held-out dataset. ` +
+      `Do not cite as final published accuracy without independent replication.`,
   };
 
   return NextResponse.json({ success: true, data: researchEvaluation });

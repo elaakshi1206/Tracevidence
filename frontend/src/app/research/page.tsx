@@ -131,8 +131,8 @@ const ABLATION_STAGES = [
 ];
 
 export default function ResearchDashboardPage() {
-  type TabType = 'datasetEvaluator' | 'ablation' | 'benchmarks' | 'datasetViewer' | 'systemMetrics';
-  const validTabs: TabType[] = ['datasetEvaluator', 'ablation', 'benchmarks', 'datasetViewer', 'systemMetrics'];
+  type TabType = 'datasetEvaluator' | 'ablation' | 'systemMetrics';
+  const validTabs: TabType[] = ['datasetEvaluator', 'ablation', 'systemMetrics'];
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -248,9 +248,7 @@ export default function ResearchDashboardPage() {
         {([
           { id: 'datasetEvaluator', label: '1. Dataset Evaluator', icon: <FlaskConical className="h-4 w-4" /> },
           { id: 'ablation', label: '2. Ablation Study', icon: <BarChart3 className="h-4 w-4" /> },
-          { id: 'benchmarks', label: '3. Case Library', icon: <BookOpen className="h-4 w-4" /> },
-          { id: 'datasetViewer', label: '4. Ground-Truth Dataset', icon: <Tag className="h-4 w-4" /> },
-          { id: 'systemMetrics', label: '5. System Performance Metrics', icon: <Award className="h-4 w-4" /> },
+          { id: 'systemMetrics', label: '3. System Performance Metrics', icon: <Award className="h-4 w-4" /> },
         ] as { id: TabType; label: string; icon: React.ReactNode }[]).map(({ id, label, icon }) => (
           <button
             key={id}
@@ -269,7 +267,7 @@ export default function ResearchDashboardPage() {
           className="flex items-center space-x-1.5 rounded-xl px-4 py-2 font-mono text-xs sm:text-sm font-bold bg-teal-50 text-teal-800 border border-teal-300 hover:bg-teal-100 transition-all shadow-2xs ml-auto"
         >
           <FlaskConical className="h-4 w-4 text-teal-700" />
-          <span>Test Lab (50 Experiment Cases &amp; Learning)</span>
+          <span>Test Lab (200+ Experiment Cases &amp; Learning)</span>
           <ArrowRight className="h-3.5 w-3.5 text-teal-600" />
         </Link>
       </div>
@@ -765,113 +763,6 @@ export default function ResearchDashboardPage() {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════
-          TAB 3: CURATED BENCHMARK CASES
-          ═══════════════════════════════════════════════════════ */}
-      {activeTab === 'benchmarks' && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
-            <h3 className="font-mono text-base font-bold text-slate-900 uppercase">Curated Academic Benchmark Cases</h3>
-            <p className="text-xs sm:text-sm text-slate-600">
-              Each case encapsulates a specific failure mode of standard RAG pipelines: echo chambers, outdated baselines, severe clinical contradictions, and circular citations.
-            </p>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
-              {data.benchmarks.map((b: any) => (
-                <div key={b.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-blue-600">{b.tag}</span>
-                    <DecisionBadge decision={b.expectedOutcome} size="sm" />
-                  </div>
-                  <h4 className="font-bold text-xs sm:text-sm text-slate-900">{b.title}</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{b.description}</p>
-                  <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between text-[11px] font-mono text-slate-500">
-                    <span>{b.domain}</span>
-                    <span className="font-semibold text-blue-700">{b.highlightSignal}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════
-          TAB 4: GROUND-TRUTH DATASET VIEWER
-          ═══════════════════════════════════════════════════════ */}
-      {activeTab === 'datasetViewer' && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-              <div className="flex items-center space-x-2">
-                <Tag className="h-4 w-4 text-blue-600" />
-                <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-slate-900">
-                  Labeled Ground-Truth Claims ({LABELED_RESEARCH_DATASET.length} Total)
-                </h3>
-              </div>
-              <span className="font-mono text-xs text-slate-500">Multidisciplinary Academic Benchmark</span>
-            </div>
-
-            {/* Column Explanations */}
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-3">
-              <h5 className="text-xs font-bold font-mono uppercase tracking-wider text-slate-700">📖 How to Read This Table</h5>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 text-xs text-slate-700">
-                {[
-                  { col: 'ID', desc: 'Unique identifier for each test claim (eval-01, eval-02, ...)' },
-                  { col: 'Claim Text', desc: 'The actual statement being fact-checked. The small text below is context/notes.' },
-                  { col: 'Category', desc: 'What type of claim it is — Clean, Echo Chamber, Outdated, Contradiction, etc.' },
-                  { col: 'Gold Decision', desc: 'The correct human-verified answer: TRUST, VERIFY, or ABSTAIN. This is the answer key.' },
-                  { col: 'Apparent → Indep', desc: '"8 → 5" means 8 sources found but only 5 are truly independent — 3 copied from each other. Echo Chamber detection in action.' },
-                  { col: 'Field / Year', desc: 'The scientific/academic field and the year the claim originates from.' },
-                ].map((c) => (
-                  <div key={c.col} className="bg-white rounded-lg border border-slate-200 p-2 space-y-0.5">
-                    <div className="font-bold text-blue-700">{c.col}</div>
-                    <p>{c.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              These are hand-labeled claims with a known correct answer (TRUST / VERIFY / ABSTAIN). The system runs each through its pipeline and checks if its answer matches. This tests the engine&apos;s accuracy.
-            </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-600 font-bold">
-                    <th className="py-2.5 px-3">ID</th>
-                    <th className="py-2.5 px-3">Claim Text</th>
-                    <th className="py-2.5 px-3">Category</th>
-                    <th className="py-2.5 px-3 text-center">Gold Decision</th>
-                    <th className="py-2.5 px-3 text-right">Apparent → Indep</th>
-                    <th className="py-2.5 px-3">Field / Year</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {LABELED_RESEARCH_DATASET.map((claim) => (
-                    <tr key={claim.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3 px-3 font-bold text-blue-600">{claim.id}</td>
-                      <td className="py-3 px-3 max-w-md font-sans font-medium text-slate-800">
-                        {claim.text}
-                        <span className="block text-[10px] font-mono text-slate-400 mt-0.5">{claim.notes}</span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${
-                          claim.category === 'Clean' ? 'bg-emerald-100 text-emerald-800'
-                          : claim.category === 'Contradiction' || claim.category === 'Unsupported' ? 'bg-rose-100 text-rose-800'
-                          : 'bg-amber-100 text-amber-800'
-                        }`}>{claim.category}</span>
-                      </td>
-                      <td className="py-3 px-3 text-center"><DecisionBadge decision={claim.goldDecision} size="sm" /></td>
-                      <td className="py-3 px-3 text-right font-bold text-slate-700">{claim.apparentSourcesCount} → {claim.expectedOriginsCount}</td>
-                      <td className="py-3 px-3 text-slate-500 text-[11px]">{claim.topic} ({claim.year})</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ═══════════════════════════════════════════════════════
           TAB 5: SCOREBOARD (merged from /scoreboard)

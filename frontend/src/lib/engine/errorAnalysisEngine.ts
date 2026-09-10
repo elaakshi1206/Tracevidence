@@ -15,6 +15,7 @@ import {
   ErrorPatternType,
   TrainingSnapshot,
   TrainingSession,
+  TestCaseDifficulty,
 } from '@/types/experiments';
 import { DecisionType } from '@/types';
 import { generateCorrectedReasoning, storeLearnedCorrection } from './continuousLearningEngine';
@@ -258,9 +259,15 @@ export function clearErrorReports(): void {
 // ── Few-Shot Example Retrieval ─────────────────────────────────────────────────
 /**
  * Retrieves 3-5 most relevant past mistake examples for a new claim.
- * These are injected into LLM prompts to prevent pattern recurrence.
+ * These are injected into prompts and reasoning to prevent pattern recurrence.
+ * Prioritizes past mistakes from the same difficulty level (+5 weighting).
  */
-export function getFewShotExamples(claim: string, targetEntity: string, count = 5): FewShotExample[] {
+export function getFewShotExamples(
+  claim: string,
+  targetEntity: string,
+  count = 5,
+  difficulty?: TestCaseDifficulty
+): FewShotExample[] {
   const reports = getErrorReports().filter(r => !r.retriedAndImproved);
   if (reports.length === 0) return [];
 
@@ -269,6 +276,10 @@ export function getFewShotExamples(claim: string, targetEntity: string, count = 
 
   const scored = reports.map(r => {
     let score = 0;
+    // Strong boost if same difficulty level
+    if (difficulty && r.difficulty === difficulty) {
+      score += 5;
+    }
     r.fewShotExample.relevanceKeywords.forEach(kw => {
       if (lowerClaim.includes(kw) || lowerTarget.includes(kw)) score += 2;
     });
@@ -381,14 +392,22 @@ export async function retrainOnWrongCases(
   const newReports: ErrorReport[] = [];
   const updatedResults = { ...currentResults };
 
-  for (let i = 0; i < failedCases.length; i++) {
-    const tc = failedCases[i];
+  // Priority Rule: Easy first, then Medium, then Hard
+  const priorityOrder: Record<string, number> = { Easy: 0, Medium: 1, Hard: 2 };
+  const sortedFailedCases = [...failedCases].sort((a, b) => {
+    const pA = priorityOrder[a.difficulty] ?? 1;
+    const pB = priorityOrder[b.difficulty] ?? 1;
+    return pA - pB;
+  });
+
+  for (let i = 0; i < sortedFailedCases.length; i++) {
+    const tc = sortedFailedCases[i];
     const prevResult = currentResults[tc.id];
     if (!prevResult) continue;
 
     onProgress?.(
-      Math.round(((i + 1) / failedCases.length) * 100),
-      `Training on "${tc.targetEntity}" (${i + 1}/${failedCases.length})`
+      Math.round(((i + 1) / sortedFailedCases.length) * 100),
+      `[Priority: ${tc.difficulty}] Training on "${tc.targetEntity}" (${i + 1}/${sortedFailedCases.length})`
     );
 
     // 1. Build & persist error report

@@ -206,9 +206,7 @@ export default function Navbar() {
                   <div>
                     <div className="font-bold text-xs flex items-center gap-1.5 text-slate-800 group-hover:text-teal-800">
                       <span>Experiment Cases</span>
-                      <span className="rounded bg-teal-100 px-1 py-0.2 text-[9px] font-mono font-bold text-teal-800 border border-teal-300">
-                        50 Tests
-                      </span>
+                      <span className="rounded bg-teal-100 px-1 py-0.2 text-[9px] font-mono font-bold text-teal-800 border border-teal-300">200+ Tests</span>
                     </div>
                     <div className="text-[11px] text-slate-500 font-normal">Difficult test lab &amp; self-learning</div>
                   </div>
@@ -225,20 +223,6 @@ export default function Navbar() {
                   <div>
                     <div className="font-bold text-xs">Benchmarks</div>
                     <div className="text-[11px] text-slate-500 font-normal">Accuracy tests &amp; proofs</div>
-                  </div>
-                </Link>
-
-                <Link
-                  href="/research?tab=benchmarks"
-                  onClick={() => setMoreMenuOpen(false)}
-                  className="flex items-center space-x-3 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 border border-purple-200 shrink-0">
-                    <BookOpen className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-xs">Case Library</div>
-                    <div className="text-[11px] text-slate-500 font-normal">Pre-analyzed example cases</div>
                   </div>
                 </Link>
 
@@ -331,7 +315,7 @@ export default function Navbar() {
               <span>Experiment Cases</span>
             </div>
             <span className="rounded bg-teal-100 px-1.5 py-0.5 text-[10px] font-mono font-bold text-teal-800 border border-teal-200">
-              50 Tests
+              200+ Tests
             </span>
           </Link>
 

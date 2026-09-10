@@ -176,10 +176,25 @@ export function evaluateSourceRelevance(
       item.title.toLowerCase().includes('(song)') ||
       item.title.toLowerCase().includes('(album)') ||
       item.title.toLowerCase().includes('(fairy-tale)') ||
+      item.title.toLowerCase().includes('(novel)') ||
+      item.title.toLowerCase().includes('(miniseries)') ||
+      item.title.toLowerCase().includes('(video game)') ||
+      item.title.toLowerCase().includes('(franchise)') ||
+      item.title.toLowerCase().includes('(character)') ||
       item.snippet.toLowerCase().includes('is an american drama television series') ||
       item.snippet.toLowerCase().includes('is a television series') ||
       item.snippet.toLowerCase().includes('is a musical with') ||
-      item.snippet.toLowerCase().includes('is a norwegian fairy-tale')
+      item.snippet.toLowerCase().includes('is a norwegian fairy-tale') ||
+      item.snippet.toLowerCase().includes('is a film directed by') ||
+      item.snippet.toLowerCase().includes('is a song recorded by') ||
+      item.snippet.toLowerCase().includes('is an american sitcom') ||
+      item.snippet.toLowerCase().includes('is an american animated') ||
+      item.snippet.toLowerCase().includes('is a british television') ||
+      item.snippet.toLowerCase().includes('is a video game') ||
+      item.snippet.toLowerCase().includes('is a comic book') ||
+      item.snippet.toLowerCase().includes('is a superhero film') ||
+      item.snippet.toLowerCase().includes('is an action film') ||
+      item.snippet.toLowerCase().includes('is a horror film')
     ) {
       return { isRelevant: false, relevanceScore: 0.05 };
     }
@@ -208,8 +223,32 @@ export function evaluateSourceRelevance(
     return { isRelevant: false, relevanceScore: 0.10 };
   }
 
-  // Minimum threshold of 0.28 lexical overlap required to be considered relevant
-  const isRelevant = overlap >= 0.28;
+  // 4. Entity-anchor check: extract critical proper nouns and numbers from the claim.
+  // When the claim contains at least 2 named anchors (e.g. "India" + "peacock", or "Ashoka Chakra" + "24"),
+  // require that at least one anchor appears verbatim in the source to prevent off-topic results
+  // that only share generic function words from passing relevance.
+  const claimRawLower = combinedClaims.toLowerCase();
+  const entityAnchors: string[] = [];
+
+  // Named entities: sequences of >= 1 capitalised words from the original combined claim texts
+  const originalCombined = claimTexts.join(' ');
+  const namedEntityMatches = originalCombined.match(/\b[A-Z][a-zA-Z]{2,}(?:\s+[A-Z][a-zA-Z]{2,})?\b/g) || [];
+  namedEntityMatches.forEach(ne => entityAnchors.push(ne.toLowerCase()));
+
+  // Critical numbers (e.g. "24", "206", "46", "100")
+  const criticalNumbers = combinedClaims.match(/\b\d{2,}\b/g) || [];
+  criticalNumbers.forEach(n => entityAnchors.push(n));
+
+  if (entityAnchors.length >= 2) {
+    const sourceHasAnchor = entityAnchors.some(anchor => sourceContent.includes(anchor));
+    if (!sourceHasAnchor) {
+      return { isRelevant: false, relevanceScore: 0.12 };
+    }
+  }
+
+  // Minimum threshold of 0.32 lexical overlap required to be considered relevant
+  // (raised from 0.28 to reduce loosely-related off-topic sources)
+  const isRelevant = overlap >= 0.32;
   const relevanceScore = Math.max(0.10, Math.min(1.0, Number(overlap.toFixed(2))));
 
   return { isRelevant, relevanceScore };

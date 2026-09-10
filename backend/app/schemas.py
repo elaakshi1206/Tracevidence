@@ -3,7 +3,7 @@ from typing import List, Optional, Literal
 
 DecisionEnum = Literal['TRUST', 'VERIFY', 'ABSTAIN']
 SourceTierEnum = Literal['Academic', 'Government', 'Official', 'Reputable Media', 'Aggregator/Blog', 'Unverified']
-PolarityEnum = Literal['SUPPORT', 'PARTIAL', 'CONTRADICT']
+PolarityEnum = Literal['SUPPORT', 'PARTIAL', 'CONTRADICT', 'IRRELEVANT']
 
 class SourceSchema(BaseModel):
     id: str
@@ -23,18 +23,18 @@ class SourceSchema(BaseModel):
 class EvidenceSchema(BaseModel):
     id: str
     claim_id: str
-    source_id: str
+    source_id: Optional[str] = None
     polarity: PolarityEnum
     quote: str
     relevance_score: float = Field(ge=0.0, le=1.0)
-    verification_reasoning: str
+    verification_reasoning: Optional[str] = None
 
 class TrustMathBreakdownSchema(BaseModel):
-    support_score: float
-    independence_factor: float
-    freshness_decay: float
-    contradiction_penalty: float
-    final_trust_score: float
+    support_score: float = 0.0
+    independence_factor: float = 0.0
+    freshness_decay: float = 1.0
+    contradiction_penalty: float = 0.0
+    final_trust_score: float = 0.0
 
 class ClaimSchema(BaseModel):
     id: str
@@ -44,21 +44,30 @@ class ClaimSchema(BaseModel):
     decision: DecisionEnum
     decision_reason: str
     recommended_action: str
-    apparent_sources_count: int
-    independent_origins_count: int
-    independence_ratio: float
-    freshness_score: float
-    temporal_status: str
-    contradiction_detected: bool
+    apparent_sources_count: int = 0
+    independent_origins_count: int = 0
+    independence_ratio: float = 0.0
+    freshness_score: float = 1.0
+    temporal_status: str = "Current"
+    contradiction_detected: bool = False
     contradiction_details: Optional[str] = None
-    evidence_ids: List[str]
-    math_breakdown: TrustMathBreakdownSchema
-    llm_reasoning: str
+    evidence_ids: List[str] = []
+    math_breakdown: Optional[TrustMathBreakdownSchema] = None
+    llm_reasoning: Optional[str] = None
 
 class AnalyzeRequest(BaseModel):
     text: Optional[str] = None
     url: Optional[str] = None
     benchmark_id: Optional[str] = None
+    mode: Optional[str] = "live"
+
+class AnalysisListItem(BaseModel):
+    id: str
+    title: str
+    query: str
+    created_at: str
+    claims_count: int
+    executive_summary: Optional[str] = None
 
 class AnalysisResponse(BaseModel):
     id: str
@@ -71,3 +80,32 @@ class AnalysisResponse(BaseModel):
     evidences: List[EvidenceSchema]
     execution_time_ms: int
     provider: str
+
+class LearnedRuleCreate(BaseModel):
+    id: Optional[str] = None
+    test_case_id: Optional[str] = None
+    claim_snippet: str
+    target_entity: str
+    original_failed_stage: Optional[str] = None
+    original_system_decision: Optional[str] = None
+    expected_decision: str
+    mistake_pattern: Optional[str] = None
+    corrected_reasoning: str
+    rule_directive: str
+    canonical_correction: Optional[str] = None
+
+class LearnedRuleResponse(BaseModel):
+    id: str
+    test_case_id: Optional[str] = None
+    claim_snippet: str
+    target_entity: str
+    original_failed_stage: Optional[str] = None
+    original_system_decision: Optional[str] = None
+    expected_decision: str
+    mistake_pattern: Optional[str] = None
+    corrected_reasoning: str
+    rule_directive: str
+    canonical_correction: Optional[str] = None
+    applied_count: int = 0
+    created_at: str
+    active: bool = True

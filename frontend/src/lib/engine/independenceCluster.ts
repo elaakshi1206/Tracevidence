@@ -87,7 +87,16 @@ export function clusterSourcesByIndependence(sources: Source[]): IndependenceClu
       sharedFigures.forEach(f => allSharedFigures.add(f));
 
       const hasSharedFigures = sharedFigures.length > 0;
-      const isSyndicated = isExplicitChild || sharesOrigin || overlap > 0.40 || (overlap > 0.25 && hasSharedFigures);
+
+      // Guard: do not cluster if either snippet is too short (< 15 words).
+      // Short snippets share numbers and words by coincidence, producing false collapses.
+      const snippetAWords = srcA.snippet.trim().split(/\s+/).length;
+      const snippetBWords = srcB.snippet.trim().split(/\s+/).length;
+      const bothSnippetsSubstantive = snippetAWords >= 15 && snippetBWords >= 15;
+
+      const isSyndicated = bothSnippetsSubstantive && (
+        isExplicitChild || sharesOrigin || overlap > 0.40 || (overlap > 0.25 && hasSharedFigures)
+      );
 
       if (isSyndicated) {
         currentClusterSources.push(srcB.id);
@@ -106,17 +115,37 @@ export function clusterSourcesByIndependence(sources: Source[]): IndependenceClu
     }
 
     const sharedFigArr = Array.from(allSharedFigures);
+
+    // Cautious, evidence-grounded rationale language:
+    // Never make absolute collapse claims. Always include similarity % and shared figures as proof.
+    let cautiousRationale: string;
+    if (currentClusterSources.length > 1) {
+      const proofParts: string[] = [];
+      if (sharedFigArr.length > 0) {
+        proofParts.push(`shared key figures [${sharedFigArr.join(', ')}]`);
+      }
+      if (maxOverlap > 0) {
+        proofParts.push(`${Math.round(maxOverlap * 100)}% n-gram text similarity`);
+      }
+      const proofStr = proofParts.length > 0 ? ` (evidence: ${proofParts.join(' and ')})` : '';
+
+      if (derivationProbability === 'High') {
+        cautiousRationale = `High likelihood of derivation: ${currentClusterSources.length} sources appear to originate from ${srcA.publisher}${proofStr}. Independent verification recommended.`;
+      } else if (derivationProbability === 'Medium') {
+        cautiousRationale = `Possible shared origin: ${currentClusterSources.length} sources share content markers with ${srcA.publisher}${proofStr}. Treat as probable (not confirmed) derivation.`;
+      } else {
+        cautiousRationale = `Low-confidence grouping: ${currentClusterSources.length} sources weakly associated with ${srcA.publisher}${proofStr}. May be coincidental overlap.`;
+      }
+    } else {
+      cautiousRationale = `Genuinely independent primary root from ${srcA.publisher}. No significant overlap detected with other retrieved sources.`;
+    }
+
     const collapseEvidence: CollapseEvidence = {
       sharedFigures: sharedFigArr.length > 0 ? sharedFigArr : undefined,
       overlapSnippet: maxOverlap > 0 ? `${Math.round(maxOverlap * 100)}% n-gram similarity with primary root text` : undefined,
       commonOrigin: srcA.originId || srcA.id,
       derivationProbability,
-      rationale:
-        currentClusterSources.length > 1
-          ? `Collapsed ${currentClusterSources.length} sources to 1 origin (${srcA.publisher}) due to ${
-              sharedFigArr.length > 0 ? `shared key figures [${sharedFigArr.join(', ')}] and ` : ''
-            }${Math.round(maxOverlap * 100)}% text phrasing overlap.`
-          : `Genuinely independent primary root from ${srcA.publisher}.`,
+      rationale: cautiousRationale,
     };
 
     clusters.push({

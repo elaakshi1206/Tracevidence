@@ -112,7 +112,15 @@ export function analyzeVerificationSignals(
 
   const averageFreshness = Number((freshnessSum / evidences.length).toFixed(3));
   const contradictionRatio = totalWeight > 0 ? contradictWeight / totalWeight : 0;
-  const contradictionDetected = contradictionRatio >= 0.25 || contradictingEvidences.length > 0;
+
+  // A "high-confidence contradiction" is one that comes from a canonical knowledge source
+  // (relevanceScore >= 0.85 is only set by factualMatcher curated-fact paths and learned corrections).
+  const hasHighConfidenceContradiction = contradictingEvidences.some(ev => ev.relevanceScore >= 0.85);
+
+  // Require a meaningful weight ratio (>= 30%) OR an explicit canonical-knowledge refutation.
+  // The previous `|| contradictingEvidences.length > 0` allowed a single 0.25-relevance source
+  // from an unrelated page to trigger ABSTAIN on a correct claim — this is now fixed.
+  const contradictionDetected = contradictionRatio >= 0.30 || hasHighConfidenceContradiction;
 
   let temporalStatus: SignalAnalysisResult['temporalStatus'] = 'Current';
   if (averageFreshness < 0.35) {

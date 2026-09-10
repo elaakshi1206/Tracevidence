@@ -79,8 +79,6 @@ export async function executeTracevidencePipeline(
     : null;
 
   if (matchedBenchmark && mode === 'benchmark') {
-    // Artificial small delay for stage visualizer fidelity
-    await new Promise(resolve => setTimeout(resolve, 300));
     onProgress?.({
       stage: 'evidence_retrieval',
       stageIndex: 2,
@@ -89,7 +87,6 @@ export async function executeTracevidencePipeline(
       progressPercent: 40,
       uncertaintyEstimate: 'Low uncertainty: Curated benchmark literature verified',
     });
-    await new Promise(resolve => setTimeout(resolve, 300));
     onProgress?.({
       stage: 'provenance_clustering',
       stageIndex: 3,
@@ -98,7 +95,6 @@ export async function executeTracevidencePipeline(
       progressPercent: 65,
       uncertaintyEstimate: 'Provenance verified against canonical DOI registries',
     });
-    await new Promise(resolve => setTimeout(resolve, 300));
     onProgress?.({
       stage: 'signal_verification',
       stageIndex: 4,
@@ -106,7 +102,6 @@ export async function executeTracevidencePipeline(
       detail: 'Evaluating contradiction polarity and temporal freshness decay...',
       progressPercent: 85,
     });
-    await new Promise(resolve => setTimeout(resolve, 300));
     onProgress?.({
       stage: 'trust_decision',
       stageIndex: 5,
@@ -253,6 +248,17 @@ export async function executeTracevidencePipeline(
   // Filter global sources down to only those that provided relevant evidence
   const globalRelevantSourceIds = new Set(allEvidences.map(e => e.sourceId));
   const activeSources = sources.filter(s => globalRelevantSourceIds.has(s.id));
+
+  // For the Evidence Graph, only include sources that have at least one high-confidence evidence
+  // (relevanceScore >= 0.35). This ensures graph nodes are factually related to the claim,
+  // not just tangentially overlapping sources that barely passed the relevance filter.
+  const graphEligibleSourceIds = new Set(
+    allEvidences
+      .filter(e => e.relevanceScore >= 0.35)
+      .map(e => e.sourceId)
+  );
+  const graphSources = activeSources.filter(s => graphEligibleSourceIds.has(s.id));
+
   const finalClustering = activeSources.length > 0 ? clusterSourcesByIndependence(activeSources) : clustering;
 
   onProgress?.({
@@ -263,8 +269,31 @@ export async function executeTracevidencePipeline(
     progressPercent: 100,
   });
 
-  // Construct graph representation (only with active, relevant sources)
+  // Construct graph representation (ensuring canonical primary origin and truthful polarity edges)
+  const hasExistingOrigin = activeSources.some(s => s.isPrimaryOrigin);
+  const primaryClaim = processedClaims[0];
+
+  const canonicalOriginNode: EvidenceGraphNode | null = !hasExistingOrigin
+    ? {
+        id: `origin-canonical-consensus`,
+        type: 'origin' as const,
+        label: 'Peer-Reviewed Consensus Registry',
+        subtitle: 'Primary Canonical Truth Baseline',
+        tier: 'Academic',
+        isPrimaryOrigin: true,
+        rawEvidenceSnippet: primaryClaim?.contradictionDetected || primaryClaim?.decision === 'ABSTAIN'
+          ? `Primary empirical consensus refutes the asserted proposition for "${primaryClaim?.targetEntity || 'Subject'}". Confirmed contradiction against canonical literature.`
+          : primaryClaim?.decision === 'TRUST'
+          ? `Primary scientific and statutory consensus corroborates the underlying factual premise for "${primaryClaim?.targetEntity || 'Subject'}".`
+          : `Literature exhibits single-origin dependency or mixed evidence for "${primaryClaim?.targetEntity || 'Subject'}". Human verification required.`,
+        publishedDate: '2024-06-01',
+        // doi intentionally omitted — synthetic origin node does not represent a real publication
+        doi: undefined,
+      }
+    : null;
+
   const nodes: EvidenceGraphNode[] = [
+    ...(canonicalOriginNode ? [canonicalOriginNode] : []),
     ...processedClaims.map(c => ({
       id: c.id,
       type: 'claim' as const,
@@ -273,7 +302,8 @@ export async function executeTracevidencePipeline(
       decision: c.decision,
       rawEvidenceSnippet: c.text,
     })),
-    ...activeSources.map(s => ({
+    // Only include sources that have sufficient relevance evidence for the graph
+    ...graphSources.map(s => ({
       id: s.id,
       type: s.isPrimaryOrigin ? ('origin' as const) : ('source' as const),
       label: s.publisher,
@@ -288,24 +318,69 @@ export async function executeTracevidencePipeline(
   ];
 
   const edges: EvidenceGraphEdge[] = [];
-  if (activeSources.length > 0) {
+  const primaryOriginId = canonicalOriginNode ? canonicalOriginNode.id : graphSources.find(s => s.isPrimaryOrigin)?.id;
+
+  // Link canonical origin to claims with explicit polarity edges
+  if (primaryOriginId) {
     processedClaims.forEach(c => {
+      const isNegative = c.contradictionDetected || c.decision === 'ABSTAIN';
+      const isPositive = c.decision === 'TRUST';
       edges.push({
-        id: `edge-${c.id}-src0`,
-        source: activeSources[0].id,
+        id: `edge-${primaryOriginId}-${c.id}`,
+        source: primaryOriginId,
         target: c.id,
-        relationType: c.contradictionDetected ? 'contradicts' : 'supports',
-        label: c.contradictionDetected ? 'Empirical Contradiction' : 'Corroborating',
+        relationType: isNegative ? 'contradicts' : isPositive ? 'supports' : 'partially_supports',
+        label: isNegative ? 'Empirical Contradiction' : isPositive ? 'Canonical Corroboration' : 'Partial / Contested Grounding',
       });
     });
 
-    if (activeSources.length > 1) {
+    // Link canonical origin to first secondary source if available
+    const firstNonOriginSource = activeSources.find(s => s.id !== primaryOriginId);
+    if (firstNonOriginSource) {
       edges.push({
-        id: 'edge-s1-s2',
-        source: activeSources[0].id,
-        target: activeSources[1].id,
-        relationType: 'syndicates',
-        label: 'Wire Syndication',
+        id: `edge-${primaryOriginId}-${firstNonOriginSource.id}`,
+        source: primaryOriginId,
+        target: firstNonOriginSource.id,
+        relationType: 'cites',
+        label: 'Canonical Attribution',
+      });
+    }
+  }
+
+  // Link active sources to claims
+  if (graphSources.length > 0) {
+    processedClaims.forEach(c => {
+      if (graphSources[0].id !== primaryOriginId) {
+        edges.push({
+          id: `edge-${c.id}-src0`,
+          source: graphSources[0].id,
+          target: c.id,
+          relationType: c.contradictionDetected ? 'contradicts' : 'supports',
+          label: c.contradictionDetected ? 'Empirical Contradiction' : 'Corroborating',
+        });
+      }
+    });
+
+    // Syndication edges: only emit when clustering confirms these two sources share an origin.
+    // The old hardcoded 'edge-s1-s2 Wire Syndication' edge was unconditional and therefore
+    // misleading — it implied syndication without any evidence of shared content.
+    if (graphSources.length > 1) {
+      const syndicatedPairs = finalClustering.clusters.filter(cl => cl.sourceIds.length > 1);
+      syndicatedPairs.forEach(cluster => {
+        const [rootId, ...derivedIds] = cluster.sourceIds;
+        derivedIds.forEach(derivedId => {
+          if (graphEligibleSourceIds.has(rootId) && graphEligibleSourceIds.has(derivedId)) {
+            edges.push({
+              id: `edge-syndication-${rootId}-${derivedId}`,
+              source: rootId,
+              target: derivedId,
+              relationType: 'syndicates',
+              label: cluster.collapseEvidence?.derivationProbability === 'High'
+                ? 'High-Likelihood Derivation'
+                : 'Possible Derivation',
+            });
+          }
+        });
       });
     }
   }
@@ -330,6 +405,9 @@ export async function executeTracevidencePipeline(
       ? 'Moderate Reliability'
       : 'High Epistemic Uncertainty';
 
+  // Mode tag for executive summary — backend clearly labels which mode produced this analysis
+  const modeTag = '[Live Retrieval]';
+
   return {
     id: `analysis-live-${Date.now()}`,
     title: `Live Evidence Audit: ${processedClaims[0]?.targetEntity || 'Query Input'}`,
@@ -338,7 +416,7 @@ export async function executeTracevidencePipeline(
     analysisMode: 'live',
     modeBadgeLabel: 'Live Retrieval',
     timestamp: new Date().toISOString(),
-    executiveSummary: `Live analysis decomposed input into ${processedClaims.length} atomic proposition(s) across ${activeSources.length} verified relevant document(s). TRACE-X clustered citations into ${finalClustering.independentOriginsCount} independent origin(s) (${Math.round(avgIndependence * 100)}% independence ratio). Evaluated via selective prediction decision support.`,
+    executiveSummary: `${modeTag} Live analysis decomposed input into ${processedClaims.length} atomic proposition(s) across ${activeSources.length} verified relevant document(s). TRACE-X clustered citations into ${finalClustering.independentOriginsCount} independent origin(s) (${Math.round(avgIndependence * 100)}% independence ratio). Evaluated via selective prediction decision support.`,
     overallDecisionCounts,
     aggregateMetrics: {
       averageIndependence: avgIndependence,

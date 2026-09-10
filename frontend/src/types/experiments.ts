@@ -1,4 +1,4 @@
-import { DecisionType } from './index';
+import { DecisionType, AnalysisResult } from './index';
 
 export type TestCaseCategory =
   | 'Clearly True'
@@ -13,7 +13,7 @@ export type TestCaseCategory =
   | 'Sounds False But True'
   | 'Ambiguous Statement';
 
-export type TestCaseDifficulty = 'Easy' | 'Medium' | 'Hard';
+export type TestCaseDifficulty = 'Easy' | 'Medium' | 'Hard' | 'Tricky';
 
 export type TestCaseDomain =
   | 'Science'
@@ -23,7 +23,8 @@ export type TestCaseDomain =
   | 'Current Affairs'
   | 'General Knowledge'
   | 'Technology'
-  | 'Astronomy';
+  | 'Astronomy'
+  | (string & {});
 
 export type PipelineStageFailure =
   | 'Stage 1: Claim Extraction'
@@ -74,10 +75,66 @@ export interface TestCaseRunResult {
   learnedCorrectionApplied?: boolean;
   improvedAfterCorrection?: boolean;
   retriedAfterCorrection?: boolean;
+  autoTrained?: boolean;
+  hardTrained?: boolean;
+  liveEvidenceGathered?: boolean;
+  hardTrainedCycle?: HardTrainingCycleSummary;
   previousDecision?: DecisionType;
   apparentSourcesCount?: number;
   independentOriginsCount?: number;
   executionTimeMs?: number;
+  analysisResult?: AnalysisResult;
+}
+
+export interface HardTrainingLiveSource {
+  publisher: string;
+  tier: string;
+  canonicalProofSnippet: string;
+  doi?: string;
+  isPrimaryConsensus: boolean;
+  title?: string;
+  url?: string;
+  reliability?: number;
+  empiricalExcerpt?: string;
+}
+
+export interface HardTrainingCycleSummary {
+  cycleId: string;
+  testCaseId: string;
+  targetEntity: string;
+  originalVerdict: DecisionType;
+  correctedVerdict: DecisionType;
+  failedStage: PipelineStageFailure;
+  liveSourcesConsulted: HardTrainingLiveSource[];
+  liveSourcesGathered?: Array<{
+    title: string;
+    publisher: string;
+    url: string;
+    doi: string;
+    reliability: number;
+    empiricalExcerpt: string;
+  }>;
+  mistakePatternIdentified: string;
+  ruleDirectiveFormulated: string;
+  workUponItIterations: number;
+  epistemicAudit: {
+    premiseAudit: string;
+    canonicalGroundTruth: string;
+    calibrationDirective: string;
+  };
+  epistemicDirective?: {
+    premiseAudit: string;
+    canonicalFact: string;
+    confidenceConstraint: string;
+  };
+  workingIterations?: Array<{
+    iteration: number;
+    focus: string;
+    modelOutput: string;
+    lossReductionScore: number;
+  }>;
+  verificationStatus: 'SUCCESSFULLY_GROUNDED' | 'CALIBRATED';
+  timestamp: string;
 }
 
 export interface LearnedCorrectionMemory {
@@ -85,6 +142,7 @@ export interface LearnedCorrectionMemory {
   testCaseId: string;
   claimSnippet: string;
   targetEntity: string;
+  difficulty?: TestCaseDifficulty;
   originalFailedStage: PipelineStageFailure;
   originalSystemDecision: DecisionType;
   expectedDecision: DecisionType;
@@ -183,4 +241,84 @@ export interface TrainingSession {
   accuracyBefore: number;
   accuracyAfter: number;
   newMemoriesCreated: number;
+}
+
+/** Atomic claim decomposed from an AI chatbot paragraph */
+export interface ParagraphKeyClaim {
+  id: string;
+  claimText: string;
+  expectedDecision: DecisionType; // 'TRUST' | 'VERIFY' | 'ABSTAIN'
+  isFactuallyAccurate: boolean;
+  explanation: string;
+}
+
+/** Realistic AI Chatbot answer test case */
+export interface ParagraphTestCase {
+  id: string; // 'PARA-01' to 'PARA-67'
+  title: string;
+  simulatedQuery: string; // User prompt
+  simulatedBot: 'ChatGPT-4o' | 'Claude 3.5' | 'Claude 3.5 Sonnet' | 'Gemini 1.5 Pro' | 'Perplexity' | 'Perplexity AI' | string;
+  paragraph: string;
+  expectedDecision: DecisionType; // Overall paragraph verdict
+  mainReason: string;
+  category: TestCaseCategory;
+  difficulty: TestCaseDifficulty;
+  domain: TestCaseDomain;
+  targetEntity: string;
+  keyClaims: ParagraphKeyClaim[];
+  knownHallucinationType?: string;
+}
+
+/** Individual evaluated claim result within a paragraph */
+export interface EvaluatedParagraphClaim {
+  claimId: string;
+  claimText: string;
+  expectedDecision: DecisionType;
+  systemDecision: DecisionType;
+  confidence: number;
+  explanation?: string;
+  reasoning?: string;
+  matchesExpected: boolean;
+  isFactuallyAccurate?: boolean;
+}
+
+/** Result of executing a full paragraph test case */
+export interface ParagraphRunResult {
+  paragraphId: string;
+  testCaseId?: string;
+  executedAt: string;
+  status: 'PASSED' | 'FAILED';
+  systemDecision: DecisionType;
+  expectedDecision: DecisionType;
+  confidence: number;
+  failedStage: PipelineStageFailure;
+  stageDiagnostic?: string;
+  overallReasoning: string;
+  correctedReasoning?: string;
+  claimsCount?: number;
+  evaluatedClaims: EvaluatedParagraphClaim[];
+  learnedCorrectionApplied?: boolean;
+  improvedAfterCorrection?: boolean;
+  retriedAfterCorrection?: boolean;
+  autoTrained?: boolean;
+  executionTimeMs?: number;
+  analysisResult?: AnalysisResult;
+}
+
+/** Aggregate metrics for the paragraph test suite */
+export interface ParagraphSuiteMetrics {
+  totalCases: number;
+  executedCount: number;
+  passedCount: number;
+  failedCount: number;
+  unrunCount: number;
+  accuracyRate: number;
+  totalAtomicClaimsEvaluated: number;
+  atomicClaimsAccuracyRate: number;
+  stageFailureBreakdown: Record<PipelineStageFailure, number>;
+  activeLearnedMemoriesCount: number;
+  difficultyBreakdown: Record<
+    TestCaseDifficulty,
+    { total: number; executed: number; passed: number; failed: number; accuracy: number }
+  >;
 }
