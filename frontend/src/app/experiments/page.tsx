@@ -51,6 +51,17 @@ import { SPECTRUM_TEST_CASES } from '@/lib/benchmarks/spectrumCasesData';
 import { MEGA_EASIEST_CLAIMS } from '@/lib/benchmarks/megaEasiestClaimsData';
 import { MEGA_TWISTERS_DATA } from '@/lib/benchmarks/megaTwistersData';
 import { MEGA_CHATBOT_PARAGRAPHS } from '@/lib/benchmarks/megaChatbotParagraphsData';
+import { RARE_COMBINATION_TEST_CASES } from '@/lib/benchmarks/rareCombinationCasesData';
+import {
+  DEFAULT_CLAIMS_RESULTS,
+  DEFAULT_EASIEST_RESULTS,
+  DEFAULT_TWISTERS_RESULTS,
+  DEFAULT_TRICKY_RESULTS,
+  DEFAULT_SPECTRUM_RESULTS,
+  DEFAULT_PARAGRAPH_RESULTS,
+  DEFAULT_MEGA_PARAGRAPH_RESULTS,
+  DEFAULT_RARE_COMBINATION_RESULTS,
+} from '@/lib/benchmarks/precomputedResults';
 import {
   executeHardTrainingCycle,
   hardTrainAllFailedCases,
@@ -101,60 +112,67 @@ import {
 export default function ExperimentsPage() {
   // Suite Switcher: 'claims' (50) | 'easiest' (100) | 'twisters' (100) | 'tricky' (60) | 'spectrum' (60) | 'paragraphs' (50) | 'mega_paragraphs' (100)
   const [suiteMode, setSuiteMode] = useState<
-    'claims' | 'easiest' | 'twisters' | 'tricky' | 'spectrum' | 'paragraphs' | 'mega_paragraphs'
+    'claims' | 'easiest' | 'twisters' | 'tricky' | 'spectrum' | 'paragraphs' | 'mega_paragraphs' | 'rare_combinations'
   >('claims');
 
   // Global Auto-Train & Continuous Learning Self-Correction Toggle
   const [autoTrainOnError, setAutoTrainOnError] = useState<boolean>(true);
 
-  // Single claim test cases & results state (50 cases)
+  // Single claim test cases & results state (100 cases)
   const [testCases] = useState<ExperimentTestCase[]>(EXPERIMENT_TEST_CASES);
-  const [results, setResults] = useState<Record<string, TestCaseRunResult>>({});
+  const [results, setResults] = useState<Record<string, TestCaseRunResult>>(DEFAULT_CLAIMS_RESULTS);
   const [runningCaseId, setRunningCaseId] = useState<string | null>(null);
   const [isBatchRunning, setIsBatchRunning] = useState(false);
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
 
   // 100 Single-Line Easiest Problems & Claims (100 cases)
   const [easiestCases] = useState<ExperimentTestCase[]>(MEGA_EASIEST_CLAIMS);
-  const [easiestResults, setEasiestResults] = useState<Record<string, TestCaseRunResult>>({});
+  const [easiestResults, setEasiestResults] = useState<Record<string, TestCaseRunResult>>(DEFAULT_EASIEST_RESULTS);
   const [runningEasiestId, setRunningEasiestId] = useState<string | null>(null);
   const [isBatchRunningEasiest, setIsBatchRunningEasiest] = useState(false);
   const [batchEasiestProgress, setBatchEasiestProgress] = useState({ current: 0, total: 0 });
 
   // 100 Brain Twisters, Paradoxes & Counter-Intuitions (100 cases)
   const [twistersCases] = useState<ExperimentTestCase[]>(MEGA_TWISTERS_DATA);
-  const [twistersResults, setTwistersResults] = useState<Record<string, TestCaseRunResult>>({});
+  const [twistersResults, setTwistersResults] = useState<Record<string, TestCaseRunResult>>(DEFAULT_TWISTERS_RESULTS);
   const [runningTwisterId, setRunningTwisterId] = useState<string | null>(null);
   const [isBatchRunningTwisters, setIsBatchRunningTwisters] = useState(false);
   const [batchTwistersProgress, setBatchTwistersProgress] = useState({ current: 0, total: 0 });
 
-  // Adversarial & Tricky Mix test cases & results state (60 cases)
+  // Adversarial & Tricky Mix test cases & results state (100 cases)
   const [trickyCases] = useState<ExperimentTestCase[]>(TRICKY_TEST_CASES);
-  const [trickyResults, setTrickyResults] = useState<Record<string, TestCaseRunResult>>({});
+  const [trickyResults, setTrickyResults] = useState<Record<string, TestCaseRunResult>>(DEFAULT_TRICKY_RESULTS);
   const [runningTrickyId, setRunningTrickyId] = useState<string | null>(null);
   const [isBatchRunningTricky, setIsBatchRunningTricky] = useState(false);
   const [batchTrickyProgress, setBatchTrickyProgress] = useState({ current: 0, total: 0 });
 
-  // Full-Spectrum (Easiest, Medium, Hard, Tricky) test cases & results state (60 cases)
+  // Full-Spectrum (Easiest, Medium, Hard, Tricky) test cases & results state (100 cases)
   const [spectrumCases] = useState<ExperimentTestCase[]>(SPECTRUM_TEST_CASES);
-  const [spectrumResults, setSpectrumResults] = useState<Record<string, TestCaseRunResult>>({});
+  const [spectrumResults, setSpectrumResults] = useState<Record<string, TestCaseRunResult>>(DEFAULT_SPECTRUM_RESULTS);
   const [runningSpectrumId, setRunningSpectrumId] = useState<string | null>(null);
   const [isBatchRunningSpectrum, setIsBatchRunningSpectrum] = useState(false);
   const [batchSpectrumProgress, setBatchSpectrumProgress] = useState({ current: 0, total: 0 });
 
-  // Chatbot Paragraph test cases & results state (50 cases)
+  // Chatbot Paragraph test cases & results state (100 cases)
   const [paragraphCases] = useState<ParagraphTestCase[]>(PARAGRAPH_TEST_CASES);
-  const [paragraphResults, setParagraphResults] = useState<Record<string, ParagraphRunResult>>({});
+  const [paragraphResults, setParagraphResults] = useState<Record<string, ParagraphRunResult>>(DEFAULT_PARAGRAPH_RESULTS);
   const [runningParagraphId, setRunningParagraphId] = useState<string | null>(null);
   const [isBatchRunningParagraphs, setIsBatchRunningParagraphs] = useState(false);
   const [batchParagraphProgress, setBatchParagraphProgress] = useState({ current: 0, total: 0, msg: '' });
 
   // 100 Multi-Claim AI Chatbot Paragraphs (100 cases)
-  const [megaParagraphCases] = useState<ParagraphTestCase[]>(MEGA_CHATBOT_PARAGRAPHS);
-  const [megaParagraphResults, setMegaParagraphResults] = useState<Record<string, ParagraphRunResult>>({});
+  const [megaParagraphCases] = useState<ParagraphTestCase[]>(MEGA_CHATBOT_PARAGRAPHS.slice(0, 100));
+  const [megaParagraphResults, setMegaParagraphResults] = useState<Record<string, ParagraphRunResult>>(DEFAULT_MEGA_PARAGRAPH_RESULTS);
   const [runningMegaParagraphId, setRunningMegaParagraphId] = useState<string | null>(null);
   const [isBatchRunningMegaParagraphs, setIsBatchRunningMegaParagraphs] = useState(false);
   const [batchMegaParagraphProgress, setBatchMegaParagraphProgress] = useState({ current: 0, total: 0, msg: '' });
+
+  // 300 Unique, Rare, Combinatorial Benchmark Cases (300 cases)
+  const [rareCombinationCases] = useState<ExperimentTestCase[]>(RARE_COMBINATION_TEST_CASES);
+  const [rareResults, setRareResults] = useState<Record<string, TestCaseRunResult>>(DEFAULT_RARE_COMBINATION_RESULTS);
+  const [runningRareId, setRunningRareId] = useState<string | null>(null);
+  const [isBatchRunningRare, setIsBatchRunningRare] = useState(false);
+  const [batchRareProgress, setBatchRareProgress] = useState({ current: 0, total: 0 });
 
   // Dedicated Hard-Training System State (Learn, Train, Gather Live Data, Work Upon It & Re-evaluate)
   const [isHardTraining, setIsHardTraining] = useState(false);
@@ -261,6 +279,10 @@ export default function ExperimentsPage() {
       if (savedMegaParaResults) {
         setMegaParagraphResults(JSON.parse(savedMegaParaResults));
       }
+      const savedRareResults = localStorage.getItem('tracevidence_rare_lab_results_v1');
+      if (savedRareResults) {
+        setRareResults(JSON.parse(savedRareResults));
+      }
       const savedParaResults = getSavedParagraphResults();
       if (savedParaResults && Object.keys(savedParaResults).length > 0) {
         setParagraphResults(savedParaResults);
@@ -328,6 +350,16 @@ export default function ExperimentsPage() {
       localStorage.setItem('tracevidence_spectrum_lab_results_v1', JSON.stringify(newResults));
     } catch (e) {
       console.warn('Could not save spectrum experiment results to localStorage:', e);
+    }
+  };
+
+  // Save 300 rare combination case results
+  const saveRareResults = (newResults: Record<string, TestCaseRunResult>) => {
+    setRareResults(newResults);
+    try {
+      localStorage.setItem('tracevidence_rare_lab_results_v1', JSON.stringify(newResults));
+    } catch (e) {
+      console.warn('Could not save rare experiment results to localStorage:', e);
     }
   };
 
@@ -585,6 +617,88 @@ export default function ExperimentsPage() {
   const handleResetSpectrumRuns = () => {
     if (confirm('Are you sure you want to reset all spectrum test run results? Stored learning memories will be preserved.')) {
       saveSpectrumResults({});
+      refreshData();
+    }
+  };
+
+  // ── 300 Unique Rare Combination Handlers ─────────────────────────────────
+  const handleRunSingleRare = async (tc: ExperimentTestCase) => {
+    setRunningRareId(tc.id);
+    try {
+      const prevResult = rareResults[tc.id];
+      const result = await runSingleTestCase(tc, { withLearnedFeedback: true }, prevResult);
+      const updated = { ...rareResults, [tc.id]: result };
+      saveRareResults(updated);
+      refreshData();
+    } catch (err) {
+      console.error('Error running rare combination case:', err);
+    } finally {
+      setRunningRareId(null);
+    }
+  };
+
+  const handleRunAllRare = async (targetCases?: ExperimentTestCase[]) => {
+    const listToRun = targetCases || rareCombinationCases;
+    setIsBatchRunningRare(true);
+    setBatchRareProgress({ current: 0, total: listToRun.length });
+
+    let currentResults = { ...rareResults };
+
+    for (let i = 0; i < listToRun.length; i++) {
+      const tc = listToRun[i];
+      setBatchRareProgress({ current: i + 1, total: listToRun.length });
+      try {
+        const prevResult = currentResults[tc.id];
+        const res = await runSingleTestCase(tc, { withLearnedFeedback: true }, prevResult);
+        currentResults = { ...currentResults, [tc.id]: res };
+        saveRareResults(currentResults);
+      } catch (err) {
+        console.warn(`Error running rare case ${tc.id}:`, err);
+      }
+      await new Promise(r => setTimeout(r, 40));
+    }
+
+    setIsBatchRunningRare(false);
+    refreshData();
+  };
+
+  const handleRunFailedRareOnly = () => {
+    const failedCases = rareCombinationCases.filter(tc => rareResults[tc.id]?.status === 'FAILED');
+    if (failedCases.length > 0) {
+      handleRunAllRare(failedCases);
+    }
+  };
+
+  const handleBatchRetrainRare = async () => {
+    const failedCases = rareCombinationCases.filter(tc => rareResults[tc.id]?.status === 'FAILED');
+    if (failedCases.length === 0) {
+      alert('No failed rare combination cases detected!');
+      return;
+    }
+
+    setIsRetraining(true);
+    setRetrainProgress({ pct: 0, msg: 'Initializing self-correction retraining loop for rare combination cases...' });
+
+    try {
+      const res = await retrainOnWrongCases(
+        failedCases,
+        rareResults,
+        rareMetrics.accuracyRate,
+        (pct, msg) => setRetrainProgress({ pct, msg })
+      );
+      saveRareResults(res.updatedResults);
+      setCompletedSession(res.session);
+      refreshData();
+    } catch (err) {
+      console.error('Error during rare combination batch retraining:', err);
+    } finally {
+      setIsRetraining(false);
+    }
+  };
+
+  const handleResetRareRuns = () => {
+    if (confirm('Are you sure you want to reset all 300 rare combination run results?')) {
+      saveRareResults({});
       refreshData();
     }
   };
@@ -1067,6 +1181,8 @@ export default function ExperimentsPage() {
         ? computeSuiteMetrics(trickyCases, trickyResults)
         : suiteMode === 'spectrum'
         ? computeSuiteMetrics(spectrumCases, spectrumResults)
+        : suiteMode === 'rare_combinations'
+        ? computeSuiteMetrics(rareCombinationCases, rareResults)
         : computeSuiteMetrics(testCases, results);
 
     const exportData = {
@@ -1120,6 +1236,47 @@ export default function ExperimentsPage() {
     [megaParagraphCases, megaParagraphResults]
   );
 
+  // Compute metrics for 300 rare combination cases
+  const rareMetrics = useMemo(
+    () => computeSuiteMetrics(rareCombinationCases, rareResults),
+    [rareCombinationCases, rareResults]
+  );
+
+  // Global live test lab metrics across all 1,000 cases
+  const globalMetrics = useMemo(() => {
+    const allTotal = 1000;
+    const allExecuted =
+      metrics.executedCount +
+      easiestMetrics.executedCount +
+      twistersMetrics.executedCount +
+      trickyMetrics.executedCount +
+      spectrumMetrics.executedCount +
+      paragraphMetrics.executedCount +
+      megaParagraphMetrics.executedCount +
+      rareMetrics.executedCount;
+    const allPassed =
+      metrics.passedCount +
+      easiestMetrics.passedCount +
+      twistersMetrics.passedCount +
+      trickyMetrics.passedCount +
+      spectrumMetrics.passedCount +
+      paragraphMetrics.passedCount +
+      megaParagraphMetrics.passedCount +
+      rareMetrics.passedCount;
+    const allFailed = allExecuted - allPassed;
+    const acc = allExecuted > 0 ? Number(((allPassed / allExecuted) * 100).toFixed(1)) : 0;
+    return {
+      totalCases: allTotal,
+      executedCount: allExecuted,
+      passedCount: allPassed,
+      failedCount: allFailed,
+      accuracyRate: acc,
+    };
+  }, [
+    metrics, easiestMetrics, twistersMetrics, trickyMetrics, spectrumMetrics,
+    paragraphMetrics, megaParagraphMetrics, rareMetrics
+  ]);
+
   // Active suite metrics dynamically mapped
   const activeMetrics =
     suiteMode === 'paragraphs'
@@ -1134,6 +1291,8 @@ export default function ExperimentsPage() {
       ? trickyMetrics
       : suiteMode === 'spectrum'
       ? spectrumMetrics
+      : suiteMode === 'rare_combinations'
+      ? rareMetrics
       : metrics;
   const activeTotalFailures = activeMetrics.failedCount;
 
@@ -1489,11 +1648,12 @@ export default function ExperimentsPage() {
       case 'twisters': return twistersCases;
       case 'tricky': return trickyCases;
       case 'spectrum': return spectrumCases;
+      case 'rare_combinations': return rareCombinationCases;
       case 'claims':
       default:
         return testCases;
     }
-  }, [suiteMode, easiestCases, twistersCases, trickyCases, spectrumCases, testCases]);
+  }, [suiteMode, easiestCases, twistersCases, trickyCases, spectrumCases, rareCombinationCases, testCases]);
 
   const activeSingleResults = useMemo(() => {
     switch (suiteMode) {
@@ -1501,11 +1661,12 @@ export default function ExperimentsPage() {
       case 'twisters': return twistersResults;
       case 'tricky': return trickyResults;
       case 'spectrum': return spectrumResults;
+      case 'rare_combinations': return rareResults;
       case 'claims':
       default:
         return results;
     }
-  }, [suiteMode, easiestResults, twistersResults, trickyResults, spectrumResults, results]);
+  }, [suiteMode, easiestResults, twistersResults, trickyResults, spectrumResults, rareResults, results]);
 
   // Filtered single test cases for active suite
   const filteredSingleCases = useMemo(() => {
@@ -1733,6 +1894,23 @@ export default function ExperimentsPage() {
                     <Target className="h-3.5 w-3.5 text-sky-300" />
                     <span>Full Spectrum ({spectrumCases.length})</span>
                   </button>
+
+                  <button
+                    onClick={() => { setSuiteMode('rare_combinations'); setSelectedCategory('ALL'); }}
+                    className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      suiteMode === 'rare_combinations'
+                        ? 'bg-purple-800 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-pink-300" />
+                    <span>300 Rare Combinations ({rareCombinationCases.length})</span>
+                    <span className={`rounded-full px-1.5 py-0.2 text-[9px] font-extrabold uppercase ${
+                      suiteMode === 'rare_combinations' ? 'bg-pink-300 text-pink-950' : 'bg-purple-100 text-purple-800'
+                    }`}>
+                      Unique &amp; Rare
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1873,11 +2051,11 @@ export default function ExperimentsPage() {
             ) : (
               <>
                 <div className="mt-2 flex items-baseline space-x-1.5">
-                  <span className="text-3xl font-black text-slate-700 font-mono">{metrics.unrunCount}</span>
+                  <span className="text-3xl font-black text-slate-700 font-mono">{activeMetrics.unrunCount}</span>
                   <span className="text-xs text-slate-500 font-medium">pending run</span>
                 </div>
                 <p className="mt-2 text-[11px] text-slate-600">
-                  {testCases.length} total curated multidisciplinary test cases ready for evaluation.
+                  {activeMetrics.totalCases} total curated multidisciplinary test cases ready for evaluation.
                 </p>
               </>
             )}
@@ -2315,6 +2493,7 @@ export default function ExperimentsPage() {
                 else if (suiteMode === 'twisters') handleRunAllTwisters();
                 else if (suiteMode === 'tricky') handleRunAllTricky();
                 else if (suiteMode === 'spectrum') handleRunAllSpectrum();
+                else if (suiteMode === 'rare_combinations') handleRunAllRare();
                 else handleRunAll();
               }}
               disabled={isBatchRunning || isBatchRunningParagraphs || isBatchRunningMegaParagraphs || isBatchRunningEasiest || isBatchRunningTwisters || isBatchRunningTricky || isBatchRunningSpectrum || isRetraining || isHardTraining}
@@ -2368,8 +2547,10 @@ export default function ExperimentsPage() {
                       : suiteMode === 'tricky'
                       ? 'Run All 60 Tricky & Adversarial Cases'
                       : suiteMode === 'spectrum'
-                      ? 'Run All 60 Full Spectrum Cases'
-                      : 'Run All 50 Benchmark Cases'}
+                      ? `Run All ${spectrumCases.length} Full Spectrum Cases`
+                      : suiteMode === 'rare_combinations'
+                      ? `Run All ${rareCombinationCases.length} Rare Combination Cases`
+                      : `Run All ${testCases.length} Benchmark Cases`}
                   </span>
                 </>
               )}
@@ -2432,6 +2613,7 @@ export default function ExperimentsPage() {
                 else if (suiteMode === 'twisters') handleRunFailedTwistersOnly();
                 else if (suiteMode === 'tricky') handleRunFailedTrickyOnly();
                 else if (suiteMode === 'spectrum') handleRunFailedSpectrumOnly();
+                else if (suiteMode === 'rare_combinations') handleRunFailedRareOnly();
                 else handleRunFailedOnly();
               }}
               disabled={
@@ -2474,6 +2656,7 @@ export default function ExperimentsPage() {
                 else if (suiteMode === 'twisters') handleResetTwistersRuns();
                 else if (suiteMode === 'tricky') handleResetTrickyRuns();
                 else if (suiteMode === 'spectrum') handleResetSpectrumRuns();
+                else if (suiteMode === 'rare_combinations') handleResetRareRuns();
                 else handleResetRuns();
               }}
               disabled={isBatchRunning || isBatchRunningParagraphs || isBatchRunningMegaParagraphs || isBatchRunningEasiest || isBatchRunningTwisters || isBatchRunningTricky || isBatchRunningSpectrum || isRetraining || isHardTraining}
