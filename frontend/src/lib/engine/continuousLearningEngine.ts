@@ -15,7 +15,7 @@ const INITIAL_SEEDED_MEMORIES: LearnedCorrectionMemory[] = [
     testCaseId: 'exp-33',
     claimSnippet: 'Albert Einstein was awarded the 1921 Nobel Prize in Physics for General Relativity...',
     targetEntity: 'Einstein Nobel Prize Citation',
-    originalFailedStage: 'Stage 3: Matching & Contradiction',
+    originalFailedStage: 'Stage 4: Claim vs Source Matching',
     originalSystemDecision: 'TRUST',
     expectedDecision: 'ABSTAIN',
     mistakePattern: 'Lexical alignment accepted Nobel year (1921) and Einstein entity without verifying citation reason (Photoelectric Effect vs General Relativity).',
@@ -31,7 +31,7 @@ const INITIAL_SEEDED_MEMORIES: LearnedCorrectionMemory[] = [
     testCaseId: 'exp-23',
     claimSnippet: 'The Ashoka Chakra features exactly 25 spokes...',
     targetEntity: 'Ashoka Chakra Spoke Count',
-    originalFailedStage: 'Stage 3: Matching & Contradiction',
+    originalFailedStage: 'Stage 4: Claim vs Source Matching',
     originalSystemDecision: 'TRUST',
     expectedDecision: 'ABSTAIN',
     mistakePattern: 'Off-by-one numerical error (25 vs 24) bypassed cosine semantic similarity threshold.',
@@ -47,7 +47,7 @@ const INITIAL_SEEDED_MEMORIES: LearnedCorrectionMemory[] = [
     testCaseId: 'exp-15',
     claimSnippet: 'Manufacturing a 75 kWh EV battery causes 17 to 20 tonnes of carbon dioxide...',
     targetEntity: 'EV Battery Manufacturing Carbon Debt',
-    originalFailedStage: 'Stage 4: Provenance & Independence',
+    originalFailedStage: 'Stage 5: Provenance & Independence',
     originalSystemDecision: 'TRUST',
     expectedDecision: 'VERIFY',
     mistakePattern: '25 syndicated commercial media reports were counted as separate corroborations, failing to detect single 2017 IVL origin collapse.',
@@ -131,19 +131,25 @@ export function generateCorrectedReasoning(
       ruleDirective = `RULE_DOMAIN_TARGET_RETRIEVAL: Prioritize primary authoritative knowledge nodes for "${target}". Require verified literature alignment before rendering decision.`;
       break;
 
-    case 'Stage 3: Matching & Contradiction':
+    case 'Stage 3: Source Relevance Filtering':
+      mistakePattern = `Relevance filter accepted outdated or temporally stale sources for "${target}" without checking publication date.`;
+      correctedReasoning = `The source filter failed to apply temporal validity checks. Sources predating the key event/update were passed through as current evidence. The system must validate recency metadata before scoring source relevance. Canonical truth: ${testCase.canonicalFact || testCase.explanation}`;
+      ruleDirective = `RULE_TEMPORAL_RELEVANCE: For "${target}", discard sources older than the most recent canonical update. Downgrade confidence if only stale sources found. Output ${gold}.`;
+      break;
+
+    case 'Stage 4: Claim vs Source Matching':
       mistakePattern = `Factual matcher failed to register exact contradiction or numerical/temporal disparity between proposition and evidence.`;
       correctedReasoning = `The system yielded ${actualSystemVerdict} because lexical similarity masked an underlying factual contradiction. Authoritative sources confirm: "${testCase.canonicalFact || testCase.explanation}". The system must detect this direct clash and enforce ${gold}.`;
       ruleDirective = `RULE_CONTRADICTION_GUARD: When evaluating "${target}", check for explicit conflict with canonical truth: "${testCase.canonicalFact || 'Empirical evidence'}". Enforce ${gold}.`;
       break;
 
-    case 'Stage 4: Provenance & Independence':
+    case 'Stage 5: Provenance & Independence':
       mistakePattern = `TRACE-X failed to detect syndication collapse or echo chamber recycling of a single unverified seed source.`;
       correctedReasoning = `Multiple citations for "${target}" were deceptively treated as separate independent corroborations, whereas they all trace back to an identical origin. Under AIVIDENCE epistemic calibration, collapsed syndication requires selective prediction verdict ${gold}.`;
       ruleDirective = `RULE_INDEPENDENCE_COLLAPSE: Enforce strict origin root deduplication for "${target}". If independent origin count <= 1 despite multiple citations, cap trust and enforce ${gold}.`;
       break;
 
-    case 'Stage 5: Final Decision Calibration':
+    case 'Stage 6: Final Trust Decision':
     default:
       mistakePattern = `Decision engine violated conservative epistemic calibration thresholds (output ${actualSystemVerdict} instead of ${gold}).`;
       correctedReasoning = `The selective prediction engine was either overconfident or excessively risk-averse. For category "${testCase.category}", the calibrated expected decision is ${gold}. ${testCase.explanation}`;
