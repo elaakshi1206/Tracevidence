@@ -397,6 +397,12 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
     const hasKey = cf.keywords.some(k => claimLower.includes(k));
     if (!hasKey) continue;
 
+    // GUARD: Ensure the source actually discusses this canonical topic before matching!
+    const sourceHasKey = cf.keywords.some(k => sourceText.includes(k));
+    if (!sourceHasKey) {
+      continue;
+    }
+
     // Check for explicit conflicting matches
     if (cf.conflictingMatch && cf.conflictingMatch.some(cm => claimLower.includes(cm))) {
       return {
@@ -431,6 +437,18 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
 
   // A. Directional Check (e.g. Solar motion, cardinal directions)
   if (claimLower.includes('sun') || claimLower.includes('sunset') || claimLower.includes('sunrise')) {
+    const sourceHasSolar = sourceText.includes('sun') || sourceText.includes('sunset') || sourceText.includes('sunrise') || sourceText.includes('solar') || sourceText.includes('west') || sourceText.includes('east') || sourceText.includes('rotation') || sourceText.includes('equinox');
+    if (!sourceHasSolar) {
+      return {
+        userClaim: claimText,
+        sourceSaid: rawSnippet.slice(0, 180),
+        exactDifference: 'Source content does not address solar motion or astronomical directions.',
+        polarity: 'IRRELEVANT',
+        relevanceScore: 0.10,
+        matchConfidence: 0.95,
+      };
+    }
+
     const claimSetsEast = /\bsets?\s+in\s+(?:the\s+)?east\b/i.test(claimLower) || /\bsetting\s+in\s+(?:the\s+)?east\b/i.test(claimLower);
     const claimRisesWest = /\brises?\s+in\s+(?:the\s+)?west\b/i.test(claimLower) || /\brising\s+in\s+(?:the\s+)?west\b/i.test(claimLower);
 
@@ -465,8 +483,6 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
     const claimSetsWest = /\bsets?\s+in\s+(?:the\s+)?west\b/i.test(claimLower);
     const claimRisesEast = /\brises?\s+in\s+(?:the\s+)?east\b/i.test(claimLower);
     if (claimSetsWest || claimRisesEast) {
-      // Do not require source to contain specific words — the canonical fact about solar motion
-      // is established astronomy. Any relevant source for this sun-related query is sufficient.
       return {
         userClaim: claimText,
         sourceSaid: rawSnippet.slice(0, 240),
@@ -482,6 +498,18 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
   if (
     claimLower.includes('flag') || claimLower.includes('tricolour') || claimLower.includes('tiranga')
   ) {
+    const sourceHasFlag = sourceText.includes('flag') || sourceText.includes('tricolour') || sourceText.includes('tiranga') || sourceText.includes('chakra') || sourceText.includes('emblem');
+    if (!sourceHasFlag) {
+      return {
+        userClaim: claimText,
+        sourceSaid: rawSnippet.slice(0, 180),
+        exactDifference: 'Source content does not discuss the national flag or its specifications.',
+        polarity: 'IRRELEVANT',
+        relevanceScore: 0.10,
+        matchConfidence: 0.95,
+      };
+    }
+
     const claimColors = extractColors(claimLower);
     const flagKnownColors = ['saffron', 'white', 'green', 'navy blue', 'blue'];
 
@@ -522,6 +550,18 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
     claimLower.includes('chakra') ||
     (claimLower.includes('spoke') && (claimLower.includes('flag') || claimLower.includes('india')))
   ) {
+    const sourceHasChakra = sourceText.includes('chakra') || sourceText.includes('flag') || sourceText.includes('spoke') || sourceText.includes('ashoka') || sourceText.includes('lion capital');
+    if (!sourceHasChakra) {
+      return {
+        userClaim: claimText,
+        sourceSaid: rawSnippet.slice(0, 180),
+        exactDifference: 'Source content does not discuss the Ashoka Chakra or its spoke specification.',
+        polarity: 'IRRELEVANT',
+        relevanceScore: 0.10,
+        matchConfidence: 0.95,
+      };
+    }
+
     const claimNums = extractNumbers(claimLower);
     const has24 = claimNums.some(n => n.num === 24);
     const non24 = claimNums.find(n => n.num !== 24 && n.num >= 8 && n.num <= 40);
@@ -553,11 +593,22 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
   }
 
   // D. National Bird / Animal / Symbol of India Checks
-  // Guard: only activate this check if the claim is specifically about India.
   if (
     (claimLower.includes('national bird') || claimLower.includes('national animal')) &&
     claimLower.includes('india')
   ) {
+    const sourceHasFauna = sourceText.includes('bird') || sourceText.includes('animal') || sourceText.includes('symbol') || sourceText.includes('peacock') || sourceText.includes('peafowl') || sourceText.includes('tiger') || sourceText.includes('eagle');
+    if (!sourceHasFauna) {
+      return {
+        userClaim: claimText,
+        sourceSaid: rawSnippet.slice(0, 180),
+        exactDifference: 'Source content does not discuss India\'s national symbols or fauna.',
+        polarity: 'IRRELEVANT',
+        relevanceScore: 0.10,
+        matchConfidence: 0.95,
+      };
+    }
+
     if (claimLower.includes('national bird')) {
       if (claimLower.includes('peacock') || claimLower.includes('pavo cristatus')) {
         return {
@@ -743,23 +794,21 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
   // 5. STRICT SUBSTANTIVE RELEVANCE & MATCH CHECK
   // --------------------------------------------------------------------------
   const claimTokens = extractSubstantiveTokens(claimLower);
+  const sourceTokensSet = new Set(extractSubstantiveTokens(sourceText));
+  const matchedTokensCount = claimTokens.filter(t => sourceTokensSet.has(t) || Array.from(sourceTokensSet).some(st => st.startsWith(t) || t.startsWith(st))).length;
+  const fullCoverageRatio = claimTokens.length > 0 ? matchedTokensCount / claimTokens.length : 0;
 
-  // If very low lexical overlap or source doesn't address the subject, mark IRRELEVANT
-  if (lexicalOverlap < 0.25) {
+  // If low lexical overlap or insufficient coverage of claim tokens, mark IRRELEVANT (discard source)
+  if (lexicalOverlap < 0.30 || fullCoverageRatio < 0.35) {
     return {
       userClaim: claimText,
       sourceSaid: rawSnippet.slice(0, 180) + '...',
       exactDifference: 'Source content does not address the entities or core subject matter of the user claim.',
       polarity: 'IRRELEVANT',
-      relevanceScore: 0.15,
+      relevanceScore: 0.10,
       matchConfidence: 0.85,
     };
   }
-
-  // Check if all core substantive tokens are corroborated in source
-  const sourceTokensSet = new Set(extractSubstantiveTokens(sourceText));
-  const matchedTokensCount = claimTokens.filter(t => sourceTokensSet.has(t) || Array.from(sourceTokensSet).some(st => st.startsWith(t) || t.startsWith(st))).length;
-  const fullCoverageRatio = claimTokens.length > 0 ? matchedTokensCount / claimTokens.length : 0;
 
   // Strict support requires high coverage without contradicting predicates
   if (fullCoverageRatio >= 0.75 && lexicalOverlap >= 0.50) {
