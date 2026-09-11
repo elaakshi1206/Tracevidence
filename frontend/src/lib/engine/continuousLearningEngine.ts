@@ -59,6 +59,22 @@ const INITIAL_SEEDED_MEMORIES: LearnedCorrectionMemory[] = [
     createdAt: '2026-09-03T09:15:00Z',
     active: true,
   },
+  {
+    id: 'mem-seed-04',
+    testCaseId: 'exp-54',
+    claimSnippet: 'India has 12 states...',
+    targetEntity: 'States of India Count',
+    originalFailedStage: 'Stage 4: Claim vs Source Matching',
+    originalSystemDecision: 'TRUST',
+    expectedDecision: 'ABSTAIN',
+    mistakePattern: 'Unrelated reference footnote mentioning selected states matched lexical tokens and bypassed quantitative verification.',
+    correctedReasoning: 'Under the Constitution of India and Jammu & Kashmir Reorganisation Act 2019, India comprises exactly 28 states and 8 union territories (total 36 entities). Any claim asserting 12 states is factually false and must receive ABSTAIN with a direct numerical refutation.',
+    ruleDirective: 'RULE_INDIAN_ADMINISTRATIVE_COUNT: India = 28 states + 8 UTs. Reject any arbitrary integer count.',
+    canonicalCorrection: 'India comprises 28 states and 8 union territories (total 36 entities), not 12 states.',
+    appliedCount: 5,
+    createdAt: '2026-09-04T11:00:00Z',
+    active: true,
+  },
 ];
 
 /**

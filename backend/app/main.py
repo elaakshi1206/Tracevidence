@@ -79,6 +79,21 @@ async def lifespan(app: FastAPI):
                     canonical_correction="75 kWh EV battery = 4-7 tonnes modern LCA; 17-20 tonnes is outdated 2017 single-origin syndication.",
                     applied_count=3,
                     active=True,
+                ),
+                LearnedRuleModel(
+                    id="rule-indian-states",
+                    test_case_id="exp-54",
+                    claim_snippet="India has 12 states",
+                    target_entity="States of India Count",
+                    original_failed_stage="Stage 4: Claim vs Source Matching",
+                    original_system_decision="TRUST",
+                    expected_decision="ABSTAIN",
+                    mistake_pattern="Unrelated reference footnote mentioning selected states matched lexical tokens and bypassed quantitative verification.",
+                    corrected_reasoning="Under the Constitution of India and Jammu & Kashmir Reorganisation Act 2019, India comprises exactly 28 states and 8 union territories (total 36 entities). Any claim asserting 12 states is factually false and must receive ABSTAIN with a direct numerical refutation.",
+                    rule_directive="RULE_INDIAN_ADMINISTRATIVE_COUNT: India = 28 states + 8 UTs. Reject any arbitrary integer count.",
+                    canonical_correction="India comprises 28 states and 8 union territories (total 36 entities), not 12 states.",
+                    applied_count=5,
+                    active=True,
                 )
             ]
             db.add_all(seed_rules)

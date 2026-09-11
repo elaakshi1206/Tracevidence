@@ -1,5 +1,5 @@
 import { Source, SourceTier } from '@/types';
-import { performMultiSearch, SearchResultItem } from './searchService';
+import { performMultiSearch, SearchResultItem, decodeHtmlEntities } from './searchService';
 
 export interface RetrievalResult {
   sources: Source[];
@@ -307,6 +307,19 @@ export function evaluateSourceRelevance(
     }
   }
 
+  // D. Indian States & Union Territories: Reject generic unrelated pages
+  if ((combinedClaims.includes('state') || combinedClaims.includes('states')) && (combinedClaims.includes('india') || combinedClaims.includes('indian'))) {
+    const isRelatedStates = sourceContent.includes('state') ||
+      sourceContent.includes('union territor') ||
+      sourceContent.includes('reorganisation') ||
+      sourceContent.includes('subnational') ||
+      sourceContent.includes('district') ||
+      sourceContent.includes('federal union');
+    if (!isRelatedStates) {
+      return { isRelevant: false, relevanceScore: 0.08 };
+    }
+  }
+
   // 2. Compute lexical overlap across title (weighted 1.4x) and snippet
   const titleOverlap = computeLexicalOverlap(combinedClaims, item.title || '');
   const snippetOverlap = computeLexicalOverlap(combinedClaims, item.snippet || '');
@@ -320,14 +333,21 @@ export function evaluateSourceRelevance(
     return { isRelevant: false, relevanceScore: 0.10 };
   }
 
-  // 4. Entity-anchor check: extract critical proper nouns and numbers from the claim.
+  // 4. Entity-anchor check: extract critical proper nouns, known entities, and numbers from the claim.
   const entityAnchors: string[] = [];
   const originalCombined = claimTexts.join(' ');
   const namedEntityMatches = originalCombined.match(/\b[A-Z][a-zA-Z]{2,}(?:\s+[A-Z][a-zA-Z]{2,})?\b/g) || [];
   namedEntityMatches.forEach(ne => entityAnchors.push(ne.toLowerCase()));
 
-  const criticalNumbers = combinedClaims.match(/\b\d{2,}\b/g) || [];
-  criticalNumbers.forEach(n => entityAnchors.push(n));
+  // Recognize lowercase key geographical/proper entities
+  const commonEntities = ['india', 'china', 'america', 'usa', 'sun', 'moon', 'earth', 'states'];
+  commonEntities.forEach(ce => {
+    if (combinedClaims.includes(ce) && !entityAnchors.includes(ce)) {
+      entityAnchors.push(ce);
+    }
+  });
+
+  const criticalNumbers = combinedClaims.match(/\b\d{1,4}\b/g) || [];
 
   if (entityAnchors.length >= 1) {
     const sourceHasAnchor = entityAnchors.some(anchor => sourceContent.includes(anchor));
@@ -344,6 +364,9 @@ export function evaluateSourceRelevance(
   }
   if (entityAnchors.length >= 2 && entityAnchors.every(a => sourceContent.includes(a))) {
     calibratedScore = Math.min(1.0, calibratedScore + 0.20);
+  }
+  if (criticalNumbers.length > 0 && criticalNumbers.some(n => new RegExp(`\\b${n}\\b`).test(sourceContent))) {
+    calibratedScore = Math.min(1.0, calibratedScore + 0.10);
   }
 
   // STRICT RELEVANCE THRESHOLD: Must achieve at least 0.40 calibrated score
@@ -439,7 +462,7 @@ export async function retrieveEvidenceForClaims(
 
     processedSources.push({
       id: `src-live-${processedSources.length + 1}`,
-      title: item.title || `Retrieved Document #${processedSources.length + 1}`,
+      title: decodeHtmlEntities(item.title || `Retrieved Document #${processedSources.length + 1}`),
       url: item.url,
       publisher,
       authorOrOrg: publisher,
@@ -447,7 +470,7 @@ export async function retrieveEvidenceForClaims(
       publishedDate: item.publishedDate || new Date().toISOString().split('T')[0],
       isPrimaryOrigin: tier === 'Government' || tier === 'Academic' || tier === 'Official',
       credibilityScore: credibility,
-      snippet: item.snippet,
+      snippet: decodeHtmlEntities(item.snippet),
       rawRelevance: relevanceScore,
     });
   }

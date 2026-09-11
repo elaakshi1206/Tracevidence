@@ -77,7 +77,26 @@ export function extractAtomicClaimsFromText(input: string): ExtractedClaimCandid
     const lowerSentence = sentence.toLowerCase();
 
     // Extract capitalized entities or key noun phrases
-    const entities = sentence.match(/\b[A-Z][a-zA-Z0-9-]{2,}\b/g) || [];
+    let entities = sentence.match(/\b[A-Z][a-zA-Z0-9-]{2,}\b/g) || [];
+    if (entities.length === 0) {
+      const knownNouns = [
+        { regex: /\b(?:india|indian)\b/i, label: 'India' },
+        { regex: /\b(?:united states|usa|america)\b/i, label: 'United States' },
+        { regex: /\b(?:china|chinese)\b/i, label: 'China' },
+        { regex: /\b(?:solar system)\b/i, label: 'Solar System' },
+        { regex: /\b(?:sun|sunset|sunrise)\b/i, label: 'Sun' },
+        { regex: /\b(?:moon)\b/i, label: 'Moon' },
+        { regex: /\b(?:earth)\b/i, label: 'Earth' },
+        { regex: /\b(?:ashoka chakra)\b/i, label: 'Ashoka Chakra' },
+        { regex: /\b(?:flag)\b/i, label: 'National Flag' },
+        { regex: /\b(?:states?)\b/i, label: 'States' },
+        { regex: /\b(?:planets?)\b/i, label: 'Planets' },
+      ];
+      const matched = knownNouns.filter(kn => kn.regex.test(lowerSentence)).map(kn => kn.label);
+      if (matched.length > 0) {
+        entities = matched;
+      }
+    }
     const targetEntity = entities.slice(0, 3).join(' ') || `Proposition Target #${idx + 1}`;
 
     // Extract numerical figures and units

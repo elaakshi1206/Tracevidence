@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Claim, Evidence, Source } from '@/types';
 import { useAnalysisStore } from '@/lib/store/analysisStore';
+import { decodeHtmlEntities } from '@/lib/engine/searchService';
 import {
   Scale,
   CheckCircle2,
@@ -151,11 +152,12 @@ export default function SourceVsUserComparison({
       }
 
       // What the organization actually stated (extract most relevant fact sentence)
-      const orgStatement = (ev.sourceSaid && ev.sourceSaid.trim())
+      const rawOrgStatement = (ev.sourceSaid && ev.sourceSaid.trim())
         ? ev.sourceSaid.trim()
         : (ev.quote && ev.quote.trim())
         ? ev.quote.trim()
         : src.snippet;
+      const orgStatement = decodeHtmlEntities(rawOrgStatement);
 
       // Organization identity
       const orgName = src.authorOrOrg || src.publisher;
@@ -164,7 +166,7 @@ export default function SourceVsUserComparison({
       const orgTier = src.tier;
 
       // Difference explanation
-      let difference = ev.exactDifference || '';
+      let difference = decodeHtmlEntities(ev.exactDifference || '');
       if (!difference) {
         if (isContradiction) {
           if (claim.numericalConflict) {

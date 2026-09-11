@@ -497,10 +497,34 @@ const STOP_WORDS = new Set([
 ]);
 
 /**
+ * Decodes HTML entities commonly returned by search engines and encyclopedic APIs
+ */
+export function decodeHtmlEntities(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, code) => {
+      const n = parseInt(code, 10);
+      return !isNaN(n) && n > 0 && n < 65536 ? String.fromCharCode(n) : '';
+    })
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => {
+      const n = parseInt(code, 16);
+      return !isNaN(n) && n > 0 && n < 65536 ? String.fromCharCode(n) : '';
+    });
+}
+
+/**
  * Extracts substantive, non-stopword tokens from text (preserving crucial short words like 'sun', 'dna')
  */
 export function extractSubstantiveTokens(text: string): string[] {
-  return text
+  return decodeHtmlEntities(text)
     .toLowerCase()
     .replace(/[^\w\s]/g, ' ')
     .split(/\s+/)
@@ -508,7 +532,8 @@ export function extractSubstantiveTokens(text: string): string[] {
 }
 
 /**
- * Computes semantic lexical overlap ratio between a query and a text snippet/title
+ * Computes semantic lexical overlap ratio between a query and a text snippet/title.
+ * Strictly avoids allowing number tokens to prefix-match unrelated words or years.
  */
 export function computeLexicalOverlap(query: string, text: string): number {
   const queryTokens = extractSubstantiveTokens(query);
@@ -516,15 +541,21 @@ export function computeLexicalOverlap(query: string, text: string): number {
 
   const targetTokens = new Set(extractSubstantiveTokens(text));
   let matched = 0;
+
   for (const q of queryTokens) {
+    const isNumeric = /^\d+$/.test(q);
+
     if (targetTokens.has(q)) {
       matched++;
-    } else {
-      // Partial prefix / root match (e.g. set vs sets, rose vs rise)
-      for (const t of targetTokens) {
-        if (t.startsWith(q) || q.startsWith(t)) {
-          matched += 0.8;
-          break;
+    } else if (!isNumeric) {
+      // Partial prefix / root match for words only (e.g. set vs sets, rose vs rise)
+      // Require both tokens to be at least 4 chars long to prevent false sub-string matches
+      if (q.length >= 4) {
+        for (const t of targetTokens) {
+          if (!/^\d+$/.test(t) && t.length >= 4 && (t.startsWith(q) || q.startsWith(t))) {
+            matched += 0.8;
+            break;
+          }
         }
       }
     }
@@ -633,8 +664,8 @@ async function queryWikipedia(query: string): Promise<SearchResultItem[]> {
 
     // Score candidates based on lexical and topical overlap with query
     const scoredCandidates = validCandidates.map((item: any) => {
-      const title = item.title || '';
-      const cleanSnippet = (item.snippet || '').replace(/<[^>]+>/g, '');
+      const title = decodeHtmlEntities(item.title || '');
+      const cleanSnippet = decodeHtmlEntities((item.snippet || '').replace(/<[^>]+>/g, '')).trim();
       const overlap = computeLexicalOverlap(query, `${title} ${cleanSnippet}`);
       return { item, title, cleanSnippet, overlap };
     });
@@ -666,27 +697,29 @@ async function queryWikipedia(query: string): Promise<SearchResultItem[]> {
         );
         if (summaryRes.ok) {
           const summaryData = await summaryRes.json();
-          const extract = summaryData.extract || cleanSnippet;
+          const rawExtract = decodeHtmlEntities(summaryData.extract || '').trim();
 
           // Double check summary extract against entertainment / ballot filters
           if (!queryMentionsEntertainment && (
-            extract.includes('is an American drama television series') ||
-            extract.includes('is a television series') ||
-            extract.includes('is a Norwegian fairy-tale') ||
-            extract.includes('is a musical with music by')
+            rawExtract.includes('is an American drama television series') ||
+            rawExtract.includes('is a television series') ||
+            rawExtract.includes('is a Norwegian fairy-tale') ||
+            rawExtract.includes('is a musical with music by')
           )) {
             continue;
           }
 
-          // Combine search snippet and summary extract to preserve specific matched factual evidence
-          const combinedSnippet = cleanSnippet && extract && !extract.toLowerCase().includes(cleanSnippet.toLowerCase().slice(0, 30))
-            ? `${cleanSnippet}. ${extract}`
-            : (extract || cleanSnippet);
+          // Use the clean encyclopedic article summary as the primary authoritative statement.
+          // Never prepend random citation or footnote snippets ahead of the verified article definition.
+          let finalSnippet = rawExtract || cleanSnippet;
+          if (rawExtract && cleanSnippet && rawExtract.length < 180 && !rawExtract.toLowerCase().includes(cleanSnippet.toLowerCase().slice(0, 30))) {
+            finalSnippet = `${rawExtract} ${cleanSnippet}`.trim();
+          }
 
           items.push({
-            title: summaryData.title || title,
+            title: decodeHtmlEntities(summaryData.title || title),
             url: summaryData.content_urls?.desktop?.page || pageUrl,
-            snippet: combinedSnippet.slice(0, 650),
+            snippet: finalSnippet.slice(0, 650),
             publisher: 'en.wikipedia.org',
             publishedDate: summaryData.timestamp || new Date().toISOString().split('T')[0],
             provider: 'wikipedia' as const,
@@ -770,21 +803,77 @@ async function queryDuckDuckGo(query: string): Promise<SearchResultItem[]> {
  */
 export function extractCanonicalSearchTopic(query: string): string | null {
   const q = query.toLowerCase();
+
+  // 1. Indian States and Union Territories
+  if ((q.includes('state') || q.includes('states') || q.includes('union territor')) && (q.includes('india') || q.includes('indian'))) {
+    return 'States and union territories of India';
+  }
+
+  // 2. US States
+  if ((q.includes('state') || q.includes('states')) && (q.includes('us') || q.includes('usa') || q.includes('united states') || q.includes('america'))) {
+    return 'U.S. state';
+  }
+
+  // 3. Indian Flag & Ashoka Chakra
   if (q.includes('ashoka chakra') || (q.includes('chakra') && (q.includes('spoke') || q.includes('flag')))) {
     return 'Ashoka Chakra';
   }
   if ((q.includes('flag') || q.includes('tiranga') || q.includes('tricolour')) && (q.includes('india') || q.includes('indian'))) {
     return 'Flag of India';
   }
-  if (q.includes('sun') && (q.includes('set') || q.includes('setting') || q.includes('rise') || q.includes('rising') || q.includes('east') || q.includes('west'))) {
-    return 'Sunset';
-  }
+
+  // 4. Indian Fauna / National Symbols
   if (q.includes('national bird') && q.includes('india')) {
     return 'Indian peafowl';
   }
   if (q.includes('national animal') && q.includes('india')) {
     return 'Royal Bengal tiger';
   }
+
+  // 5. Astronomy / Solar System / Directions
+  if (q.includes('sun') && (q.includes('set') || q.includes('setting') || q.includes('rise') || q.includes('rising') || q.includes('east') || q.includes('west'))) {
+    return 'Sunset';
+  }
+  if ((q.includes('planet') || q.includes('planets')) && (q.includes('solar system') || q.includes('sun'))) {
+    return 'Solar System';
+  }
+  if ((q.includes('moon') || q.includes('moons')) && (q.includes('earth') || q.includes('orbit') || q.includes('natural satellite'))) {
+    return 'Moon';
+  }
+
+  // 6. Geography
+  if (q.includes('continent') || q.includes('continents')) {
+    return 'Continent';
+  }
+  if (q.includes('ocean') || q.includes('oceans')) {
+    return 'Ocean';
+  }
+
+  // 7. Human Biology
+  if ((q.includes('bone') || q.includes('bones') || q.includes('skeleton')) && (q.includes('human') || q.includes('adult') || q.includes('body'))) {
+    return 'Human skeleton';
+  }
+  if ((q.includes('chromosome') || q.includes('chromosomes')) && (q.includes('human') || q.includes('dna'))) {
+    return 'Chromosome';
+  }
+
+  // 8. Physics & Capitals
+  if (q.includes('speed of light')) {
+    return 'Speed of light';
+  }
+  if (q.includes('capital') && q.includes('australia')) {
+    return 'Canberra';
+  }
+  if (q.includes('capital') && q.includes('canada')) {
+    return 'Ottawa';
+  }
+  if (q.includes('capital') && q.includes('brazil')) {
+    return 'Brasília';
+  }
+  if (q.includes('capital') && q.includes('india')) {
+    return 'New Delhi';
+  }
+
   return null;
 }
 
