@@ -354,12 +354,44 @@ const CANONICAL_FACTS: CanonicalFact[] = [
 ];
 
 /**
+ * Extracts the single most factually relevant sentence or clause from a source snippet.
+ * Prevents dumping unrelated sentences and ensures only directly relevant facts are shown in claim-fact matching.
+ */
+export function extractMostRelevantFact(claimText: string, text: string): string {
+  if (!text) return '';
+  const clean = text.replace(/\s+/g, ' ').trim();
+  const sentences = clean.split(/(?<=[.?!])\s+/);
+  if (sentences.length <= 1) {
+    return clean.slice(0, 260);
+  }
+
+  const claimTokens = extractSubstantiveTokens(claimText);
+  let bestSentence = sentences[0];
+  let maxMatched = -1;
+
+  for (const sentence of sentences) {
+    const sLower = sentence.toLowerCase();
+    let matches = 0;
+    for (const t of claimTokens) {
+      if (sLower.includes(t)) matches++;
+    }
+    if (matches > maxMatched) {
+      maxMatched = matches;
+      bestSentence = sentence;
+    }
+  }
+
+  return bestSentence.slice(0, 260).trim();
+}
+
+/**
  * Performs deep, granular factual alignment between User Claim and Source Content
  */
 export function compareClaimWithSource(claimText: string, source: Source): FactualComparison {
   const claimLower = claimText.toLowerCase().trim();
   const sourceText = `${source.title} ${source.snippet}`.toLowerCase();
   const rawSnippet = source.snippet || source.title;
+  const relevantSourceFact = extractMostRelevantFact(claimText, rawSnippet);
 
   // --------------------------------------------------------------------------
   // 0. CONTINUOUS LEARNING FEEDBACK MEMORY INJECTION
@@ -369,7 +401,7 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
     if (learnedMemory.expectedDecision === 'ABSTAIN') {
       return {
         userClaim: claimText,
-        sourceSaid: rawSnippet.slice(0, 240),
+        sourceSaid: relevantSourceFact,
         exactDifference: `[Continuous Learning Engine]: Active feedback directive applied (${learnedMemory.ruleDirective}). ${learnedMemory.correctedReasoning}`,
         polarity: 'CONTRADICT',
         relevanceScore: 0.99,
@@ -381,7 +413,7 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
     } else if (learnedMemory.expectedDecision === 'TRUST') {
       return {
         userClaim: claimText,
-        sourceSaid: rawSnippet.slice(0, 240),
+        sourceSaid: relevantSourceFact,
         exactDifference: `[Continuous Learning Engine]: Ground truth corroborated by learned rule (${learnedMemory.ruleDirective}). ${learnedMemory.canonicalCorrection}`,
         polarity: 'SUPPORT',
         relevanceScore: 0.98,
@@ -394,12 +426,14 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
   // 1. CANONICAL VERIFIED KNOWLEDGE MATCHING
   // --------------------------------------------------------------------------
   for (const cf of CANONICAL_FACTS) {
-    const hasKey = cf.keywords.some(k => claimLower.includes(k));
-    if (!hasKey) continue;
+    // Require coincidence of at least 2 keywords (or all if < 2) to prevent accidental generic triggers
+    const requiredThreshold = cf.keywords.length >= 3 ? 2 : 1;
+    const claimMatches = cf.keywords.filter(k => claimLower.includes(k)).length;
+    if (claimMatches < requiredThreshold) continue;
 
-    // GUARD: Ensure the source actually discusses this canonical topic before matching!
-    const sourceHasKey = cf.keywords.some(k => sourceText.includes(k));
-    if (!sourceHasKey) {
+    // GUARD: Ensure the source actually discusses this canonical topic with the same strictness
+    const sourceMatches = cf.keywords.filter(k => sourceText.includes(k)).length;
+    if (sourceMatches < requiredThreshold) {
       continue;
     }
 
@@ -407,7 +441,7 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
     if (cf.conflictingMatch && cf.conflictingMatch.some(cm => claimLower.includes(cm))) {
       return {
         userClaim: claimText,
-        sourceSaid: rawSnippet.slice(0, 240),
+        sourceSaid: relevantSourceFact || cf.canonicalFact,
         exactDifference: `Empirical contradiction: ${cf.explanation} Canonical truth: ${cf.canonicalFact}`,
         polarity: 'CONTRADICT',
         relevanceScore: 0.98,
@@ -422,7 +456,7 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
     if (cf.requiredMatch && cf.requiredMatch.some(rm => claimLower.includes(rm))) {
       return {
         userClaim: claimText,
-        sourceSaid: rawSnippet.slice(0, 240),
+        sourceSaid: relevantSourceFact || cf.canonicalFact,
         exactDifference: `Direct factual alignment: ${cf.canonicalFact}`,
         polarity: 'SUPPORT',
         relevanceScore: 0.96,
@@ -799,10 +833,10 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
   const fullCoverageRatio = claimTokens.length > 0 ? matchedTokensCount / claimTokens.length : 0;
 
   // If low lexical overlap or insufficient coverage of claim tokens, mark IRRELEVANT (discard source)
-  if (lexicalOverlap < 0.30 || fullCoverageRatio < 0.35) {
+  if (lexicalOverlap < 0.38 || fullCoverageRatio < 0.40) {
     return {
       userClaim: claimText,
-      sourceSaid: rawSnippet.slice(0, 180) + '...',
+      sourceSaid: relevantSourceFact || (rawSnippet.slice(0, 180) + '...'),
       exactDifference: 'Source content does not address the entities or core subject matter of the user claim.',
       polarity: 'IRRELEVANT',
       relevanceScore: 0.10,
@@ -814,8 +848,8 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
   if (fullCoverageRatio >= 0.75 && lexicalOverlap >= 0.50) {
     return {
       userClaim: claimText,
-      sourceSaid: rawSnippet.slice(0, 240),
-      exactDifference: `User Claim: "${claimText.slice(0, 100)}" | Source States: "${rawSnippet.slice(0, 200)}" | Assessment: Substantive alignment — source directly corroborates the asserted entities and propositions (${Math.round(fullCoverageRatio * 100)}% token coverage, ${Math.round(lexicalOverlap * 100)}% lexical overlap).`,
+      sourceSaid: relevantSourceFact,
+      exactDifference: `Direct factual alignment: Source corroborates the asserted proposition ("${relevantSourceFact}"). Full entity and predicate match (${Math.round(fullCoverageRatio * 100)}% coverage, ${Math.round(lexicalOverlap * 100)}% lexical overlap).`,
       polarity: 'SUPPORT',
       relevanceScore: Math.min(0.96, Number(lexicalOverlap.toFixed(2))),
       matchConfidence: 0.88,
@@ -825,10 +859,10 @@ export function compareClaimWithSource(claimText: string, source: Source): Factu
   // Partial support when topic is relevant but not all specific predicates are proved.
   return {
     userClaim: claimText,
-    sourceSaid: rawSnippet.slice(0, 240),
-    exactDifference: `User Claim: "${claimText.slice(0, 100)}" | Source States: "${rawSnippet.slice(0, 200)}" | Assessment: Source mentions related subject matter but does not definitively corroborate all specific predicates in the claim (${Math.round(lexicalOverlap * 100)}% lexical overlap).`,
+    sourceSaid: relevantSourceFact,
+    exactDifference: `Partial topical alignment: Source discusses related subject matter ("${relevantSourceFact}") but does not definitively substantiate all specific predicates in the claim (${Math.round(lexicalOverlap * 100)}% lexical overlap).`,
     polarity: 'PARTIAL',
-    relevanceScore: Math.max(0.26, Number(lexicalOverlap.toFixed(2))),
+    relevanceScore: Math.max(0.40, Number(lexicalOverlap.toFixed(2))),
     matchConfidence: 0.65,
   };
 }

@@ -177,8 +177,8 @@ export async function executeTracevidencePipeline(
       };
     });
 
-    // Strictly retain only relevant evidences (discard IRRELEVANT)
-    const relevantEvidences = rawClaimEvidences.filter(e => e.polarity !== 'IRRELEVANT' && e.relevanceScore >= 0.25);
+    // Strictly retain only relevant evidences (discard IRRELEVANT and sub-0.40 weak matches)
+    const relevantEvidences = rawClaimEvidences.filter(e => e.polarity !== 'IRRELEVANT' && e.relevanceScore >= 0.40);
     allEvidences.push(...relevantEvidences);
 
     const relevantSourceIds = new Set(relevantEvidences.map(e => e.sourceId));

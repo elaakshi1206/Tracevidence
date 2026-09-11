@@ -150,8 +150,10 @@ export default function SourceVsUserComparison({
         StatusIcon = AlertTriangle;
       }
 
-      // What the organization actually stated (their own voice)
-      const orgStatement = ev.quote && ev.quote.trim()
+      // What the organization actually stated (extract most relevant fact sentence)
+      const orgStatement = (ev.sourceSaid && ev.sourceSaid.trim())
+        ? ev.sourceSaid.trim()
+        : (ev.quote && ev.quote.trim())
         ? ev.quote.trim()
         : src.snippet;
 
@@ -181,22 +183,22 @@ export default function SourceVsUserComparison({
         }
       }
 
-      // Final judgment: STOP false verdicts when source is not actually supporting
-      let judgment = '';
-      let JudgmentIcon = isContradiction ? TrendingDown : (isPartial || isIrrelevant) ? Minus : TrendingUp;
+      // Plain English judgment badge
+      let judgment: string;
+      let JudgmentIcon = CheckCircle2;
 
       if (isContradiction) {
-        judgment = `Source refutes claim: Backed by ${orgTier.toLowerCase()} records from ${src.publisher}, this source refutes the assertion with empirical evidence.`;
+        judgment = 'Disagrees with this claim';
+        JudgmentIcon = XCircle;
       } else if (isIrrelevant) {
-        judgment = 'Not related: This source discusses an unrelated subject and cannot support or contest this proposition.';
-      } else if (claim.temporalStatus === 'Outdated' && polarity === 'SUPPORT') {
-        judgment = `Neither fully current: The user claim relied on this source, but newer studies supersede this historical estimate.`;
-        JudgmentIcon = Minus;
-      } else if (polarity === 'SUPPORT' && ev.relevanceScore >= 0.70) {
-        judgment = `Both well-supported: The user statement faithfully represents verified findings from ${src.publisher}.`;
+        judgment = 'Off-topic / Irrelevant to this claim';
+        JudgmentIcon = XCircle;
+      } else if (isPartial || ev.relevanceScore < 0.7) {
+        judgment = 'Partially agrees with this claim';
+        JudgmentIcon = AlertTriangle;
       } else {
-        judgment = `Partially supported: The source addresses related context but does not independently establish the full claim.`;
-        JudgmentIcon = Minus;
+        judgment = 'Agrees with this claim';
+        JudgmentIcon = CheckCircle2;
       }
 
 
@@ -223,14 +225,17 @@ export default function SourceVsUserComparison({
 
   const filtered = comparisons.filter((c) => {
     if (!c) return false;
-    if (filterType === 'ALL') return true;
+    if (filterType === 'ALL') {
+      // By default in ALL view, ONLY display relevant facts (discard IRRELEVANT / weak matches)
+      return c.polarity !== 'IRRELEVANT' && c.matchScore >= 0.35;
+    }
     return c.polarity === filterType;
   });
 
   const supportCount = comparisons.filter((c) => c?.polarity === 'SUPPORT').length;
   const contradictCount = comparisons.filter((c) => c?.polarity === 'CONTRADICT').length;
   const partialCount = comparisons.filter((c) => c?.polarity === 'PARTIAL').length;
-  const irrelevantCount = comparisons.filter((c) => c?.polarity === 'IRRELEVANT').length;
+  const irrelevantCount = comparisons.filter((c) => c?.polarity === 'IRRELEVANT' || (c?.matchScore || 0) < 0.35).length;
 
   const filterTabs: ('ALL' | 'SUPPORT' | 'PARTIAL' | 'CONTRADICT' | 'IRRELEVANT')[] = [
     'ALL',
@@ -311,7 +316,7 @@ export default function SourceVsUserComparison({
                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              {t === 'ALL' ? 'All Sources' : t === 'SUPPORT' ? '✓ Supporting' : t === 'PARTIAL' ? '~ Partial' : t === 'CONTRADICT' ? '✕ Contradicting' : '⊘ Irrelevant'}
+              {t === 'ALL' ? 'All Relevant Facts' : t === 'SUPPORT' ? '✓ Supporting' : t === 'PARTIAL' ? '~ Partial' : t === 'CONTRADICT' ? '✕ Contradicting' : '⊘ Filtered Out'}
             </button>
           ))}
         </div>
@@ -333,7 +338,12 @@ export default function SourceVsUserComparison({
 
       {/* Comparison Cards */}
       <div className="divide-y divide-slate-100">
-        {filtered.map((item, idx) => {
+        {filtered.length === 0 ? (
+          <div className="px-6 py-12 text-center text-slate-500 font-mono text-xs">
+            No sources match this filter. Only directly verified, relevant facts are displayed.
+          </div>
+        ) : (
+          filtered.map((item, idx) => {
           if (!item) return null;
           const { StatusIcon, JudgmentIcon } = item;
           const isExpanded = expandedIdx === idx;
@@ -508,13 +518,7 @@ export default function SourceVsUserComparison({
               )}
             </div>
           );
-        })}
-
-        {filtered.length === 0 && (
-          <div className="text-center py-10 text-xs text-slate-400 font-mono">
-            No sources found under this filter.
-          </div>
-        )}
+        }))}
       </div>
     </div>
   );
