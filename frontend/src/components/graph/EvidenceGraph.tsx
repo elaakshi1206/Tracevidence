@@ -1,19 +1,21 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { AnalysisResult, EvidenceGraphNode, EvidenceGraphEdge, SourceTier, PolarityType } from '@/types';
+import React, { useState } from 'react';
+import { AnalysisResult, EvidenceGraphNode, EvidenceGraphEdge } from '@/types';
 import DecisionBadge from '../common/DecisionBadge';
-import SourceBadge from '../common/SourceBadge';
 import {
   ZoomIn,
   ZoomOut,
-  Maximize2,
-  Filter,
   Info,
-  Layers,
-  Sparkles,
   ExternalLink,
   RotateCcw,
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  ShieldCheck,
+  HelpCircle,
+  Share2,
 } from 'lucide-react';
 
 interface EvidenceGraphProps {
@@ -30,8 +32,10 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(nodes[0]?.id || null);
   const [tierFilter, setTierFilter] = useState<string>('ALL');
 
-  // Compute node positions programmatically for an impressive layout
-  // Origin nodes on Left (x: 100), Sources in Center (x: 450), Claims on Right (x: 800)
+  // Compute 3-column Left-to-Right layout positions:
+  // Column 1 (Left): Primary Origins (Root Sources)
+  // Column 2 (Middle): Intermediate Sources (Media, blogs, secondary citations)
+  // Column 3 (Right): User Claims (Tested propositions)
   const nodePositions = React.useMemo(() => {
     const origins = nodes.filter((n) => n.type === 'origin');
     const sources = nodes.filter((n) => n.type === 'source');
@@ -39,24 +43,27 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
 
     const posMap: Record<string, { x: number; y: number }> = {};
 
+    // Left Column: Primary Origins
     origins.forEach((n, idx) => {
       posMap[n.id] = {
-        x: 120,
-        y: 120 + idx * 160,
+        x: 100,
+        y: 110 + idx * 150,
       };
     });
 
+    // Middle Column: Intermediate Sources
     sources.forEach((n, idx) => {
       posMap[n.id] = {
         x: 480,
-        y: 100 + idx * 140,
+        y: 110 + idx * 140,
       };
     });
 
+    // Right Column: User Claims
     claims.forEach((n, idx) => {
       posMap[n.id] = {
-        x: 860,
-        y: 130 + idx * 180,
+        x: 870,
+        y: 120 + idx * 160,
       };
     });
 
@@ -87,75 +94,120 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
     return n.tier === tierFilter;
   });
 
+  // Plain-English Graph Conclusion
+  const primaryClaim = analysis.claims[0];
+  const hasContradiction = analysis.claims.some((c) => c.contradictionDetected || c.decision === 'ABSTAIN');
+  const isEchoChamber = analysis.aggregateMetrics.averageIndependence < 0.45 && analysis.sources.length >= 3;
+  const independentOriginsCount = Math.max(
+    1,
+    Math.round(analysis.sources.length * (analysis.aggregateMetrics.averageIndependence || 0.5))
+  );
+
+  let graphConclusion = '';
+  let conclusionTone: 'contradict' | 'echo' | 'trust' | 'verify' = 'verify';
+
+  if (hasContradiction) {
+    graphConclusion = 'Reliable sources contradict this claim.';
+    conclusionTone = 'contradict';
+  } else if (isEchoChamber) {
+    graphConclusion = 'Most sources are repeating the same single report.';
+    conclusionTone = 'echo';
+  } else if (primaryClaim?.decision === 'TRUST') {
+    graphConclusion = 'Strongly supported by multiple independent authoritative origins.';
+    conclusionTone = 'trust';
+  } else if (independentOriginsCount <= 2) {
+    graphConclusion = `Only ${independentOriginsCount} independent source${independentOriginsCount > 1 ? 's support' : ' supports'} this claim.`;
+    conclusionTone = 'verify';
+  } else {
+    graphConclusion = 'Additional independent literature verification recommended.';
+    conclusionTone = 'verify';
+  }
+
   return (
-    <div className="relative flex flex-col h-[700px] w-full overflow-hidden rounded-2xl border border-white/10 bg-[#07090e] shadow-2xl">
-      {/* Top Controls Toolbar */}
-      <div className="absolute top-4 left-4 z-20 flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-[#0d1424]/90 p-2 shadow-xl backdrop-blur-md">
-        <div className="flex items-center space-x-1 border-r border-white/10 pr-2">
-          <button
-            onClick={() => setZoom((z) => Math.min(2.0, z + 0.15))}
-            className="rounded p-1.5 text-slate-300 hover:bg-white/10 hover:text-white"
-            title="Zoom In"
+    <div className="relative flex flex-col h-[740px] w-full overflow-hidden rounded-2xl border border-white/10 bg-[#07090e] shadow-2xl">
+      {/* 1. Plain-English Graph Conclusion Banner */}
+      <div className="z-20 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-[#0b101d]/95 px-5 py-3 backdrop-blur-md">
+        <div className="flex items-center space-x-3">
+          <div
+            className={`flex h-8 w-8 items-center justify-center rounded-xl font-bold text-xs shadow-md ${
+              conclusionTone === 'contradict'
+                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                : conclusionTone === 'trust'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                : conclusionTone === 'echo'
+                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+            }`}
           >
-            <ZoomIn className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setZoom((z) => Math.max(0.5, z - 0.15))}
-            className="rounded p-1.5 text-slate-300 hover:bg-white/10 hover:text-white"
-            title="Zoom Out"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => {
-              setZoom(1);
-              setPan({ x: 0, y: 0 });
-            }}
-            className="rounded p-1.5 text-slate-300 hover:bg-white/10 hover:text-white"
-            title="Reset View"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </button>
+            {conclusionTone === 'contradict' ? (
+              <XCircle className="h-4 w-4" />
+            ) : conclusionTone === 'trust' ? (
+              <ShieldCheck className="h-4 w-4" />
+            ) : conclusionTone === 'echo' ? (
+              <Share2 className="h-4 w-4" />
+            ) : (
+              <AlertTriangle className="h-4 w-4" />
+            )}
+          </div>
+          <div>
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Graph Conclusion
+            </span>
+            <div className="text-sm font-bold text-white tracking-tight">{graphConclusion}</div>
+          </div>
         </div>
 
-        {/* Tier filter */}
-        <div className="flex items-center space-x-2 text-xs">
-          <span className="text-slate-400 font-mono">Filter:</span>
+        {/* Top-Right Controls */}
+        <div className="flex items-center space-x-2">
+          {/* Zoom controls */}
+          <div className="flex items-center space-x-1 rounded-lg border border-white/10 bg-slate-800/80 p-1">
+            <button
+              onClick={() => setZoom((z) => Math.min(2.0, z + 0.15))}
+              className="rounded p-1 text-slate-300 hover:bg-white/10 hover:text-white"
+              title="Zoom In"
+            >
+              <ZoomIn className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setZoom((z) => Math.max(0.5, z - 0.15))}
+              className="rounded p-1 text-slate-300 hover:bg-white/10 hover:text-white"
+              title="Zoom Out"
+            >
+              <ZoomOut className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => {
+                setZoom(1);
+                setPan({ x: 0, y: 0 });
+              }}
+              className="rounded p-1 text-slate-300 hover:bg-white/10 hover:text-white"
+              title="Reset View"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* Tier filter */}
           <select
             value={tierFilter}
             onChange={(e) => setTierFilter(e.target.value)}
-            className="rounded border border-white/10 bg-slate-800 px-2 py-1 text-xs text-slate-200 outline-none focus:border-cyan-500"
+            className="rounded-lg border border-white/10 bg-slate-800/80 px-2 py-1 text-xs text-slate-200 outline-none focus:border-cyan-500"
           >
             <option value="ALL">All Tiers</option>
-            <option value="Academic">Academic</option>
+            <option value="Official">Official</option>
             <option value="Government">Government</option>
+            <option value="Academic">Academic</option>
             <option value="Reputable Media">Media</option>
-            <option value="Aggregator/Blog">Aggregator / Blog</option>
           </select>
-        </div>
-
-        <div className="hidden sm:flex items-center space-x-3 text-[11px] font-mono text-slate-400 border-l border-white/10 pl-2">
-          <span className="flex items-center space-x-1">
-            <span className="h-2 w-2 rounded-full bg-cyan-400" />
-            <span>Origins</span>
-          </span>
-          <span className="flex items-center space-x-1">
-            <span className="h-2 w-2 rounded-full bg-indigo-400" />
-            <span>Sources</span>
-          </span>
-          <span className="flex items-center space-x-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span>Claims</span>
-          </span>
         </div>
       </div>
 
-      {/* SVG Canvas */}
+      {/* 2. SVG Canvas */}
       <div
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        className="h-full w-full cursor-grab active:cursor-grabbing select-none"
+        className="flex-1 w-full cursor-grab active:cursor-grabbing select-none relative overflow-hidden"
       >
         <svg className="h-full w-full">
           <defs>
@@ -168,14 +220,14 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
             <marker id="arrow-support" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
             </marker>
+            <marker id="arrow-partial" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" />
+            </marker>
             <marker id="arrow-contradict" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" />
             </marker>
             <marker id="arrow-syndicate" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" />
-            </marker>
-            <marker id="arrow-cites" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#06b6d4" />
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#ea580c" />
             </marker>
           </defs>
 
@@ -183,6 +235,24 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
           <rect width="100%" height="100%" fill="url(#graph-grid)" />
 
           <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
+            {/* Column Structure Headers (Left to Right Flow) */}
+            <g className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 select-none">
+              <rect x="20" y="30" width="300" height="28" rx="6" fill="#061c24" stroke="#0e7490" strokeWidth="1" />
+              <text x="170" y="48" textAnchor="middle" fill="#22d3ee">
+                1. Primary Origins (Root Sources)
+              </text>
+
+              <rect x="400" y="30" width="300" height="28" rx="6" fill="#141432" stroke="#4f46e5" strokeWidth="1" />
+              <text x="550" y="48" textAnchor="middle" fill="#818cf8">
+                2. Intermediate Sources (Media & Reprints)
+              </text>
+
+              <rect x="780" y="30" width="280" height="28" rx="6" fill="#063228" stroke="#059669" strokeWidth="1" />
+              <text x="920" y="48" textAnchor="middle" fill="#34d399">
+                3. User Claims (Tested Fact)
+              </text>
+            </g>
+
             {/* Edges */}
             {edges.map((edge) => {
               const srcPos = nodePositions[edge.source];
@@ -190,25 +260,33 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
               if (!srcPos || !tgtPos) return null;
 
               const isContradict = edge.relationType === 'contradicts';
+              const isSupport = edge.relationType === 'supports';
+              const isPartial = edge.relationType === 'partially_supports';
               const isSyndicate = edge.relationType === 'syndicates';
 
-              let strokeColor = '#06b6d4';
-              let marker = 'url(#arrow-cites)';
+              let strokeColor = '#f59e0b';
+              let marker = 'url(#arrow-partial)';
+              let dashArray: string | undefined = '5,4';
 
-              if (edge.relationType === 'supports') {
+              if (isSupport) {
                 strokeColor = '#10b981';
                 marker = 'url(#arrow-support)';
+                dashArray = undefined;
               } else if (isContradict) {
                 strokeColor = '#f43f5e';
                 marker = 'url(#arrow-contradict)';
+                dashArray = undefined;
               } else if (isSyndicate) {
-                strokeColor = '#f59e0b';
+                strokeColor = '#ea580c';
                 marker = 'url(#arrow-syndicate)';
+                dashArray = '3,3';
               }
 
-              // Cubic bezier curve path
+              // Smooth cubic bezier curve from left source to right target
               const dx = tgtPos.x - srcPos.x;
-              const pathData = `M ${srcPos.x + 90} ${srcPos.y + 35} C ${srcPos.x + dx * 0.5} ${srcPos.y + 35}, ${tgtPos.x - dx * 0.5} ${tgtPos.y + 35}, ${tgtPos.x - 10} ${tgtPos.y + 35}`;
+              const pathData = `M ${srcPos.x + 130} ${srcPos.y + 40} C ${srcPos.x + dx * 0.5} ${srcPos.y + 40}, ${
+                tgtPos.x - dx * 0.5
+              } ${tgtPos.y + 40}, ${tgtPos.x - 10} ${tgtPos.y + 40}`;
 
               return (
                 <g key={edge.id} className="group">
@@ -216,11 +294,11 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
                     d={pathData}
                     fill="none"
                     stroke={strokeColor}
-                    strokeWidth={isContradict ? 2.5 : 1.8}
-                    strokeDasharray={isSyndicate ? '5,5' : undefined}
+                    strokeWidth={isContradict ? 2.6 : 1.8}
+                    strokeDasharray={dashArray}
                     markerEnd={marker}
-                    className={edge.animated ? 'animate-pulse' : ''}
-                    opacity={0.8}
+                    className={isContradict ? 'animate-pulse' : ''}
+                    opacity={0.85}
                   />
                   {edge.label && (
                     <text
@@ -229,8 +307,9 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
                       fill={strokeColor}
                       fontSize="10"
                       fontFamily="monospace"
+                      fontWeight="bold"
                       textAnchor="middle"
-                      className="bg-black/80 px-1 py-0.5"
+                      className="bg-black/90 px-1 py-0.5"
                     >
                       {edge.label}
                     </text>
@@ -248,34 +327,41 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
               const isClaim = node.type === 'claim';
               const isOrigin = node.type === 'origin';
 
-              let borderColor = 'border-slate-500 shadow-sm';
-              let bgColor = 'bg-[#1e293b]';
-              if (isClaim) {
+              // Visual styling by node role
+              let borderColor = 'border-indigo-400/80 shadow-md shadow-indigo-950/40';
+              let bgColor = 'bg-[#151733]';
+              let roleBadge = 'Intermediate Source';
+              let roleBadgeStyle = 'bg-indigo-950 border border-indigo-500/40 text-indigo-300';
+
+              if (isOrigin) {
+                borderColor = 'border-cyan-400 shadow-md shadow-cyan-950/40 ring-1 ring-cyan-500/30';
+                bgColor = 'bg-[#06242e]';
+                roleBadge = 'Primary Origin';
+                roleBadgeStyle = 'bg-cyan-950 border border-cyan-400/50 text-cyan-300';
+              } else if (isClaim) {
+                roleBadge = 'Claim';
                 if (node.decision === 'TRUST') {
-                  borderColor = 'border-[#059669] ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/40';
-                  bgColor = 'bg-[#064e3b]';
+                  borderColor = 'border-emerald-400 shadow-lg shadow-emerald-950/40 ring-1 ring-emerald-500/40';
+                  bgColor = 'bg-[#063b2f]';
+                  roleBadgeStyle = 'bg-emerald-950 border border-emerald-400 text-emerald-300';
                 } else if (node.decision === 'VERIFY') {
-                  borderColor = 'border-[#d97706] ring-1 ring-amber-500/50 shadow-md shadow-amber-950/40';
-                  bgColor = 'bg-[#451a03]';
+                  borderColor = 'border-amber-400 shadow-lg shadow-amber-950/40 ring-1 ring-amber-500/40';
+                  bgColor = 'bg-[#3b2306]';
+                  roleBadgeStyle = 'bg-amber-950 border border-amber-400 text-amber-300';
                 } else {
-                  borderColor = 'border-[#e11d48] ring-1 ring-rose-500/50 shadow-md shadow-rose-950/40';
-                  bgColor = 'bg-[#4c0519]';
+                  borderColor = 'border-rose-500 shadow-lg shadow-rose-950/40 ring-1 ring-rose-500/40';
+                  bgColor = 'bg-[#3d0818]';
+                  roleBadgeStyle = 'bg-rose-950 border border-rose-400 text-rose-300';
                 }
-              } else if (isOrigin) {
-                borderColor = 'border-[#14b8a6] ring-1 ring-teal-400/50 shadow-md shadow-teal-950/40';
-                bgColor = 'bg-[#134e4a]';
-              } else {
-                borderColor = 'border-slate-400 shadow-md';
-                bgColor = 'bg-[#1e293b]';
               }
 
               return (
                 <foreignObject
                   key={node.id}
-                  x={pos.x - 80}
+                  x={pos.x - 70}
                   y={pos.y}
-                  width="210"
-                  height="90"
+                  width="220"
+                  height="96"
                   className="overflow-visible"
                 >
                   <div
@@ -283,13 +369,13 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
                       e.stopPropagation();
                       setSelectedNodeId(node.id);
                     }}
-                    className={`h-full w-full cursor-pointer rounded-xl border-2 p-3 transition-all ${borderColor} ${bgColor} ${
-                      isSelected ? 'scale-105 ring-2 ring-white' : 'hover:scale-102'
+                    className={`h-full w-full cursor-pointer rounded-xl border-2 p-2.5 transition-all ${borderColor} ${bgColor} ${
+                      isSelected ? 'scale-105 ring-2 ring-white shadow-2xl' : 'hover:scale-102 hover:border-white/60'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-slate-200 font-bold">
-                        {node.type}
+                    <div className="flex items-center justify-between gap-1">
+                      <span className={`rounded px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider ${roleBadgeStyle}`}>
+                        {roleBadge}
                       </span>
                       {isClaim && node.decision && (
                         <span
@@ -305,15 +391,18 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
                         </span>
                       )}
                       {node.tier && (
-                        <span className="rounded bg-teal-950 border border-teal-500/30 px-1.5 py-0.5 text-[9px] text-teal-300 font-mono font-bold">
+                        <span className="rounded bg-slate-900 border border-white/10 px-1 py-0.5 text-[8px] text-slate-300 font-mono">
                           {node.tier}
                         </span>
                       )}
                     </div>
 
-                    <div className="mt-1 font-bold text-xs text-white truncate">{node.label}</div>
+                    <div className="mt-1 font-bold text-xs text-white truncate leading-tight">
+                      {node.label}
+                    </div>
+
                     {node.subtitle && (
-                      <div className="mt-0.5 text-[10px] text-slate-300 truncate leading-tight">
+                      <div className="mt-0.5 text-[10px] text-slate-300 truncate leading-snug">
                         {node.subtitle}
                       </div>
                     )}
@@ -325,84 +414,146 @@ export default function EvidenceGraph({ analysis }: EvidenceGraphProps) {
         </svg>
       </div>
 
-      {/* Selected Node Inspector Drawer */}
+      {/* 3. Selected Node Inspector Drawer (Shows what it actually said, relation, support level) */}
       {selectedNode && (() => {
         const matchingSource = analysis.sources.find((s) => s.id === selectedNode.id);
         const matchingClaim = analysis.claims.find((c) => c.id === selectedNode.id);
-        const matchingEvidence = analysis.evidences.filter((e) => e.sourceId === selectedNode.id || e.claimId === selectedNode.id);
+        const matchingEvidence = analysis.evidences.find(
+          (e) => e.sourceId === selectedNode.id || e.claimId === selectedNode.id
+        );
 
         return (
-          <div className="absolute bottom-4 right-4 z-20 w-88 max-h-80 overflow-y-auto rounded-xl border border-white/15 bg-[#0d1424]/95 p-4 shadow-2xl backdrop-blur-md">
+          <div className="absolute bottom-16 right-4 z-20 w-96 max-h-80 overflow-y-auto rounded-xl border border-white/15 bg-[#0a0f1d]/95 p-4 shadow-2xl backdrop-blur-md">
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <div className="flex items-center space-x-1.5">
                 <Info className="h-3.5 w-3.5 text-cyan-400" />
                 <span className="font-mono text-xs font-bold uppercase text-white">
-                  Node Inspector & Raw Evidence
+                  Node Inspector & Comparison
                 </span>
               </div>
               <span className="font-mono text-[10px] text-slate-400">{selectedNode.id}</span>
             </div>
 
             <div className="mt-2.5">
-              <h5 className="text-xs font-bold text-white leading-snug">{selectedNode.label}</h5>
+              <div className="flex items-center justify-between">
+                <h5 className="text-xs font-bold text-white leading-snug truncate max-w-[240px]">
+                  {selectedNode.label}
+                </h5>
+                {matchingSource?.url && (
+                  <a
+                    href={matchingSource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-1 text-[10px] text-cyan-400 hover:text-cyan-300 font-mono"
+                  >
+                    <span>Source Link</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+
               {selectedNode.subtitle && (
-                <p className="mt-1 text-[11px] text-slate-300">{selectedNode.subtitle}</p>
+                <p className="mt-0.5 text-[11px] text-slate-300 truncate">{selectedNode.subtitle}</p>
               )}
 
-              {/* Raw Evidence / Snippet */}
+              {/* What It Actually Said (Verbatim Snippet) */}
               {(matchingSource?.snippet || selectedNode.rawEvidenceSnippet || matchingClaim?.inputQuote) && (
-                <div className="mt-2.5 rounded-lg bg-black/40 p-2 text-[11px] text-slate-300 border border-white/10 leading-relaxed font-sans">
-                  <span className="font-mono text-[10px] font-bold text-cyan-400 block mb-0.5 uppercase">
-                    Raw Evidence Snippet:
+                <div className="mt-2.5 rounded-lg bg-black/50 p-2.5 text-[11px] text-slate-200 border border-white/10 leading-relaxed font-sans">
+                  <span className="font-mono text-[10px] font-bold text-cyan-400 block mb-0.5 uppercase tracking-wider">
+                    What It Actually Said:
                   </span>
                   &ldquo;{matchingSource?.snippet || matchingClaim?.inputQuote || selectedNode.rawEvidenceSnippet}&rdquo;
                 </div>
               )}
 
-              <div className="mt-3 space-y-1.5 text-[11px] font-mono border-t border-white/5 pt-2">
-                <div className="flex justify-between text-slate-400">
-                  <span>Node Type:</span>
-                  <span className="font-bold text-cyan-300 uppercase">{selectedNode.type}</span>
+              {/* How It Relates to User's Claim & Support Level */}
+              {matchingEvidence && (
+                <div className="mt-2.5 rounded-lg bg-slate-900/60 p-2.5 border border-white/10 text-[11px] text-slate-300">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-mono text-[10px] font-bold uppercase text-amber-400">
+                      Relation to User Claim:
+                    </span>
+                    <span
+                      className={`font-mono text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${
+                        matchingEvidence.polarity === 'SUPPORT'
+                          ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+                          : matchingEvidence.polarity === 'CONTRADICT'
+                          ? 'bg-rose-950 text-rose-300 border border-rose-500/40'
+                          : 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                      }`}
+                    >
+                      {matchingEvidence.polarity === 'SUPPORT'
+                        ? 'Supports'
+                        : matchingEvidence.polarity === 'CONTRADICT'
+                        ? 'Contradicts'
+                        : 'Partially Supports'}
+                    </span>
+                  </div>
+                  <p className="font-sans leading-relaxed text-slate-200">
+                    {matchingEvidence.exactDifference || matchingEvidence.verificationReasoning}
+                  </p>
                 </div>
-                {selectedNode.tier && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Quality Tier:</span>
-                    <span className="text-white font-semibold">{selectedNode.tier}</span>
+              )}
+
+              {/* Claim Verdict if Claim node */}
+              {selectedNode.type === 'claim' && primaryClaim && (
+                <div className="mt-2.5 rounded-lg bg-slate-900/60 p-2 border border-white/10 space-y-1 text-[11px] font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Decision:</span>
+                    <DecisionBadge decision={primaryClaim.decision} size="sm" />
                   </div>
-                )}
-                {matchingSource?.publishedDate && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Publication Date:</span>
-                    <span className="text-slate-200">{matchingSource.publishedDate}</span>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Epistemic Confidence:</span>
+                    <span className="text-white font-bold">{Math.round(primaryClaim.confidence * 100)}%</span>
                   </div>
-                )}
-                {matchingSource?.verbatimOverlapRatio && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Verbatim Text Overlap:</span>
-                    <span className="text-amber-400 font-bold">
-                      {Math.round(matchingSource.verbatimOverlapRatio * 100)}% Derived
-                    </span>
+                  <div className="text-slate-300 font-sans text-[10px] mt-1 pt-1 border-t border-white/5">
+                    {primaryClaim.decisionReason}
                   </div>
-                )}
-                {matchingSource?.doi && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Canonical DOI:</span>
-                    <span className="text-emerald-400 font-bold truncate max-w-[150px]">
-                      {matchingSource.doi}
-                    </span>
-                  </div>
-                )}
-                {selectedNode.decision && (
-                  <div className="flex justify-between text-slate-400 pt-1">
-                    <span>Trust Decision:</span>
-                    <DecisionBadge decision={selectedNode.decision} size="sm" />
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         );
       })()}
+
+      {/* 4. Always-Visible High-Contrast Legend */}
+      <div className="z-20 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 bg-[#080d1a] px-5 py-2.5 text-xs font-mono text-slate-300">
+        <div className="flex items-center space-x-4">
+          <span className="font-bold text-slate-400 uppercase text-[10px]">Node Types:</span>
+          <span className="flex items-center space-x-1.5">
+            <span className="h-2.5 w-2.5 rounded bg-[#06242e] border border-cyan-400" />
+            <span className="text-cyan-200 text-[11px]">Primary Origin</span>
+          </span>
+          <span className="flex items-center space-x-1.5">
+            <span className="h-2.5 w-2.5 rounded bg-[#151733] border border-indigo-400" />
+            <span className="text-indigo-200 text-[11px]">Intermediate Source</span>
+          </span>
+          <span className="flex items-center space-x-1.5">
+            <span className="h-2.5 w-2.5 rounded bg-[#063b2f] border border-emerald-400" />
+            <span className="text-emerald-200 text-[11px]">User Claim</span>
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <span className="font-bold text-slate-400 uppercase text-[10px]">Edges:</span>
+          <span className="flex items-center space-x-1.5">
+            <span className="h-0.5 w-3.5 bg-[#10b981]" />
+            <span className="text-emerald-300 text-[11px]">Supports</span>
+          </span>
+          <span className="flex items-center space-x-1.5">
+            <span className="h-0.5 w-3.5 border-t-2 border-dashed border-[#f59e0b]" />
+            <span className="text-amber-300 text-[11px]">Partially Supports</span>
+          </span>
+          <span className="flex items-center space-x-1.5">
+            <span className="h-0.5 w-3.5 bg-[#f43f5e]" />
+            <span className="text-rose-300 text-[11px]">Contradicts</span>
+          </span>
+          <span className="flex items-center space-x-1.5">
+            <span className="h-0.5 w-3.5 border-t-2 border-dotted border-[#ea580c]" />
+            <span className="text-orange-300 text-[11px]">Copied / Echo Chamber</span>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

@@ -347,7 +347,6 @@ export async function executeTracevidencePipeline(
       });
     });
   }
-  }
 
   const overallDecisionCounts = {
     trust: processedClaims.filter(c => c.decision === 'TRUST').length,

@@ -34,41 +34,30 @@ export default function GraphConclusionGuide({ analysis }: GraphConclusionGuideP
   const echoDetected = m.averageIndependence < 0.45;
   const hasContradictions = m.contradictionRate > 0.3;
 
-  // Generate simple, student-friendly Graph Conclusion sentences
+  // Generate clear, structured Graph Conclusion sentences
   const conclusionSentences: string[] = [];
 
-  if (echoDetected) {
+  if (hasContradictions || claims.some(c => c.contradictionDetected || c.decision === 'ABSTAIN')) {
     conclusionSentences.push(
-      `Most of the sources are repeating the same original report. We found ${apparentSourcesCount} websites that mention this, but they all trace back to only ${independentOriginsCount} original study. So the apparent agreement is misleading — it is one idea echoed many times, not many independent confirmations.`
+      `Reliable sources contradict this claim. Empirical facts, official specifications, or established scientific literature directly refute the asserted proposition.`
     );
+  } else if (echoDetected) {
     conclusionSentences.push(
-      `Think of it like this: if 8 people tell you the same rumor they heard from the same friend, you still only have 1 source — not 8. That is exactly what is happening here.`
+      `Most sources are repeating the same single report. TRACE-X tracing revealed that ${apparentSourcesCount} visible citations collapse into only ${independentOriginsCount} original root source. The apparent agreement is circular syndication rather than independent corroboration.`
     );
   } else if (independentOriginsCount <= 2) {
     conclusionSentences.push(
-      `Only ${independentOriginsCount} truly independent source${independentOriginsCount > 1 ? 's were' : ' was'} found in available literature.`
-    );
-    conclusionSentences.push(
-      `While the sources agree, science requires more separate research teams to reach the same conclusion before something is considered a settled consensus. More independent studies are needed.`
+      `Only ${independentOriginsCount} independent source${independentOriginsCount > 1 ? 's support' : ' supports'} this claim. Additional independent verification is advised before considering this a settled consensus.`
     );
   } else {
     conclusionSentences.push(
-      `Multiple independent research teams — with no connection to each other — conducted separate studies and all reached the same conclusion. This is the strongest kind of evidence.`
-    );
-    conclusionSentences.push(
-      `No circular copying was detected. The evidence comes from truly different institutions and research groups, which is why this claim has a higher trust score.`
+      `Strongly supported by multiple independent authoritative origins. Several distinct research bodies and official archives corroborate this proposition with zero circular copying.`
     );
   }
 
-  if (hasContradictions) {
+  if (m.averageFreshness < 0.45) {
     conclusionSentences.push(
-      `There is a direct contradiction: newer scientific studies found results that conflict with what older sources claimed. Look for the pulsing red arrows in the map below — they show exactly where experts disagree with the claim.`
-    );
-  }
-
-  if (m.averageFreshness < 0.4) {
-    conclusionSentences.push(
-      `Several cited sources are quite old. Science, law, and technology change over time — what was true 10 years ago may not reflect the current understanding. Treat old data with extra caution.`
+      `Temporal decay detected: some underlying citations rely on dated baselines that may have evolved.`
     );
   }
 

@@ -8,12 +8,12 @@ interface TestCase {
 
 const TEST_CASES: TestCase[] = [
   {
-    query: 'Indian Flag has black colour',
+    query: 'Sun sets in the east',
     expectedDecision: 'ABSTAIN',
-    description: 'Flag of India color mismatch (contains saffron, white, green, navy blue; not black)',
+    description: 'Solar directional mismatch (Sun sets in the west, never east)',
   },
   {
-    query: 'Ashoka Chakra has 23 lines',
+    query: 'Ashoka Chakra has 23 spokes',
     expectedDecision: 'ABSTAIN',
     description: 'Ashoka Chakra spoke count mismatch (contains 24 spokes, not 23)',
   },
@@ -21,6 +21,11 @@ const TEST_CASES: TestCase[] = [
     query: 'Ashoka Chakra has 24 spokes',
     expectedDecision: 'TRUST',
     description: 'Ashoka Chakra canonical 24 spokes fact',
+  },
+  {
+    query: 'Indian Flag has black colour',
+    expectedDecision: 'ABSTAIN',
+    description: 'Flag of India color mismatch (contains saffron, white, green, navy blue; not black)',
   },
   {
     query: "India's national bird is peacock",

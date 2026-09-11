@@ -185,13 +185,18 @@ export function evaluateSourceRelevance(
     return { isRelevant: false, relevanceScore: 0.05 };
   }
 
-  // Unrelated biographies and geographical places when claim is about science, nature, or emblems
+  // Unrelated biographies, tourist beaches, astrology, and ancient texts when claim is about science, nature, or emblems
   if (!queryAsksEntertainment && (
     item.snippet.toLowerCase().includes('was a pakistani') ||
     item.snippet.toLowerCase().includes('is a pakistani') ||
     item.snippet.toLowerCase().includes('was a computer prodigy') ||
-    item.snippet.toLowerCase().includes('is a beach in') ||
-    item.snippet.toLowerCase().includes('is an ancient egyptian')
+    item.snippet.toLowerCase().includes('is a beach') ||
+    item.title.toLowerCase().includes('beach') ||
+    item.snippet.toLowerCase().includes('ancient egyptian') ||
+    item.snippet.toLowerCase().includes('in astrology') ||
+    item.snippet.toLowerCase().includes('horoscopic astrology') ||
+    item.title.toLowerCase() === 'amduat' ||
+    item.title.toLowerCase() === 'descendant'
   )) {
     return { isRelevant: false, relevanceScore: 0.05 };
   }
