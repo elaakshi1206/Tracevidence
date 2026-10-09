@@ -77,7 +77,7 @@ export function extractAtomicClaimsFromText(input: string): ExtractedClaimCandid
     const lowerSentence = sentence.toLowerCase();
 
     // Extract capitalized entities or key noun phrases
-    let entities = sentence.match(/\b[A-Z][a-zA-Z0-9-]{2,}\b/g) || [];
+    let entities: string[] = Array.from(sentence.match(/\b[A-Z][a-zA-Z0-9-]{2,}\b/g) || []);
     if (entities.length === 0) {
       const knownNouns = [
         { regex: /\b(?:india|indian)\b/i, label: 'India' },
